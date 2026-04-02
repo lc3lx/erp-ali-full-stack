@@ -1,0 +1,48 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Dependencies & build output
+node_modules
+dist
+dist-ssr
+backend/dist
+build
+*.local
+
+# أسرار البيئة — لا تُرفع (كلمات مرور DB، JWT، إلخ)
+.env
+.env.*
+!.env.example
+!**/.env.example
+
+# Tests & tooling
+coverage
+*.tsbuildinfo
+.vitest
+
+# Vite / ESLint cache
+.vite
+.cache
+.eslintcache
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# مجلد تجارب/نسخ مؤقتة (إن وجد)
+backend_tmp

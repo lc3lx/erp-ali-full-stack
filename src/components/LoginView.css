@@ -1,0 +1,84 @@
+.login-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(155deg, #0f172a 0%, #1e293b 45%, #0f172a 100%);
+  padding: 1.5rem;
+  font-family: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, sans-serif;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 380px;
+  background: #f8fafc;
+  border-radius: 14px;
+  padding: 2rem 1.75rem;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.login-title {
+  margin: 0 0 0.25rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.login-sub {
+  margin: 0 0 1.25rem;
+  font-size: 0.85rem;
+  color: #5a6570;
+}
+
+.login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  color: #2c3540;
+}
+
+.login-field input {
+  padding: 0.55rem 0.65rem;
+  border: 1px solid #c5ccd4;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.login-error {
+  color: #b00020;
+  font-size: 0.85rem;
+  margin-bottom: 0.75rem;
+}
+
+.login-btn {
+  width: 100%;
+  padding: 0.65rem;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #14b8a6, #0d9488);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.35);
+}
+
+.login-btn:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+.login-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.login-hint {
+  margin: 1rem 0 0;
+  font-size: 0.75rem;
+  color: #6a7580;
+  line-height: 1.4;
+}

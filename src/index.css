@@ -1,0 +1,18 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 11px;
+  background: #d4d0c8;
+  direction: ltr;
+  overflow-x: auto;
+}
+
+#root {
+  min-width: 100%;
+  width: fit-content;
+}

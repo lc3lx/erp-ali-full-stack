@@ -1,0 +1,1058 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PartyType {
+  CUSTOMER
+  SUPPLIER
+  CLEARANCE
+  SHIPPER
+  OTHER
+}
+
+enum ContainerStatus {
+  OPEN
+  IN_TRANSIT
+  RECEIVED
+  ARRIVED
+  CUSTOMS_CLEARED
+  CLOSED
+}
+
+enum IncomeOutcomeKind {
+  EXPENSE
+  REVENUE
+}
+
+enum AccountingDirection {
+  OUT
+  IN
+}
+
+enum UserRole {
+  ADMIN
+  USER
+  ACCOUNTANT
+  STORE_KEEPER
+  DATA_ENTRY
+}
+
+enum GlAccountClass {
+  ASSET
+  LIABILITY
+  EQUITY
+  REVENUE
+  EXPENSE
+}
+
+enum FiscalPeriodStatus {
+  OPEN
+  CLOSED
+  LOCKED
+}
+
+enum JournalEntryStatus {
+  DRAFT
+  POSTED
+  VOID
+}
+
+enum JournalSourceType {
+  MANUAL
+  CONTAINER
+  SALE_VOUCHER
+  PURCHASE_VOUCHER
+  INCOME_OUTCOME
+  INVENTORY
+  OPENING_BALANCE
+  PAYMENT
+  BANK
+  FX_REVALUATION
+  YEAR_END_CLOSE
+  OTHER
+}
+
+enum StockMoveType {
+  OPENING
+  PURCHASE_RECEIPT
+  SALE_ISSUE
+  TRANSFER_OUT
+  TRANSFER_IN
+  ADJUSTMENT
+  RETURN_IN
+  RETURN_OUT
+}
+
+/// دورة حياة مستندات التشغيل قبل وبعد الترحيل المحاسبي
+enum SourceDocumentStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  POSTED
+  PAID
+  CANCELLED
+}
+
+enum CostingMethod {
+  WEIGHTED_AVERAGE
+  FIFO
+}
+
+enum ApprovalEntityType {
+  SALE_VOUCHER
+  PURCHASE_VOUCHER
+  TREASURY_PAYMENT
+  JOURNAL_ENTRY
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AppModule {
+  SALES
+  PURCHASES
+  INVENTORY
+  FINANCE
+  TREASURY
+  CRM
+  HR
+  LOGISTICS
+  REPORTS
+  SETTINGS
+}
+
+/// مطابقة أسطر دفتر الأستاذ (AR/AP) جزئية أو كاملة — تدقيق
+enum ReconciliationMatchType {
+  STANDARD
+  WRITEOFF
+}
+
+enum BankStatementLineStatus {
+  UNMATCHED
+  MATCHED
+  IGNORED
+}
+
+model Company {
+  id             String   @id @default(uuid())
+  code           String   @unique
+  name           String
+  baseCurrency   String   @default("USD")
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  journalEntries JournalEntry[]
+  bankStatements BankStatement[]
+  reconciliationMatches ReconciliationMatch[]
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  role         UserRole @default(USER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  journalEntries JournalEntry[]
+  auditLogs      AuditLog[]
+
+  saleVouchersApproved     SaleVoucher[]           @relation("SaleVoucherApprovedBy")
+  purchaseVouchersApproved PurchaseInvoiceVoucher[] @relation("PurchaseVoucherApprovedBy")
+  notifications            AppNotification[]
+  reconciliationMatchesCreated ReconciliationMatch[] @relation("ReconciliationCreatedBy")
+  bankStatementsImported      BankStatement[]       @relation("BankStatementImportedBy")
+  bankStatementMatches        BankStatementLine[]   @relation("BankStatementMatchedBy")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  createdAt  DateTime @default(now())
+  userId     String?
+  action     String
+  entityType String
+  entityId   String
+  details    Json?
+  /// لقطة قبل التعديل ( ERP audit trail )
+  before     Json?
+  /// لقطة بعد التعديل
+  after      Json?
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+/// صلاحيات دقيقة: (دور × وحدة × فعل) — RBAC production
+model RolePermission {
+  id      String   @id @default(uuid())
+  role    UserRole
+  module  AppModule
+  action  String /// e.g. VIEW, CREATE, EDIT, POST, VOID, APPROVE_L1, APPROVE_L2
+  allowed Boolean  @default(true)
+
+  @@unique([role, module, action])
+  @@index([role])
+}
+
+/// إشعارات داخل التطبيق (فواتير متأخرة، مخزون منخفض، موافقات معلّقة)
+model AppNotification {
+  id         String    @id @default(uuid())
+  userId     String
+  kind       String /// OVERDUE_INVOICE, LOW_STOCK, PENDING_APPROVAL, FX_REVAL, etc.
+  title      String
+  body       String?
+  readAt     DateTime?
+  entityType String?
+  entityId   String?
+  createdAt  DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@index([createdAt])
+}
+
+/// طلب موافقة على مستند قبل الترحيل أو الصرف
+model ApprovalRequest {
+  id            String             @id @default(uuid())
+  entityType    ApprovalEntityType
+  entityId      String
+  status        ApprovalStatus     @default(PENDING)
+  comment       String?
+  requestedById String?
+  decidedById   String?
+  decidedAt     DateTime?
+  createdAt     DateTime           @default(now())
+
+  @@index([entityType, entityId])
+  @@index([status])
+}
+
+/// تعريف ضريبة القيمة المضافة أو ضرائب أخرى
+model TaxRate {
+  id                   String    @id @default(uuid())
+  code                 String    @unique
+  name                 String
+  /// نسبة مئوية، مثال 15.0000 = 15%
+  ratePercent          Decimal   @db.Decimal(9, 4)
+  isInclusive          Boolean   @default(false)
+  outputVatAccountId   String?
+  inputVatAccountId    String?
+  isActive             Boolean   @default(true)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  outputVatAccount GlAccount? @relation("TaxOutputVat", fields: [outputVatAccountId], references: [id], onDelete: SetNull)
+  inputVatAccount  GlAccount? @relation("TaxInputVat", fields: [inputVatAccountId], references: [id], onDelete: SetNull)
+
+  saleLines     SaleVoucherLine[]     @relation("SaleVoucherLineTax")
+  purchaseLines PurchaseVoucherLine[] @relation("PurchaseVoucherLineTax")
+}
+
+/// ميزانية سنوية مقارنة بالفعلي في التقارير
+model Budget {
+  id           String   @id @default(uuid())
+  fiscalYearId String
+  name         String
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  fiscalYear FiscalYear   @relation(fields: [fiscalYearId], references: [id], onDelete: Cascade)
+  lines      BudgetLine[]
+
+  @@index([fiscalYearId])
+}
+
+model BudgetLine {
+  id          String   @id @default(uuid())
+  budgetId    String
+  accountId   String
+  /// رقم الشهر 1..12 أو null للمجموع السنوي
+  monthIndex  Int?
+  amount      Decimal  @db.Decimal(18, 4)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  budget  Budget    @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  account GlAccount @relation(fields: [accountId], references: [id], onDelete: Restrict)
+
+  @@index([budgetId])
+  @@index([accountId])
+}
+
+/// Atomic journal number sequence; key e.g. JOURNAL
+model DocumentSequence {
+  key     String @id
+  prefix  String @default("JE")
+  nextNum Int    @default(1)
+}
+
+model Party {
+  id                  String   @id @default(uuid())
+  type                PartyType
+  name                String
+  phone               String?
+  address             String?
+  balanceDisplay      String?
+  saleDiscountDefault Decimal? @db.Decimal(18, 4)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  containersAsCustomer   Container[]               @relation("ContainerCustomer")
+  containersAsClearance  Container[]               @relation("ContainerClearance")
+  purchaseVouchers       PurchaseInvoiceVoucher[]
+  saleVouchers           SaleVoucher[]
+  journalLines           JournalLine[]
+  treasuryPayments       TreasuryPayment[]
+  quotations             CrmQuotation[]         @relation("QuotationCustomer")
+}
+
+model Store {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  purchaseVouchers PurchaseInvoiceVoucher[]
+  saleVouchers     SaleVoucher[]
+  journalLines     JournalLine[]
+  invWarehouse     InvWarehouse?
+}
+
+model Item {
+  id         String   @id @default(uuid())
+  itemNo     String?
+  name       String
+  barcode    String?  @unique
+  category   String?
+  defaultUom String? /// وحدة القياس الافتراضية (مثال: PCS، CTN)
+  isActive   Boolean  @default(true)
+  costingMethod CostingMethod @default(WEIGHTED_AVERAGE)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  containerLineItems   ContainerLineItem[]
+  purchaseVoucherLines PurchaseVoucherLine[]
+  saleVoucherLines     SaleVoucherLine[]
+  invStockMoves        InvStockMove[]
+  invBalances          InvStockBalance[]
+  invCostLayers        InvCostLayer[]
+}
+
+model Container {
+  id                      String          @id @default(uuid())
+  containerNo             String          @unique
+  documentDate            DateTime?
+  arriveDate              DateTime?
+  isLoaded                Boolean         @default(false)
+  centralPoint            String?
+  sourceCountry           String?
+  notes                   String?
+  contents                String?
+  telexNo                 String?
+  asPridePartyId          String?
+  officeCommissionPercent Decimal?        @db.Decimal(18, 4)
+  cbmTransportPrice       Decimal?        @db.Decimal(18, 4)
+  chinaExchangeRate       Decimal?        @db.Decimal(18, 4)
+  status                  ContainerStatus @default(OPEN)
+  customerId              String?
+  clearanceCompanyId      String?
+  shipperText             String?
+  policyNo                String?
+  shipDate                DateTime?
+  releaseExportFlag       Boolean         @default(false)
+  weightTotal             Decimal?        @db.Decimal(18, 4)
+  cartonsTotal            Int?
+  profit                  Decimal?        @db.Decimal(18, 4)
+  received                Boolean         @default(false)
+  release                 String?
+  receiverName            String?
+  receiverPhone           String?
+  axis                    String?
+  country                 String?
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
+
+  customer         Party?                  @relation("ContainerCustomer", fields: [customerId], references: [id])
+  clearanceCompany Party?                  @relation("ContainerClearance", fields: [clearanceCompanyId], references: [id])
+  lineItems        ContainerLineItem[]
+  costLines        ContainerCostLine[]
+  attachments      ContainerAttachment[]
+  purchaseVouchers PurchaseInvoiceVoucher[]
+  saleVouchers     SaleVoucher[]
+  journalLines     JournalLine[]
+}
+
+model ContainerLineItem {
+  id                 String   @id @default(uuid())
+  containerId        String
+  seq                Int
+  realPrice          Decimal? @db.Decimal(18, 6)
+  pieceTransport     Decimal? @db.Decimal(18, 6)
+  weightSum          Decimal? @db.Decimal(18, 6)
+  weight             Decimal? @db.Decimal(18, 6)
+  cbmSum             Decimal? @db.Decimal(18, 6)
+  cbm                Decimal? @db.Decimal(18, 6)
+  priceToCustomerSum Decimal? @db.Decimal(18, 6)
+  priceToCustomer    Decimal? @db.Decimal(18, 6)
+  boxes              Int?
+  pieces             Decimal? @db.Decimal(18, 6)
+  byPriceSum         Decimal? @db.Decimal(18, 6)
+  cartonPcs          Decimal? @db.Decimal(18, 6)
+  byPrice            Decimal? @db.Decimal(18, 6)
+  itemName           String?
+  itemNo             String?
+  hasItem            Boolean  @default(false)
+  itemId             String?
+
+  container   Container @relation(fields: [containerId], references: [id], onDelete: Cascade)
+  catalogItem Item?     @relation(fields: [itemId], references: [id])
+}
+
+model ContainerCostLine {
+  id          String   @id @default(uuid())
+  containerId String
+  sortOrder   Int      @default(0)
+  label       String?
+  amount      Decimal  @db.Decimal(18, 4)
+  description String?
+
+  container Container @relation(fields: [containerId], references: [id], onDelete: Cascade)
+}
+
+model PurchaseInvoiceVoucher {
+  id               String    @id @default(uuid())
+  voucherNo        String
+  voucherDate      DateTime?
+  exchangeRate     Decimal?  @db.Decimal(18, 6)
+  officeCommission Decimal?  @db.Decimal(18, 4)
+  cbmTransportPrice Decimal? @db.Decimal(18, 4)
+  currency         String    @default("دولار")
+  containerId      String
+  supplierId       String
+  storeId          String?
+  notes            String?
+  phoneBalanceText String?
+  summation        Decimal?  @db.Decimal(18, 4)
+  paid             Decimal?  @default(0) @db.Decimal(18, 4)
+  balance          Decimal?  @db.Decimal(18, 4)
+  glJournalEntryId String?   @unique
+  documentStatus   SourceDocumentStatus @default(DRAFT)
+  approvedAt       DateTime?
+  approvedById     String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  container        Container     @relation(fields: [containerId], references: [id])
+  supplier         Party         @relation(fields: [supplierId], references: [id])
+  store            Store?        @relation(fields: [storeId], references: [id])
+  glJournalEntry   JournalEntry? @relation("PurchaseVoucherGlJe", fields: [glJournalEntryId], references: [id], onDelete: SetNull)
+  approvedBy       User?         @relation("PurchaseVoucherApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  lines            PurchaseVoucherLine[]
+  paymentAllocations TreasuryPaymentAllocation[]
+  attachments      PurchaseVoucherAttachment[]
+
+  @@unique([voucherNo, currency])
+}
+
+model PurchaseVoucherLine {
+  id                   String   @id @default(uuid())
+  voucherId            String
+  seq                  Int
+  priceToCustomerSum   Decimal? @db.Decimal(18, 6)
+  weightSum            Decimal? @db.Decimal(18, 6)
+  weight               Decimal? @db.Decimal(18, 6)
+  cbmSum               Decimal? @db.Decimal(18, 6)
+  cbm                  Decimal? @db.Decimal(18, 6)
+  boxesSum             Decimal? @db.Decimal(18, 6)
+  piecesSum            Decimal? @db.Decimal(18, 6)
+  priceSum             Decimal? @db.Decimal(18, 6)
+  cartonPcs            Decimal? @db.Decimal(18, 6)
+  unitPrice            Decimal? @db.Decimal(18, 6)
+  itemName             String?
+  itemNo               String?
+  itemId               String?
+  /// صافي السطر قبل الضريبة (عملة الفاتورة)
+  lineSubtotal         Decimal? @db.Decimal(18, 4)
+  taxRateId            String?
+  taxAmount            Decimal? @db.Decimal(18, 4)
+  item                 Item?    @relation(fields: [itemId], references: [id], onDelete: SetNull)
+  taxRate              TaxRate? @relation("PurchaseVoucherLineTax", fields: [taxRateId], references: [id], onDelete: SetNull)
+
+  voucher PurchaseInvoiceVoucher @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+}
+
+model SaleVoucher {
+  id               String    @id @default(uuid())
+  voucherNo        String
+  voucherDate      DateTime?
+  exchangeRate     Decimal?  @db.Decimal(18, 6)
+  officeCommission Decimal?  @db.Decimal(18, 4)
+  cbmTransportPrice Decimal? @db.Decimal(18, 4)
+  currency         String    @default("دولار")
+  containerId      String
+  customerId       String
+  storeId          String?
+  notes            String?
+  total            Decimal?  @db.Decimal(18, 4)
+  paid             Decimal?  @default(0) @db.Decimal(18, 4)
+  remaining        Decimal?  @db.Decimal(18, 4)
+  profit           Decimal?  @db.Decimal(18, 4)
+  accountingDebit  Decimal?  @db.Decimal(18, 4)
+  accountingCredit Decimal?  @db.Decimal(18, 4)
+  glJournalEntryId String?  @unique
+  documentStatus   SourceDocumentStatus @default(DRAFT)
+  approvedAt       DateTime?
+  approvedById     String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  container        Container     @relation(fields: [containerId], references: [id])
+  customer         Party         @relation(fields: [customerId], references: [id])
+  store            Store?        @relation(fields: [storeId], references: [id])
+  glJournalEntry   JournalEntry? @relation("SaleVoucherGlJe", fields: [glJournalEntryId], references: [id], onDelete: SetNull)
+  approvedBy       User?         @relation("SaleVoucherApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  lines            SaleVoucherLine[]
+  paymentAllocations TreasuryPaymentAllocation[]
+  attachments      SaleVoucherAttachment[]
+
+  @@unique([voucherNo, currency])
+}
+
+model SaleVoucherLine {
+  id                String   @id @default(uuid())
+  voucherId         String
+  seq               Int
+  usdConvertRate    Decimal? @db.Decimal(18, 6)
+  usdSumCol         Decimal? @db.Decimal(18, 6)
+  usdPriceCol       Decimal? @db.Decimal(18, 6)
+  cbmSumCol         Decimal? @db.Decimal(18, 6)
+  weight            Decimal? @db.Decimal(18, 6)
+  cbm1              Decimal? @db.Decimal(18, 6)
+  cbm2              Decimal? @db.Decimal(18, 6)
+  listQty           Decimal? @db.Decimal(18, 6)
+  pricePerThousand  Decimal? @db.Decimal(18, 6)
+  totalPrice        Decimal? @db.Decimal(18, 6)
+  pcsInCarton       Decimal? @db.Decimal(18, 6)
+  linePrice         Decimal? @db.Decimal(18, 6)
+  detail            String?
+  itemNo            String?
+  itemId            String?
+  lineSubtotal      Decimal? @db.Decimal(18, 4)
+  taxRateId         String?
+  taxAmount         Decimal? @db.Decimal(18, 4)
+  item              Item?    @relation(fields: [itemId], references: [id], onDelete: SetNull)
+  taxRate           TaxRate? @relation("SaleVoucherLineTax", fields: [taxRateId], references: [id], onDelete: SetNull)
+
+  voucher SaleVoucher @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+}
+
+model SaleVoucherAttachment {
+  id            String   @id @default(uuid())
+  saleVoucherId String
+  fileName      String
+  fileUrl       String
+  mimeType      String?
+  sizeBytes     Int?
+  createdAt     DateTime @default(now())
+
+  saleVoucher SaleVoucher @relation(fields: [saleVoucherId], references: [id], onDelete: Cascade)
+
+  @@index([saleVoucherId])
+}
+
+model PurchaseVoucherAttachment {
+  id            String   @id @default(uuid())
+  purchaseVoucherId String
+  fileName      String
+  fileUrl       String
+  mimeType      String?
+  sizeBytes     Int?
+  createdAt     DateTime @default(now())
+
+  purchaseVoucher PurchaseInvoiceVoucher @relation(fields: [purchaseVoucherId], references: [id], onDelete: Cascade)
+
+  @@index([purchaseVoucherId])
+}
+
+model IncomeOutcomeEntry {
+  id               String            @id @default(uuid())
+  kind             IncomeOutcomeKind
+  entryDate        DateTime
+  currency         String            @default("دولار")
+  documentNo       String?
+  fees             Decimal?          @db.Decimal(18, 4)
+  usdAmount        Decimal?          @db.Decimal(18, 4)
+  detailsText      String?
+  glJournalEntryId String?           @unique
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  glJournalEntry JournalEntry? @relation("IncomeOutcomeGlJe", fields: [glJournalEntryId], references: [id], onDelete: SetNull)
+
+  @@index([entryDate, currency, kind])
+}
+
+model AccountingMove {
+  id            String   @id @default(uuid())
+  moveDate      DateTime
+  reportFrom    DateTime?
+  reportTo      DateTime?
+  exchangeRate  Decimal? @db.Decimal(18, 6)
+  topCurrency   String   @default("دولار")
+  searchQuery   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  lines AccountingLine[]
+}
+
+model AccountingLine {
+  id            String              @id @default(uuid())
+  moveId        String
+  direction     AccountingDirection
+  panelCurrency String              @default("دولار")
+  dinar         Decimal?            @db.Decimal(18, 4)
+  jineh         Decimal?            @db.Decimal(18, 4)
+  usd           Decimal?            @db.Decimal(18, 4)
+  rmb           Decimal?            @db.Decimal(18, 4)
+  lineNo        String?
+  details       String?
+  lineDate      DateTime?
+
+  move AccountingMove @relation(fields: [moveId], references: [id], onDelete: Cascade)
+}
+
+model OfficialDocument {
+  id            String   @id @default(uuid())
+  serial1       String?
+  serial2       String?
+  serial3       String?
+  recipient     String?
+  subject       String?
+  body          String    @db.Text
+  printAddr     String    @default("pride")
+  printType     String    @default("with")
+  hideNumDate   Boolean   @default(false)
+  party1Name    String?
+  party1Address String?
+  party2Name    String?
+  party2Address String?
+  party3Name    String?
+  party3Address String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model ExchangeRateSnapshot {
+  id        String   @id @default(uuid())
+  label     String
+  rate      Decimal  @db.Decimal(18, 6)
+  asOf      DateTime @default(now())
+  createdAt DateTime @default(now())
+}
+
+// ----- General ledger & inventory (finance module) -----
+
+model GlAccount {
+  id        String          @id @default(uuid())
+  code      String          @unique
+  name      String
+  nameAr    String?
+  class     GlAccountClass
+  parentId  String?
+  isPosting Boolean         @default(true)
+  isActive  Boolean         @default(true)
+  sortOrder Int             @default(0)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  parent   GlAccount?  @relation("GlAccountHierarchy", fields: [parentId], references: [id])
+  children GlAccount[] @relation("GlAccountHierarchy")
+
+  journalLines JournalLine[]
+  cashBankLink CashBankAccount?
+  treasuryOffsetPayments TreasuryPayment[] @relation("TreasuryOffsetAccount")
+  taxRatesOutput           TaxRate[]       @relation("TaxOutputVat")
+  taxRatesInput            TaxRate[]       @relation("TaxInputVat")
+  budgetLines              BudgetLine[]
+}
+
+model FiscalYear {
+  id        String   @id @default(uuid())
+  label     String
+  startDate DateTime
+  endDate   DateTime
+  isClosed  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  periods FiscalPeriod[]
+  budgets Budget[]
+}
+
+model FiscalPeriod {
+  id        String             @id @default(uuid())
+  yearId    String
+  index     Int
+  name      String
+  startDate DateTime
+  endDate   DateTime
+  status    FiscalPeriodStatus @default(OPEN)
+
+  year    FiscalYear     @relation(fields: [yearId], references: [id], onDelete: Cascade)
+  entries JournalEntry[]
+
+  @@unique([yearId, index])
+}
+
+model JournalEntry {
+  id          String             @id @default(uuid())
+  entryNo     String             @unique
+  entryDate   DateTime
+  periodId    String
+  status      JournalEntryStatus @default(DRAFT)
+  description String?
+  sourceType  JournalSourceType  @default(MANUAL)
+  sourceId    String?
+  postedAt    DateTime?
+  voidedAt    DateTime?
+  createdById String?
+  companyId   String?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  period             FiscalPeriod             @relation(fields: [periodId], references: [id])
+  company            Company?                 @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  createdBy          User?                    @relation(fields: [createdById], references: [id])
+  lines              JournalLine[]
+  saleVoucherSource  SaleVoucher?             @relation("SaleVoucherGlJe")
+  purchaseVoucherSrc PurchaseInvoiceVoucher?  @relation("PurchaseVoucherGlJe")
+  incomeOutcomeSrc   IncomeOutcomeEntry?      @relation("IncomeOutcomeGlJe")
+  treasuryPaymentLink TreasuryPayment?
+  treasuryTransferLink TreasuryTransfer?
+}
+
+model JournalLine {
+  id             String   @id @default(uuid())
+  journalEntryId String
+  lineNo         Int
+  accountId      String
+  description    String?
+  partyId        String?
+  containerId    String?
+  storeId        String?
+  currency       String   @default("USD")
+  exchangeRate   Decimal  @default(1) @db.Decimal(18, 8)
+  debit          Decimal  @default(0) @db.Decimal(18, 4)
+  credit         Decimal  @default(0) @db.Decimal(18, 4)
+  debitBase      Decimal  @default(0) @db.Decimal(18, 4)
+  creditBase     Decimal  @default(0) @db.Decimal(18, 4)
+  costCenterId   String?
+
+  journalEntry JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+  account      GlAccount    @relation(fields: [accountId], references: [id])
+  party        Party?       @relation(fields: [partyId], references: [id])
+  container    Container?   @relation(fields: [containerId], references: [id])
+  store        Store?       @relation(fields: [storeId], references: [id])
+  costCenter   CostCenter?  @relation(fields: [costCenterId], references: [id], onDelete: SetNull)
+
+  reconciliationsAsDebit  ReconciliationMatch[] @relation("ReconDebitLeg")
+  reconciliationsAsCredit ReconciliationMatch[] @relation("ReconCreditLeg")
+
+  @@index([accountId])
+  @@index([partyId])
+  @@index([containerId])
+  @@index([journalEntryId])
+  @@index([costCenterId])
+}
+
+/// ربط سطر مدين (مثل ذمة مدينة على فاتورة) بسطر دائن (تخفيض ذمة من سند قبض) — يدعم تعدد الفواتير لسند واحد
+model ReconciliationMatch {
+  id                   String                   @id @default(uuid())
+  companyId            String?
+  debitJournalLineId   String
+  creditJournalLineId  String
+  amount               Decimal                  @db.Decimal(18, 4)
+  matchType            ReconciliationMatchType  @default(STANDARD)
+  note                 String?
+  createdAt            DateTime                 @default(now())
+  createdById          String?
+  reversedAt           DateTime?
+
+  company    Company?    @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  createdBy  User?       @relation("ReconciliationCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  debitLine  JournalLine @relation("ReconDebitLeg", fields: [debitJournalLineId], references: [id], onDelete: Restrict)
+  creditLine JournalLine @relation("ReconCreditLeg", fields: [creditJournalLineId], references: [id], onDelete: Restrict)
+
+  @@index([debitJournalLineId])
+  @@index([creditJournalLineId])
+  @@index([companyId])
+}
+
+model InvWarehouse {
+  id        String   @id @default(uuid())
+  code      String?  @unique
+  name      String
+  storeId   String?  @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  store    Store?            @relation(fields: [storeId], references: [id])
+  moves    InvStockMove[]
+  balances InvStockBalance[]
+  costLayers InvCostLayer[]
+}
+
+/// طبقات تكلفة FIFO — إشعال عند costingMethod = FIFO على الصنف
+model InvCostLayer {
+  id           String   @id @default(uuid())
+  warehouseId  String
+  itemId       String
+  sourceMoveId String   @unique
+  qtyRemaining Decimal  @db.Decimal(18, 6)
+  unitCost     Decimal  @db.Decimal(18, 6)
+  createdAt    DateTime @default(now())
+
+  warehouse InvWarehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  item      Item         @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  sourceMove InvStockMove @relation(fields: [sourceMoveId], references: [id], onDelete: Cascade)
+
+  @@index([warehouseId, itemId])
+}
+
+model InvStockMove {
+  id            String        @id @default(uuid())
+  moveDate      DateTime
+  warehouseId   String
+  itemId        String
+  type          StockMoveType
+  qty           Decimal       @db.Decimal(18, 6)
+  unitCost      Decimal       @db.Decimal(18, 6)
+  totalCost     Decimal       @db.Decimal(18, 4)
+  referenceKind JournalSourceType @default(OTHER)
+  referenceId   String?
+
+  warehouse InvWarehouse @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
+  item      Item         @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  fifoLayer InvCostLayer?
+
+  @@index([warehouseId, moveDate])
+  @@index([itemId])
+}
+
+model InvStockBalance {
+  warehouseId String
+  itemId      String
+  qtyOnHand   Decimal  @db.Decimal(18, 6)
+  avgUnitCost Decimal  @db.Decimal(18, 6)
+  updatedAt   DateTime @updatedAt
+
+  warehouse InvWarehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  item      Item         @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@id([warehouseId, itemId])
+}
+
+model CostCenter {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  journalLines JournalLine[]
+}
+
+model CashBankAccount {
+  id          String   @id @default(uuid())
+  name        String
+  kind        String   @default("CASH")
+  glAccountId String?  @unique
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  glAccount GlAccount?         @relation(fields: [glAccountId], references: [id], onDelete: SetNull)
+  payments  TreasuryPayment[]
+  bankStatements BankStatement[]
+  transfersOut TreasuryTransfer[] @relation("TransferFrom")
+  transfersIn  TreasuryTransfer[] @relation("TransferTo")
+}
+
+model TreasuryPayment {
+  id                String   @id @default(uuid())
+  docNo             String
+  paymentDate       DateTime
+  direction         String /// RECEIPT | DISBURSEMENT
+  partyId           String?
+  cashBankId        String
+  amount            Decimal  @db.Decimal(18, 4)
+  currency          String   @default("USD")
+  offsetAccountId   String
+  notes             String?
+  glJournalEntryId  String?  @unique
+  createdAt         DateTime @default(now())
+
+  cashBank      CashBankAccount @relation(fields: [cashBankId], references: [id])
+  party         Party?          @relation(fields: [partyId], references: [id], onDelete: SetNull)
+  offsetAccount GlAccount       @relation("TreasuryOffsetAccount", fields: [offsetAccountId], references: [id])
+  glJournalEntry JournalEntry?  @relation(fields: [glJournalEntryId], references: [id], onDelete: SetNull)
+  allocations   TreasuryPaymentAllocation[]
+  bankStatementMatches BankStatementLine[]
+}
+
+/// كشف بنكي مستورد — مطابقة مع سندات الخزينة
+model BankStatement {
+  id          String   @id @default(uuid())
+  companyId   String?
+  cashBankId  String
+  importedAt  DateTime @default(now())
+  sourceName  String?
+  metadata    Json?
+  createdById String?
+
+  company  Company?        @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  cashBank CashBankAccount @relation(fields: [cashBankId], references: [id], onDelete: Cascade)
+  createdBy User?          @relation("BankStatementImportedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  lines     BankStatementLine[]
+
+  @@index([cashBankId])
+  @@index([companyId])
+}
+
+model BankStatementLine {
+  id                 String                  @id @default(uuid())
+  statementId        String
+  lineIndex          Int
+  txnDate            DateTime
+  /// موجب = وارد للصندوق، سالب = صادر (حسب اتفاق الاستيراد)
+  amount             Decimal                 @db.Decimal(18, 4)
+  description        String?
+  bankReference      String?
+  rawPayload         Json?
+  status             BankStatementLineStatus @default(UNMATCHED)
+  matchedPaymentId   String?
+  matchedAt          DateTime?
+  matchedById        String?
+
+  statement      BankStatement    @relation(fields: [statementId], references: [id], onDelete: Cascade)
+  matchedPayment TreasuryPayment? @relation(fields: [matchedPaymentId], references: [id], onDelete: SetNull)
+  matchedBy      User?            @relation("BankStatementMatchedBy", fields: [matchedById], references: [id], onDelete: SetNull)
+
+  @@unique([statementId, lineIndex])
+  @@index([statementId])
+  @@index([matchedPaymentId])
+}
+
+model TreasuryPaymentAllocation {
+  id                   String   @id @default(uuid())
+  paymentId            String
+  saleVoucherId        String?
+  purchaseVoucherId    String?
+  amount               Decimal  @db.Decimal(18, 4)
+
+  payment           TreasuryPayment        @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  saleVoucher       SaleVoucher?           @relation(fields: [saleVoucherId], references: [id], onDelete: SetNull)
+  purchaseVoucher   PurchaseInvoiceVoucher? @relation(fields: [purchaseVoucherId], references: [id], onDelete: SetNull)
+
+  @@index([paymentId])
+  @@index([saleVoucherId])
+  @@index([purchaseVoucherId])
+}
+
+model TreasuryTransfer {
+  id               String   @id @default(uuid())
+  docNo            String
+  transferDate     DateTime
+  fromCashBankId   String
+  toCashBankId     String
+  amount           Decimal  @db.Decimal(18, 4)
+  notes            String?
+  glJournalEntryId String?  @unique
+  createdAt        DateTime @default(now())
+
+  fromCash CashBankAccount @relation("TransferFrom", fields: [fromCashBankId], references: [id])
+  toCash   CashBankAccount @relation("TransferTo", fields: [toCashBankId], references: [id])
+  glJournalEntry JournalEntry? @relation(fields: [glJournalEntryId], references: [id], onDelete: SetNull)
+}
+
+model SystemSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+model ContainerAttachment {
+  id          String   @id @default(uuid())
+  containerId String
+  fileName    String
+  fileUrl     String
+  kind        String?
+  createdAt   DateTime @default(now())
+
+  container Container @relation(fields: [containerId], references: [id], onDelete: Cascade)
+
+  @@index([containerId])
+}
+
+model Employee {
+  id          String    @id @default(uuid())
+  fullName    String
+  phone       String?
+  baseSalary  Decimal?  @db.Decimal(18, 4)
+  hireDate    DateTime?
+  isActive    Boolean   @default(true)
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  loans EmployeeLoan[]
+}
+
+model EmployeeLoan {
+  id           String   @id @default(uuid())
+  employeeId   String
+  principal    Decimal  @db.Decimal(18, 4)
+  paidAmount   Decimal  @default(0) @db.Decimal(18, 4)
+  installment  Decimal? @db.Decimal(18, 4)
+  startDate    DateTime
+  notes        String?
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId])
+}
+
+model CrmLead {
+  id        String   @id @default(uuid())
+  name      String
+  phone     String?
+  company   String?
+  status    String   @default("NEW")
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CrmQuotation {
+  id         String    @id @default(uuid())
+  quoteNo    String    @unique
+  quoteDate  DateTime
+  customerId String?
+  title      String?
+  total      Decimal?  @db.Decimal(18, 4)
+  status     String    @default("DRAFT")
+  notes      String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  customer Party? @relation("QuotationCustomer", fields: [customerId], references: [id], onDelete: SetNull)
+}
