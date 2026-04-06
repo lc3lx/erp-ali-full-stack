@@ -9,6 +9,16 @@ import { routeParam } from "../utils/params.js";
 
 export const incomeOutcomeRouter = Router();
 
+const nullableNumber = z.preprocess((value) => {
+  if (value === null || value === undefined || value === "") return null;
+  if (typeof value === "number") return value;
+  if (typeof value === "string") {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : value;
+  }
+  return value;
+}, z.number().finite().nullable());
+
 const listQuery = paginationQuerySchema.extend({
   date: z.string().optional(),
   currency: z.string().optional(),
@@ -20,8 +30,10 @@ const entryBody = z.object({
   entryDate: z.string().datetime(),
   currency: z.string().default("دولار"),
   documentNo: z.string().optional().nullable(),
-  fees: z.union([z.number(), z.string()]).optional().nullable(),
-  usdAmount: z.union([z.number(), z.string()]).optional().nullable(),
+  fees: nullableNumber.optional(),
+  amountUsd: nullableNumber.optional(),
+  amountRmb: nullableNumber.optional(),
+  amountJineh: nullableNumber.optional(),
   detailsText: z.string().optional().nullable(),
 });
 
@@ -31,8 +43,10 @@ function toCreate(body: z.infer<typeof entryBody>): Prisma.IncomeOutcomeEntryCre
     entryDate: new Date(body.entryDate),
     currency: body.currency,
     documentNo: body.documentNo ?? undefined,
-    fees: body.fees as never,
-    usdAmount: body.usdAmount as never,
+    fees: body.fees ?? undefined,
+    amountUsd: body.amountUsd ?? undefined,
+    amountRmb: body.amountRmb ?? undefined,
+    amountJineh: body.amountJineh ?? undefined,
     detailsText: body.detailsText ?? undefined,
   };
 }
@@ -43,8 +57,10 @@ function toUpdate(body: Partial<z.infer<typeof entryBody>>): Prisma.IncomeOutcom
   if (body.entryDate !== undefined) d.entryDate = new Date(body.entryDate);
   if (body.currency !== undefined) d.currency = body.currency;
   if (body.documentNo !== undefined) d.documentNo = body.documentNo;
-  if (body.fees !== undefined) d.fees = body.fees as never;
-  if (body.usdAmount !== undefined) d.usdAmount = body.usdAmount as never;
+  if (body.fees !== undefined) d.fees = body.fees;
+  if (body.amountUsd !== undefined) d.amountUsd = body.amountUsd;
+  if (body.amountRmb !== undefined) d.amountRmb = body.amountRmb;
+  if (body.amountJineh !== undefined) d.amountJineh = body.amountJineh;
   if (body.detailsText !== undefined) d.detailsText = body.detailsText;
   return d;
 }

@@ -31,8 +31,8 @@ export default function AccountingHubPage() {
         },
         {
           page: "stores",
-          title: "إدارة المخازن",
-          desc: "مخازن التشغيل المرتبطة بفواتير الشراء والبيع.",
+          title: "المخازن والمستودعات",
+          desc: "تعريف موقع واحد لكل من فواتير الشراء/البيع وجرد المخزون والأرصدة — يُنشأ المستودع تلقائياً مع المخزن.",
           accent: "hub-accent--emerald",
         },
         {
@@ -42,15 +42,9 @@ export default function AccountingHubPage() {
           accent: "hub-accent--amber",
         },
         {
-          page: "warehouses",
-          title: "المستودعات",
-          desc: "ربط مستودعات الجرد الفعلي بمخازن التشغيل.",
-          accent: "hub-accent--teal",
-        },
-        {
           page: "stock",
           title: "أرصدة المخزون",
-          desc: "عرض الكميات وتحويل البضاعة بين المستودعات.",
+          desc: "عرض الكميات وتحويل البضاعة بين مواقع المخازن.",
           accent: "hub-accent--slate",
         },
         {
@@ -96,22 +90,10 @@ export default function AccountingHubPage() {
       blurb: "قيود، أستاذ، وحركات العملات الحالية",
       cards: [
         {
-          page: "treasury",
-          title: "الصناديق والخزينة",
-          desc: "تعريف البنوك، سندات القبض والصرف، والتحويل بين الصناديق.",
-          accent: "hub-accent--emerald",
-        },
-        {
           page: "freports",
           title: "القوائم المالية والذمم",
           desc: "قائمة الدخل، الميزانية، كشف الحساب، وأعمار الذمم.",
           accent: "hub-accent--violet",
-        },
-        {
-          page: "finance",
-          title: "المحاسبة العامة",
-          desc: "دليل الحسابات، قيود اليومية، ميزان المراجعة، ودفتر الأستاذ.",
-          accent: "hub-accent--emerald",
         },
         {
           page: "accounting",

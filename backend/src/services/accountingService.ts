@@ -108,3 +108,24 @@ export async function searchCustomersWithDiscount(q: string) {
     select: { id: true, name: true, saleDiscountDefault: true },
   });
 }
+
+export async function customerTotals(searchQuery: string) {
+  const lines = await prisma.accountingLine.findMany({
+    where: { move: { searchQuery } },
+  });
+  const out = { dinar: 0, jineh: 0, usd: 0, rmb: 0 };
+  const inn = { dinar: 0, jineh: 0, usd: 0, rmb: 0 };
+  for (const l of lines) {
+    const bucket = l.direction === "OUT" ? out : inn;
+    bucket.dinar += dec(l.dinar);
+    bucket.jineh += dec(l.jineh);
+    bucket.usd += dec(l.usd);
+    bucket.rmb += dec(l.rmb);
+  }
+  return { out, in: inn, grand: {
+    dinar: (inn.dinar - out.dinar), // depending on business logic, here we do (in - out) for net receipt
+    jineh: (inn.jineh - out.jineh),
+    usd: (inn.usd - out.usd),
+    rmb: (inn.rmb - out.rmb),
+  } };
+}

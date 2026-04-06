@@ -63,6 +63,13 @@ accountingMovesRouter.get(
 );
 
 accountingMovesRouter.get(
+  "/customer-totals/:query",
+  asyncHandler(async (req, res) => {
+    res.json(await svc.customerTotals(routeParam(req.params.query)));
+  }),
+);
+
+accountingMovesRouter.get(
   "/",
   asyncHandler(async (req, res) => {
     const q = listQuery.parse(req.query);

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { api } from "../lib/api.js";
 import "../App.css";
 
@@ -11,6 +11,25 @@ export default function FinancialReportsPage() {
   const [asOf, setAsOf] = useState("");
   const [partyId, setPartyId] = useState("");
   const [containerId, setContainerId] = useState("");
+  const [parties, setParties] = useState([]);
+  const [containers, setContainers] = useState([]);
+
+  const loadLookups = useCallback(async () => {
+    try {
+      const [p, c] = await Promise.all([
+        api.get("/parties", { page: 1, pageSize: 500 }),
+        api.get("/containers", { page: 1, pageSize: 500 }),
+      ]);
+      setParties(p.items ?? []);
+      setContainers(c.items ?? []);
+    } catch {
+      /* يبقى الحقل اليدوي متاحاً */
+    }
+  }, []);
+
+  useEffect(() => {
+    loadLookups();
+  }, [loadLookups]);
 
   const run = async () => {
     setErr("");
@@ -81,16 +100,50 @@ export default function FinancialReportsPage() {
           </label>
         )}
         {(tab === "soa" || tab === "aging") && (
-          <label className="master-field">
-            معرّف الطرف (UUID)
-            <input className="io-date-input master-input" dir="ltr" value={partyId} onChange={(e) => setPartyId(e.target.value)} />
-          </label>
+          <>
+            <label className="master-field">
+              الطرف (زبون / مورد / تخليص)
+              <select
+                className="io-date-input master-input"
+                value={partyId}
+                onChange={(e) => setPartyId(e.target.value)}
+              >
+                <option value="">— اختر —</option>
+                {parties.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} ({p.type})
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="master-field">
+              أو أدخل UUID يدوياً
+              <input className="io-date-input master-input" dir="ltr" value={partyId} onChange={(e) => setPartyId(e.target.value)} />
+            </label>
+          </>
         )}
         {tab === "cont" && (
-          <label className="master-field">
-            معرّف الحاوية (UUID)
-            <input className="io-date-input master-input" dir="ltr" value={containerId} onChange={(e) => setContainerId(e.target.value)} />
-          </label>
+          <>
+            <label className="master-field">
+              الحاوية
+              <select
+                className="io-date-input master-input"
+                value={containerId}
+                onChange={(e) => setContainerId(e.target.value)}
+              >
+                <option value="">— اختر —</option>
+                {containers.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.containerNo ?? c.id}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="master-field">
+              أو معرّف الحاوية (UUID)
+              <input className="io-date-input master-input" dir="ltr" value={containerId} onChange={(e) => setContainerId(e.target.value)} />
+            </label>
+          </>
         )}
         <button type="button" className="io-btn-primary" onClick={run}>
           عرض

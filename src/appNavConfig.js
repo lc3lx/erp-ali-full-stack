@@ -11,12 +11,10 @@ export const ALL_PAGE_IDS = [
   "stock",
   "suppliers",
   "official",
-  "finance",
   "accounting",
   "io",
   "iv",
   "is",
-  "treasury",
   "freports",
   "hr",
   "crm",
@@ -38,9 +36,8 @@ export const NAV_GROUPS = [
       { id: "list", label: "الحاويات" },
       { id: "reports", label: "التقارير" },
       { id: "customers", label: "الزبائن" },
-      { id: "stores", label: "المخازن" },
+      { id: "stores", label: "المخازن والمستودعات" },
       { id: "items", label: "الأصناف" },
-      { id: "warehouses", label: "المستودعات" },
       { id: "stock", label: "أرصدة المخزون" },
     ],
   },
@@ -55,8 +52,6 @@ export const NAV_GROUPS = [
   {
     title: "المحاسبة والمالية",
     items: [
-      { id: "finance", label: "المحاسبة العامة" },
-      { id: "treasury", label: "الصناديق والخزينة" },
       { id: "freports", label: "القوائم والذمم" },
       { id: "accounting", label: "حركات العملات" },
       { id: "io", label: "إيراد / مصروف" },
@@ -79,4 +74,4 @@ export const NAV_GROUPS = [
 ]
 
 /** عناصر تُخفي عن أمين المستودع (بدون أسعار GL مركزية) */
-export const STORE_KEEPER_HIDDEN = new Set(["finance", "accounting", "treasury", "freports", "settings"])
+export const STORE_KEEPER_HIDDEN = new Set(["accounting", "freports", "settings"])

@@ -1,116 +1,228 @@
-import { useEffect, useState } from "react";
+﻿import { useCallback, useEffect, useState } from "react";
 import { api } from "../lib/api.js";
-import { GlIncomeOutcomePost } from "../components/GlDocumentPost.jsx";
 import { formatIsoToDisplay, parseDisplayToIso, toApiDateTime } from "../lib/dates.js";
-import "../App.css";
+import "./IncomeOutcomePage.css";
 
-const TABLE_COLS = ["", "التاريخ", "رقم المستند", "رسوم", "دولار", "جملة التفاصيل"];
+const TABLE_COLUMNS = [
+  { key: "entryDate", label: "التاريخ", className: "io-legacy-col-date" },
+  { key: "documentNo", label: "رقم المستند", className: "io-legacy-col-doc" },
+  { key: "fees", label: "رسوم", className: "io-legacy-col-fees" },
+  { key: "amountUsd", label: "دولار", className: "io-legacy-col-usd" },
+  { key: "detailsText", label: "جملة التفاصيل", className: "io-legacy-col-details" },
+  { key: "amountJineh", label: "جنيه", className: "io-legacy-col-jineh" },
+];
 
-function str(v) {
+const CURRENCIES = [
+  { value: "دولار", label: "دولار" },
+  { value: "دينار", label: "دينار" },
+];
+
+function text(v) {
   if (v == null || v === "") return "";
   return String(v);
 }
 
-function IoTable({ caption, rows, kind, selectedId, onSelect }) {
+function toNullableText(v) {
+  const s = String(v ?? "").trim();
+  return s === "" ? null : s;
+}
+
+function todayDisplay() {
+  const d = new Date();
+  return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+}
+
+function normalizeNumberInput(raw) {
+  const s = String(raw ?? "")
+    .trim()
+    .replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)))
+    .replace(/[۰-۹]/g, (d) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d)))
+    .replace(/[٫]/g, ".")
+    .replace(/[،,]/g, "");
+  if (s === ".") return "";
+  if (s.startsWith(".")) return `0${s}`;
+  if (s.startsWith("-.")) return `-0${s.slice(1)}`;
+  return s;
+}
+
+function autoDocNo(kind) {
+  const now = new Date();
+  const y = now.getFullYear();
+  const mo = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  const hh = String(now.getHours()).padStart(2, "0");
+  const mm = String(now.getMinutes()).padStart(2, "0");
+  const ss = String(now.getSeconds()).padStart(2, "0");
+  const ms = String(now.getMilliseconds()).padStart(3, "0");
+  const prefix = kind === "EXPENSE" ? "EXP" : "REV";
+  return `${prefix}-${y}${mo}${d}-${hh}${mm}${ss}${ms}`;
+}
+
+function IncomeOutcomePanel({
+  kind,
+  title,
+  caption,
+  quickValue,
+  quickInputClass,
+  rows,
+  selectedKey,
+  onQuickChange,
+  onQuickSubmit,
+  onSelect,
+  onDelete,
+  onEdit,
+  onUndo,
+}) {
   return (
-    <table className="io-table">
-      <colgroup>
-        <col className="io-col-side" />
-        <col className="io-col-date" />
-        <col className="io-col-no" />
-        <col className="io-col-fee" />
-        <col className="io-col-usd" />
-        <col className="io-col-details" />
-      </colgroup>
-      <thead>
-        <tr>
-          <th className="io-th-blank" />
-          <th className="io-th-caption" colSpan={5}>
-            {caption}
-          </th>
-        </tr>
-        <tr>
-          {TABLE_COLS.map((c, idx) => (
-            <th key={`${c}-${idx}`}>{c}</th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {rows.length === 0 ? (
-          <tr>
-            <td colSpan={6} className="io-empty-cell" />
-          </tr>
-        ) : (
-          rows.map((row) => (
-            <tr
-              key={row.id}
-              style={{
-                cursor: "pointer",
-                background: selectedId === `${kind}:${row.id}` ? "#f0e8ff" : undefined,
-              }}
-              onClick={() => onSelect(`${kind}:${row.id}`, row)}
+    <section className="io-legacy-block">
+      <div className="io-legacy-title-row">
+        <form
+          className="io-legacy-title-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            onQuickSubmit(kind);
+          }}
+        >
+          <input
+            className={`io-legacy-title-input ${quickInputClass}`}
+            value={quickValue}
+            onChange={(e) => onQuickChange(kind, e.target.value)}
+            placeholder={kind === "EXPENSE" ? "اكتب قيمة المصروف ثم اضغط Enter" : "اكتب قيمة الإيراد ثم اضغط Enter"}
+          />
+        </form>
+        <h2 className="io-legacy-title-text">{title}</h2>
+      </div>
+
+      <div className="io-legacy-frame">
+        <div className="io-legacy-body">
+          <aside className="io-legacy-actions">
+            <button
+              type="button"
+              className="io-legacy-action-btn io-legacy-action-btn--danger"
+              onClick={() => onDelete(kind)}
             >
-              <td />
-              <td>{formatIsoToDisplay(row.entryDate)}</td>
-              <td>{row.documentNo ?? ""}</td>
-              <td>{str(row.fees)}</td>
-              <td>{str(row.usdAmount)}</td>
-              <td>{row.detailsText ?? ""}</td>
-            </tr>
-          ))
-        )}
-      </tbody>
-    </table>
+              حذف
+            </button>
+            <button type="button" className="io-legacy-action-btn" onClick={() => onEdit(kind)}>
+              تعديل
+            </button>
+            <button type="button" className="io-legacy-action-btn" onClick={onUndo}>
+              تراجع
+            </button>
+            <div className="io-legacy-enter-hint">Enter: إضافة سريعة</div>
+          </aside>
+
+          <div className="io-legacy-table-wrap">
+            <table className="io-legacy-table">
+              <thead>
+                <tr>
+                  <th className="io-legacy-caption" colSpan={TABLE_COLUMNS.length}>
+                    {caption}
+                  </th>
+                </tr>
+                <tr>
+                  {TABLE_COLUMNS.map((col) => (
+                    <th key={col.key} className={col.className}>
+                      {col.label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+
+              <tbody>
+                {rows.length === 0 ? (
+                  <tr>
+                    <td colSpan={TABLE_COLUMNS.length} className="io-legacy-empty-cell" />
+                  </tr>
+                ) : (
+                  rows.map((row) => {
+                    const rowKey = `${kind}:${row.id}`;
+                    const isSelected = selectedKey === rowKey;
+                    return (
+                      <tr
+                        key={row.id}
+                        className={`io-legacy-row ${isSelected ? "is-selected" : ""}`}
+                        onClick={() => onSelect(rowKey, row)}
+                      >
+                        <td className="io-legacy-col-date">{formatIsoToDisplay(row.entryDate)}</td>
+                        <td className="io-legacy-col-doc">{text(row.documentNo)}</td>
+                        <td className="io-legacy-col-fees">{text(row.fees)}</td>
+                        <td className="io-legacy-col-usd">{text(row.amountUsd)}</td>
+                        <td className="io-legacy-col-details io-legacy-cell-details">{text(row.detailsText)}</td>
+                        <td className="io-legacy-col-jineh">{text(row.amountJineh)}</td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 
 export default function IncomeOutcomePage() {
-  const [dateValue, setDateValue] = useState("30/01/2026");
+  const [dateValue, setDateValue] = useState(() => todayDisplay());
   const [currency, setCurrency] = useState("دولار");
+  const [exchangeRate, setExchangeRate] = useState("6.8");
+  const [quickValues, setQuickValues] = useState({ EXPENSE: "", REVENUE: "" });
   const [expenseRows, setExpenseRows] = useState([]);
   const [revenueRows, setRevenueRows] = useState([]);
   const [err, setErr] = useState("");
   const [selectedKey, setSelectedKey] = useState("");
   const [selectedRow, setSelectedRow] = useState(null);
 
+  const fetchRows = useCallback(async () => {
+    const dateIso = parseDisplayToIso(dateValue);
+    const query = { currency, page: 1, pageSize: 200 };
+    if (dateIso) query.date = dateIso;
+
+    const [expensesRes, revenuesRes] = await Promise.all([
+      api.get("/income-outcome", { ...query, kind: "EXPENSE" }),
+      api.get("/income-outcome", { ...query, kind: "REVENUE" }),
+    ]);
+
+    return {
+      expenses: expensesRes.items ?? [],
+      revenues: revenuesRes.items ?? [],
+    };
+  }, [currency, dateValue]);
+
   useEffect(() => {
     let cancelled = false;
-    const dateIso = parseDisplayToIso(dateValue);
-    const q = { currency, page: 1, pageSize: 200 };
-    if (dateIso) q.date = dateIso;
     (async () => {
       try {
-        const [exp, rev] = await Promise.all([
-          api.get("/income-outcome", { ...q, kind: "EXPENSE" }),
-          api.get("/income-outcome", { ...q, kind: "REVENUE" }),
-        ]);
+        const data = await fetchRows();
         if (cancelled) return;
-        setExpenseRows(exp.items ?? []);
-        setRevenueRows(rev.items ?? []);
+        setExpenseRows(data.expenses);
+        setRevenueRows(data.revenues);
+        setSelectedKey("");
+        setSelectedRow(null);
         setErr("");
       } catch (e) {
-        if (!cancelled) {
-          setErr(e.message);
-          setExpenseRows([]);
-          setRevenueRows([]);
-        }
+        if (cancelled) return;
+        setExpenseRows([]);
+        setRevenueRows([]);
+        setErr(e?.message || "فشل تحميل البيانات");
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [dateValue, currency]);
+  }, [fetchRows]);
 
-  const refresh = async () => {
-    const dateIso = parseDisplayToIso(dateValue);
-    const q = { currency, page: 1, pageSize: 200 };
-    if (dateIso) q.date = dateIso;
-    const [exp, rev] = await Promise.all([
-      api.get("/income-outcome", { ...q, kind: "EXPENSE" }),
-      api.get("/income-outcome", { ...q, kind: "REVENUE" }),
-    ]);
-    setExpenseRows(exp.items ?? []);
-    setRevenueRows(rev.items ?? []);
+  const refresh = useCallback(async () => {
+    const data = await fetchRows();
+    setExpenseRows(data.expenses);
+    setRevenueRows(data.revenues);
+    setErr("");
+  }, [fetchRows]);
+
+  const clearSelection = () => {
+    setSelectedKey("");
+    setSelectedRow(null);
   };
 
   const onSelect = (key, row) => {
@@ -118,155 +230,179 @@ export default function IncomeOutcomePage() {
     setSelectedRow(row);
   };
 
-  const onAdd = async (kind) => {
-    const entryDate = toApiDateTime(dateValue);
-    if (!entryDate) {
-      window.alert("تاريخ غير صالح");
+  const onQuickChange = (kind, value) => {
+    setQuickValues((prev) => ({ ...prev, [kind]: value }));
+  };
+
+  const onQuickSubmit = async (kind) => {
+    const amount = normalizeNumberInput(quickValues[kind]);
+    if (!amount) return;
+    if (!/^-?\d+(\.\d+)?$/.test(amount)) {
+      window.alert("القيمة غير صالحة. أدخل رقمًا فقط.");
       return;
     }
+
+    const today = todayDisplay();
+    const entryDate = toApiDateTime(today);
+    if (!entryDate) {
+      setErr("تعذر قراءة تاريخ اليوم");
+      return;
+    }
+
+    const isUsd = currency === "دولار";
+
     try {
       await api.post("/income-outcome", {
         kind,
         entryDate,
         currency,
-        documentNo: window.prompt("رقم المستند؟", "") || null,
-        fees: window.prompt("رسوم؟", "0") || "0",
-        usdAmount: window.prompt("مبلغ دولار؟", "0") || "0",
-        detailsText: window.prompt("تفاصيل؟", "") || null,
+        documentNo: autoDocNo(kind),
+        fees: "0",
+        amountUsd: isUsd ? amount : "0",
+        amountJineh: isUsd ? "0" : amount,
+        amountRmb: null,
+        detailsText: null,
       });
-      await refresh();
+
+      setQuickValues((prev) => ({ ...prev, [kind]: "" }));
+      clearSelection();
+
+      if (dateValue !== today) {
+        setDateValue(today);
+      } else {
+        await refresh();
+      }
     } catch (e) {
-      setErr(e.message);
+      window.alert(e?.message || "تعذر الإضافة السريعة");
+      setErr(e?.message || "تعذر الإضافة السريعة");
     }
   };
 
   const onDelete = async (kind) => {
     if (!selectedRow || !selectedKey.startsWith(`${kind}:`)) {
-      window.alert("اختر صفاً من الجدول المناسب");
+      window.alert("اختر سطرًا من نفس الجدول أولًا");
       return;
     }
-    if (!window.confirm("حذف السجل؟")) return;
+
+    if (!window.confirm("تأكيد حذف السجل المحدد؟")) return;
+
     try {
       await api.delete(`/income-outcome/${selectedRow.id}`);
-      setSelectedKey("");
-      setSelectedRow(null);
+      clearSelection();
       await refresh();
     } catch (e) {
-      setErr(e.message);
+      setErr(e?.message || "تعذر حذف السجل");
     }
   };
 
   const onEdit = async (kind) => {
     if (!selectedRow || !selectedKey.startsWith(`${kind}:`)) {
-      window.alert("اختر صفاً للتعديل");
+      window.alert("اختر سطرًا أولًا ثم اضغط تعديل");
       return;
     }
-    const fees = window.prompt("رسوم", str(selectedRow.fees));
-    const usd = window.prompt("دولار", str(selectedRow.usdAmount));
-    const details = window.prompt("تفاصيل", selectedRow.detailsText ?? "");
-    const docNo = window.prompt("رقم المستند", selectedRow.documentNo ?? "");
+
+    const fees = window.prompt("رسوم", text(selectedRow.fees ?? "0"));
+    if (fees == null) return;
+
+    const usd = window.prompt("دولار", text(selectedRow.amountUsd ?? "0"));
+    if (usd == null) return;
+
+    const jineh = window.prompt("جنيه", text(selectedRow.amountJineh ?? "0"));
+    if (jineh == null) return;
+
+    const details = window.prompt("التفاصيل", text(selectedRow.detailsText));
+    if (details == null) return;
+
     try {
-      const d = selectedRow.entryDate ? new Date(selectedRow.entryDate) : null;
       await api.patch(`/income-outcome/${selectedRow.id}`, {
-        fees: fees ?? undefined,
-        usdAmount: usd ?? undefined,
-        detailsText: details ?? undefined,
-        documentNo: docNo ?? undefined,
-        entryDate: d && !Number.isNaN(d.getTime()) ? d.toISOString() : undefined,
+        fees: fees || "0",
+        amountUsd: usd || "0",
+        amountJineh: jineh || "0",
+        detailsText: toNullableText(details),
       });
       await refresh();
     } catch (e) {
-      setErr(e.message);
+      setErr(e?.message || "تعذر تعديل السجل");
     }
   };
 
   return (
-    <div className="io-page" dir="rtl">
-      {err ? <div className="alert-error" style={{ margin: 6 }}>{err}</div> : null}
-      <div className="io-workarea">
-        <div className="io-top">
-          <div className="io-top-right">
-            <div className="io-top-row">
-              <span className="io-small-txt">نوع العملة</span>
-              <select className="io-select" value={currency} onChange={(e) => setCurrency(e.target.value)}>
-                <option value="دولار">دولار</option>
-                <option value="دينار">دينار</option>
-              </select>
-              <span className="io-small-txt">التاريخ</span>
-              <input className="io-date-input" value={dateValue} onChange={(e) => setDateValue(e.target.value)} />
-            </div>
-            <div className="io-top-row">
-              <span className="io-rate-label">الحركة هنا تعتمد عملة القيد فقط</span>
-            </div>
+    <div className="io-legacy-page" dir="rtl">
+      <div className="io-legacy-workarea">
+        {err ? <div className="io-legacy-alert">{err}</div> : null}
+
+        <div className="io-legacy-toolbar">
+          <div className="io-legacy-toolbar-row">
+            <label className="io-legacy-label" htmlFor="io-currency">
+              نوع العملة
+            </label>
+            <select
+              id="io-currency"
+              className="io-legacy-select"
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value)}
+            >
+              {CURRENCIES.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+
+            <label className="io-legacy-label" htmlFor="io-date">
+              التاريخ
+            </label>
+            <input
+              id="io-date"
+              className="io-legacy-input io-legacy-date"
+              value={dateValue}
+              onChange={(e) => setDateValue(e.target.value)}
+              placeholder="dd/mm/yyyy"
+            />
+          </div>
+
+          <div className="io-legacy-toolbar-row io-legacy-rate-row">
+            <span className="io-legacy-rate-label">سعر الدولار</span>
+            <input
+              className="io-legacy-input io-legacy-rate-input"
+              value={exchangeRate}
+              onChange={(e) => setExchangeRate(e.target.value)}
+            />
+            <span className="io-legacy-rate-label">سعر الصرف</span>
           </div>
         </div>
 
-        {selectedRow ? (
-          <GlIncomeOutcomePost
-            entryId={selectedRow.id}
-            kind={selectedRow.kind}
-            glJournalEntryId={selectedRow.glJournalEntryId}
-            onPosted={refresh}
-          />
-        ) : null}
+        <IncomeOutcomePanel
+          kind="EXPENSE"
+          title="مصاريف"
+          caption="المصروف اليومي يتم ترحيل اليومية لهذا اليوم"
+          quickValue={quickValues.EXPENSE}
+          quickInputClass="io-legacy-title-input--expense"
+          rows={expenseRows}
+          selectedKey={selectedKey}
+          onQuickChange={onQuickChange}
+          onQuickSubmit={onQuickSubmit}
+          onSelect={onSelect}
+          onDelete={onDelete}
+          onEdit={onEdit}
+          onUndo={clearSelection}
+        />
 
-        <div className="io-panel io-panel-expense">
-          <div className="io-heading-row">
-            <span className="io-heading-text">مصاريف</span>
-            <span className="io-heading-fill io-heading-fill-expense" aria-hidden />
-          </div>
-          <div className="io-panel-body">
-            <div className="io-actions">
-              <button type="button" className="io-action io-action-red" onClick={() => onDelete("EXPENSE")}>
-                حذف
-              </button>
-              <button type="button" className="io-action io-action-grey" onClick={() => onEdit("EXPENSE")}>
-                تعديل
-              </button>
-              <button type="button" className="io-action io-action-grey" onClick={() => onAdd("EXPENSE")}>
-                إضافة
-              </button>
-            </div>
-            <div className="io-table-shell">
-              <IoTable
-                caption="المصاريف اليومية لمترجم الحاوية لهذا اليوم"
-                rows={expenseRows}
-                kind="EXPENSE"
-                selectedId={selectedKey}
-                onSelect={onSelect}
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="io-panel io-panel-income">
-          <div className="io-heading-row">
-            <span className="io-heading-text">إيرادات</span>
-            <span className="io-heading-fill io-heading-fill-income" aria-hidden />
-          </div>
-          <div className="io-panel-body">
-            <div className="io-actions">
-              <button type="button" className="io-action io-action-red" onClick={() => onDelete("REVENUE")}>
-                حذف
-              </button>
-              <button type="button" className="io-action io-action-grey" onClick={() => onEdit("REVENUE")}>
-                تعديل
-              </button>
-              <button type="button" className="io-action io-action-grey" onClick={() => onAdd("REVENUE")}>
-                إضافة
-              </button>
-            </div>
-            <div className="io-table-shell">
-              <IoTable
-                caption="ايرادات اليومية لمترجم الحاوية لهذا اليوم"
-                rows={revenueRows}
-                kind="REVENUE"
-                selectedId={selectedKey}
-                onSelect={onSelect}
-              />
-            </div>
-          </div>
-        </div>
+        <IncomeOutcomePanel
+          kind="REVENUE"
+          title="إيرادات"
+          caption="إيرادات اليوم يتم ترحيل اليومية لهذا اليوم"
+          quickValue={quickValues.REVENUE}
+          quickInputClass="io-legacy-title-input--income"
+          rows={revenueRows}
+          selectedKey={selectedKey}
+          onQuickChange={onQuickChange}
+          onQuickSubmit={onQuickSubmit}
+          onSelect={onSelect}
+          onDelete={onDelete}
+          onEdit={onEdit}
+          onUndo={clearSelection}
+        />
       </div>
     </div>
   );

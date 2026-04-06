@@ -7,6 +7,8 @@ export default function StoresManagementPage() {
   const [items, setItems] = useState([]);
   const [selectedId, setSelectedId] = useState("");
   const [name, setName] = useState("");
+  const [warehouseCode, setWarehouseCode] = useState("");
+  const [warehouseActive, setWarehouseActive] = useState(true);
   const [err, setErr] = useState("");
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(true);
@@ -38,17 +40,25 @@ export default function StoresManagementPage() {
   useEffect(() => {
     if (!selectedId) {
       setName("");
+      setWarehouseCode("");
+      setWarehouseActive(true);
       return;
     }
     const s = items.find((x) => x.id === selectedId);
-    if (s) setName(s.name ?? "");
+    if (s) {
+      setName(s.name ?? "");
+      setWarehouseCode(s.invWarehouse?.code ?? "");
+      setWarehouseActive(s.invWarehouse?.isActive !== false);
+    }
   }, [selectedId, items]);
 
   const onNew = () => {
     setSelectedId("");
     setName("");
+    setWarehouseCode("");
+    setWarehouseActive(true);
     setErr("");
-    setMsg("مخزن جديد — أدخل الاسم واحفظ");
+    setMsg("موقع جديد — اسم واحد يُستخدم في الفواتير وجرد المخزون");
   };
 
   const onSave = async (e) => {
@@ -57,20 +67,25 @@ export default function StoresManagementPage() {
     setMsg("");
     const n = name.trim();
     if (!n) {
-      setErr("اسم المخزن مطلوب");
+      setErr("الاسم مطلوب");
       return;
     }
+    const payload = {
+      name: n,
+      warehouseCode: warehouseCode.trim() || null,
+      warehouseActive,
+    };
     try {
       if (selectedId) {
-        await api.patch(`/stores/${selectedId}`, { name: n });
-        setMsg("تم تحديث المخزن");
+        await api.patch(`/stores/${selectedId}`, payload);
+        setMsg("تم الحفظ — المخزن ومستودع الجرد متزامنان");
       } else {
-        const created = await api.post("/stores", { name: n });
+        const created = await api.post("/stores", payload);
         setSelectedId(created.id);
-        setMsg("تم إضافة مخزن");
+        setMsg("تمت الإضافة مع إنشاء مستودع المخزون تلقائياً");
       }
       await loadList();
-      dispatchMastersRefresh("stores");
+      dispatchMastersRefresh("all");
     } catch (ex) {
       setErr(ex.message);
     }
@@ -78,19 +93,26 @@ export default function StoresManagementPage() {
 
   const onDelete = async () => {
     if (!selectedId) {
-      setErr("اختر مخزناً من الجدول");
+      setErr("اختر موقعاً من الجدول");
       return;
     }
-    if (!window.confirm("حذف المخزن؟ سيتم إلغاء ربطه من فواتير الشراء/البيع والقيود المرتبطة به.")) return;
+    if (
+      !window.confirm(
+        "حذف هذا المخزن؟ سيُحذف مستودع الجرد المرتبط إن لم تكن له حركات مخزون، ويُلغى اختياره من الفواتير والقيود.",
+      )
+    )
+      return;
     setErr("");
     setMsg("");
     try {
       await api.delete(`/stores/${selectedId}`);
       setSelectedId("");
       setName("");
+      setWarehouseCode("");
+      setWarehouseActive(true);
       setMsg("تم الحذف");
       await loadList();
-      dispatchMastersRefresh("stores");
+      dispatchMastersRefresh("all");
     } catch (ex) {
       setErr(ex.message);
     }
@@ -98,10 +120,10 @@ export default function StoresManagementPage() {
 
   return (
     <div className="master-page io-page" dir="rtl">
-      <h2 className="master-title">إدارة المخازن</h2>
+      <h2 className="master-title">المخازن والمستودعات</h2>
       <p className="master-lead">
-        المخازن تُختار في <strong>فواتير الشراء</strong> و<strong>فواتير البيع</strong> وحسب إعدادات المخزون
-        المحاسبي. عند الحذف يُزال الربط من السندات دون حذف الفواتير.
+        كل سطر هنا هو <strong>موقع واحد</strong>: يظهر في <strong>فواتير الشراء والبيع</strong> كمخزن، ويُنشأ له تلقائياً{" "}
+        <strong>مستودع مخزون</strong> (الأرصدة والحركات) بنفس الاسم. لا حاجة لشاشتين منفصلتين.
       </p>
       {err ? <div className="master-banner master-banner-err">{err}</div> : null}
       {msg ? <div className="master-banner master-banner-ok">{msg}</div> : null}
@@ -110,7 +132,7 @@ export default function StoresManagementPage() {
       <div className="master-layout">
         <div className="master-panel">
           <div className="master-toolbar">
-            <span className="master-toolbar-lbl">قائمة المخازن ({items.length})</span>
+            <span className="master-toolbar-lbl">المواقع ({items.length})</span>
             <button type="button" className="master-btn master-btn-ghost" onClick={loadList}>
               تحديث
             </button>
@@ -120,12 +142,16 @@ export default function StoresManagementPage() {
               <thead>
                 <tr>
                   <th>الاسم</th>
+                  <th>رمز الجرد</th>
+                  <th>مستودع</th>
                 </tr>
               </thead>
               <tbody>
                 {items.length === 0 ? (
                   <tr>
-                    <td className="master-empty">لا مخازن بعد.</td>
+                    <td colSpan={3} className="master-empty">
+                      لا مواقع بعد.
+                    </td>
                   </tr>
                 ) : (
                   items.map((s) => (
@@ -139,6 +165,8 @@ export default function StoresManagementPage() {
                       }}
                     >
                       <td>{s.name}</td>
+                      <td dir="ltr">{s.invWarehouse?.code ?? "—"}</td>
+                      <td>{s.invWarehouse ? (s.invWarehouse.isActive === false ? "موقوف" : "نشط") : "غير مربوط — احفظ"}</td>
                     </tr>
                   ))
                 )}
@@ -148,15 +176,29 @@ export default function StoresManagementPage() {
         </div>
 
         <form className="master-form" onSubmit={onSave}>
-          <h3 className="master-form-title">{selectedId ? "تعديل مخزن" : "مخزن جديد"}</h3>
+          <h3 className="master-form-title">{selectedId ? "تعديل موقع" : "موقع جديد"}</h3>
           <label className="master-field">
-            اسم المخزن <span className="master-req">*</span>
+            اسم المخزن / الموقع <span className="master-req">*</span>
             <input
               className="io-date-input master-input"
               value={name}
               onChange={(e) => setName(e.target.value)}
               autoComplete="off"
             />
+          </label>
+          <label className="master-field">
+            رمز المستودع (اختياري — للطباعة والتمييز)
+            <input
+              className="io-date-input master-input"
+              dir="ltr"
+              value={warehouseCode}
+              onChange={(e) => setWarehouseCode(e.target.value)}
+              autoComplete="off"
+            />
+          </label>
+          <label className="master-field">
+            <input type="checkbox" checked={warehouseActive} onChange={(e) => setWarehouseActive(e.target.checked)} /> مستودع
+            الجرد نشط
           </label>
           <div className="master-actions">
             <button type="submit" className="io-btn-primary">

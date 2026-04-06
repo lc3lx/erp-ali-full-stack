@@ -62,12 +62,14 @@ export async function incomeOutcomeTotals(query: { date?: string; currency?: str
   }
   const agg = await prisma.incomeOutcomeEntry.aggregate({
     where,
-    _sum: { fees: true, usdAmount: true },
+    _sum: { fees: true, amountUsd: true, amountRmb: true, amountJineh: true },
     _count: true,
   });
   return {
     count: agg._count,
     sumFees: agg._sum.fees,
-    sumUsd: agg._sum.usdAmount,
+    sumAmountUsd: agg._sum.amountUsd,
+    sumAmountRmb: agg._sum.amountRmb,
+    sumAmountJineh: agg._sum.amountJineh,
   };
 }

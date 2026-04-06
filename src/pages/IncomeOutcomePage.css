@@ -1,0 +1,296 @@
+﻿.io-legacy-page {
+  background: #d4d0c8;
+  min-height: 100vh;
+  padding: 8px 14px 18px;
+  direction: rtl;
+  color: #111;
+  font-family: Tahoma, "Segoe UI", Arial, sans-serif;
+}
+
+.io-legacy-workarea {
+  width: min(1120px, 100%);
+  margin: 0 auto;
+}
+
+.io-legacy-alert {
+  margin-bottom: 8px;
+  border: 1px solid #a92b2b;
+  background: #ffd8d8;
+  color: #6b0f0f;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.io-legacy-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.io-legacy-toolbar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.io-legacy-label {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.io-legacy-input,
+.io-legacy-select {
+  height: 30px;
+  border: 1px solid #4f4f4f;
+  background: #efefef;
+  padding: 2px 8px;
+  font-size: 14px;
+}
+
+.io-legacy-date {
+  width: 130px;
+  text-align: center;
+  direction: ltr;
+}
+
+.io-legacy-select {
+  min-width: 112px;
+}
+
+.io-legacy-rate-row {
+  margin-top: 2px;
+}
+
+.io-legacy-rate-label {
+  color: #b50000;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.io-legacy-rate-input {
+  width: 76px;
+  color: #b50000;
+  font-weight: 700;
+  text-align: center;
+  direction: ltr;
+}
+
+.io-legacy-block {
+  margin-top: 10px;
+}
+
+.io-legacy-title-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: -10px;
+}
+
+.io-legacy-title-form {
+  margin: 0;
+}
+
+.io-legacy-title-input {
+  width: 250px;
+  height: 44px;
+  border: 1px solid #9c9c9c;
+  padding: 8px 10px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.io-legacy-title-input::placeholder {
+  color: #5c3333;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.io-legacy-title-input--expense {
+  background: #e5a8a8;
+}
+
+.io-legacy-title-input--income {
+  background: #9adca3;
+}
+
+.io-legacy-title-text {
+  margin: 0;
+  line-height: 1;
+  font-size: 56px;
+  font-weight: 700;
+  color: #121212;
+}
+
+.io-legacy-frame {
+  border: 1px solid #545454;
+  background: #d8d8d8;
+  padding: 8px;
+}
+
+.io-legacy-body {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.io-legacy-actions {
+  width: 76px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 80px;
+}
+
+.io-legacy-action-btn {
+  width: 100%;
+  height: 30px;
+  border: 1px solid #4a4a4a;
+  background: #d5d5d5;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+}
+
+.io-legacy-action-btn:hover {
+  filter: brightness(0.96);
+}
+
+.io-legacy-action-btn--danger {
+  background: #f07171;
+}
+
+.io-legacy-enter-hint {
+  margin-top: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+  color: #4a4a4a;
+}
+
+.io-legacy-table-wrap {
+  flex: 1;
+  min-height: 260px;
+  border: 1px solid #4c4c4c;
+  background: #efefef;
+}
+
+.io-legacy-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  direction: rtl;
+  font-size: 13px;
+}
+
+.io-legacy-table th,
+.io-legacy-table td {
+  border: 1px solid #595959;
+  padding: 3px 6px;
+  text-align: center;
+}
+
+.io-legacy-caption {
+  background: #dedede;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.io-legacy-table thead tr:nth-child(2) th {
+  background: #e4e4e4;
+  font-weight: 700;
+}
+
+.io-legacy-row {
+  cursor: pointer;
+  background: #f8f8f8;
+}
+
+.io-legacy-row:hover {
+  background: #ececec;
+}
+
+.io-legacy-row.is-selected {
+  background: #0f446f;
+  color: #fff;
+}
+
+.io-legacy-cell-details {
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.io-legacy-empty-cell {
+  height: 180px;
+  background: #f7f7f7;
+}
+
+.io-legacy-col-date {
+  width: 14%;
+}
+
+.io-legacy-col-doc {
+  width: 16%;
+}
+
+.io-legacy-col-fees {
+  width: 10%;
+}
+
+.io-legacy-col-usd {
+  width: 10%;
+}
+
+.io-legacy-col-details {
+  width: 34%;
+}
+
+.io-legacy-col-jineh {
+  width: 16%;
+}
+
+@media (max-width: 960px) {
+  .io-legacy-title-text {
+    font-size: 42px;
+  }
+
+  .io-legacy-title-input {
+    width: 190px;
+    height: 38px;
+  }
+
+  .io-legacy-body {
+    flex-direction: column;
+  }
+
+  .io-legacy-actions {
+    width: 100%;
+    margin-top: 0;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+  }
+
+  .io-legacy-action-btn {
+    width: 80px;
+  }
+
+  .io-legacy-enter-hint {
+    margin-right: 8px;
+  }
+
+  .io-legacy-table-wrap {
+    overflow-x: auto;
+  }
+
+  .io-legacy-table {
+    min-width: 760px;
+  }
+}

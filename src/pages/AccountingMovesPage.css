@@ -1,0 +1,248 @@
+.old-am-page {
+  background: #f0f0f0;
+  min-height: 100vh;
+  padding: 10px;
+  font-family: Arial, "Segoe UI", sans-serif;
+  color: #000;
+  direction: ltr;
+}
+
+.old-am-top {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.old-am-top-left {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 100px;
+  margin-left: 100px;
+}
+
+.old-am-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.old-am-input {
+  border: 1px solid #7f9db9;
+  padding: 2px;
+  font-size: 13px;
+  width: 90px;
+}
+
+.old-am-label {
+  font-size: 13px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.old-am-red-text {
+  color: red;
+}
+
+.old-am-top-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: 50px;
+}
+
+.old-am-grand-total {
+  border: 1px solid #7f9db9;
+  background: #fff;
+  color: red;
+  padding: 5px 10px;
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.old-am-report-btn {
+  background: linear-gradient(180deg, #6ba5ff 0%, #175fd3 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 8px 20px;
+  font-weight: bold;
+  font-size: 14px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  cursor: pointer;
+  width: 80px;
+}
+
+.old-am-top-right {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-right: 50px;
+}
+
+.old-am-search-table {
+  border-collapse: collapse;
+  width: 300px;
+  background: white;
+  border: 1px solid black;
+}
+
+.old-am-search-table th, .old-am-search-table td {
+  border: 1px solid black;
+  padding: 2px 4px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.old-am-search-table th {
+  background: white;
+}
+
+.old-am-search-table tr.selected td {
+  background: #0078d7;
+  color: white;
+}
+
+.old-am-panels {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+}
+
+.old-am-panel {
+  display: flex;
+  flex-direction: column;
+  width: 48%;
+}
+
+.old-am-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 2px;
+}
+
+.old-am-add-btn {
+  border: 1px solid #7f9db9;
+  padding: 2px 5px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.old-am-add-btn.green {
+  background: #aaffaa;
+}
+
+.old-am-add-btn.pink {
+  background: #ffb6c1;
+}
+
+.old-am-panel-input {
+  border: 1px solid #7f9db9;
+  width: 80px;
+  height: 20px;
+}
+
+.old-am-panel-input.out {
+  background: #ffcccc;
+}
+
+.old-am-panel-input.in {
+  background: #ccffcc;
+}
+
+.old-am-panel-body {
+  display: flex;
+  border: 1px solid #7f9db9;
+  background: #d4d0c8;
+  padding: 2px;
+}
+
+.old-am-side-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-right: 2px;
+}
+
+.old-am-action-btn {
+  border: 1px solid #7f9db9;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+  width: 40px;
+  height: 30px;
+  text-align: center;
+}
+
+.old-am-action-btn.del {
+  background: #ff6666;
+  color: black;
+}
+
+.old-am-action-btn.edit {
+  background: #00ff00;
+  color: black;
+}
+
+.old-am-action-btn.back {
+  background: white;
+  color: black;
+}
+
+.old-am-grid-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #f0f0f0;
+}
+
+.old-am-grid {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+.old-am-grid th {
+  border: 1px solid black;
+  font-size: 12px;
+  font-weight: normal;
+  padding: 2px;
+}
+
+.old-am-grid td {
+  border: 1px solid black;
+  font-size: 12px;
+  padding: 2px;
+  min-height: 20px;
+}
+
+.old-am-grid-wrap {
+  border: 1px solid black;
+  min-height: 200px;
+  background: white;
+}
+
+.old-am-sum-row {
+  display: flex;
+  margin-top: 5px;
+  justify-content: flex-end;
+  gap: 5px;
+  align-items: center;
+}
+
+.old-am-sum-label {
+  font-size: 12px;
+  font-weight: bold;
+  margin-left: 20px;
+}
+
+.old-am-sum-input {
+  border: 1px solid #7f9db9;
+  width: 60px;
+  height: 20px;
+  text-align: center;
+}

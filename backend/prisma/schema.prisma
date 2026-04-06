@@ -591,7 +591,9 @@ model IncomeOutcomeEntry {
   currency         String            @default("دولار")
   documentNo       String?
   fees             Decimal?          @db.Decimal(18, 4)
-  usdAmount        Decimal?          @db.Decimal(18, 4)
+  amountUsd        Decimal?          @db.Decimal(18, 4)
+  amountRmb        Decimal?          @db.Decimal(18, 4)
+  amountJineh      Decimal?          @db.Decimal(18, 4)
   detailsText      String?
   glJournalEntryId String?           @unique
   createdAt        DateTime          @default(now())

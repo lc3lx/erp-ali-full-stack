@@ -7,7 +7,6 @@ import ContainerListPage from './pages/ContainerListPage.jsx'
 import ReportsPage from './pages/ReportsPage.jsx'
 import OfficialDocumentsPage from './pages/OfficialDocumentsPage.jsx'
 import AccountingMovesPage from './pages/AccountingMovesPage.jsx'
-import FinanceManagementPage from './pages/FinanceManagementPage.jsx'
 import AccountingHubPage from './pages/AccountingHubPage.jsx'
 import IncomeOutcomePage from './pages/IncomeOutcomePage.jsx'
 import InvoiceVouchersPage from './pages/InvoiceVouchersPage.jsx'
@@ -15,10 +14,8 @@ import InvoiceSalePage from './pages/InvoiceSalePage.jsx'
 import CustomersManagementPage from './pages/CustomersManagementPage.jsx'
 import StoresManagementPage from './pages/StoresManagementPage.jsx'
 import ItemsManagementPage from './pages/ItemsManagementPage.jsx'
-import WarehousesManagementPage from './pages/WarehousesManagementPage.jsx'
 import StockInventoryPage from './pages/StockInventoryPage.jsx'
 import SuppliersManagementPage from './pages/SuppliersManagementPage.jsx'
-import TreasuryPage from './pages/TreasuryPage.jsx'
 import FinancialReportsPage from './pages/FinancialReportsPage.jsx'
 import DashboardPage from './pages/DashboardPage.jsx'
 import HrPage from './pages/HrPage.jsx'
@@ -40,14 +37,11 @@ export default function App() {
       {page === 'list' && <ContainerListPage />}
       {page === 'reports' && <ReportsPage />}
       {page === 'customers' && <CustomersManagementPage />}
-      {page === 'stores' && <StoresManagementPage />}
+      {(page === 'stores' || page === 'warehouses') && <StoresManagementPage />}
       {page === 'items' && <ItemsManagementPage />}
-      {page === 'warehouses' && <WarehousesManagementPage />}
       {page === 'stock' && <StockInventoryPage />}
       {page === 'suppliers' && <SuppliersManagementPage />}
       {page === 'official' && <OfficialDocumentsPage />}
-      {page === 'finance' && <FinanceManagementPage />}
-      {page === 'treasury' && <TreasuryPage />}
       {page === 'freports' && <FinancialReportsPage />}
       {page === 'accounting' && <AccountingMovesPage />}
       {page === 'io' && <IncomeOutcomePage />}

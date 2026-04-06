@@ -11,6 +11,10 @@ export default function StockInventoryPage() {
   const [tt, setTt] = useState("");
   const [ti, setTi] = useState("");
   const [tqty, setTqty] = useState("");
+  const [cardItemId, setCardItemId] = useState("");
+  const [cardWarehouseId, setCardWarehouseId] = useState("");
+  const [cardMoves, setCardMoves] = useState([]);
+  const [cardLoading, setCardLoading] = useState(false);
 
   const load = useCallback(async () => {
     setErr("");
@@ -32,6 +36,25 @@ export default function StockInventoryPage() {
     load();
   }, [load]);
 
+  const loadItemCard = async () => {
+    if (!cardItemId) {
+      setErr("اختر صنفاً لعرض كارت الحركات");
+      return;
+    }
+    setErr("");
+    setCardLoading(true);
+    setCardMoves([]);
+    try {
+      const q = cardWarehouseId ? { warehouseId: cardWarehouseId } : {};
+      const d = await api.get(`/inventory/items/${cardItemId}/card`, q);
+      setCardMoves(d.moves ?? []);
+    } catch (ex) {
+      setErr(ex.message);
+    } finally {
+      setCardLoading(false);
+    }
+  };
+
   const doTransfer = async (e) => {
     e.preventDefault();
     try {
@@ -50,6 +73,9 @@ export default function StockInventoryPage() {
   return (
     <div className="master-page io-page" dir="rtl">
       <h2 className="master-title">أرصدة المخزون وتحويل</h2>
+      <p className="master-lead" style={{ marginTop: 0, marginBottom: 12 }}>
+        المستودعات هنا هي نفس مواقع <strong>المخازن والمستودعات</strong> في الإدارة — كل مخزن له مستودع جرد مرتبط تلقائياً.
+      </p>
       {err ? <div className="master-banner master-banner-err">{err}</div> : null}
       <button type="button" className="master-btn master-btn-ghost" onClick={load}>
         تحديث
@@ -76,6 +102,80 @@ export default function StockInventoryPage() {
           </tbody>
         </table>
       </div>
+
+      <div className="master-form" style={{ marginTop: 20 }}>
+        <h3 className="master-form-title">كارت الصنف (حركات المخزون)</h3>
+        <p className="master-hint" style={{ marginBottom: 8, color: "#555" }}>
+          عرض كل حركات الصنف المختار (شراء، بيع، تحويل، تسوية…) حسب المستودع أو الكل.
+        </p>
+        <label className="master-field">
+          صنف
+          <select
+            className="io-date-input master-input"
+            value={cardItemId}
+            onChange={(e) => setCardItemId(e.target.value)}
+          >
+            <option value="">— اختر —</option>
+            {items.map((x) => (
+              <option key={x.id} value={x.id}>
+                {x.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="master-field">
+          مستودع (اختياري)
+          <select
+            className="io-date-input master-input"
+            value={cardWarehouseId}
+            onChange={(e) => setCardWarehouseId(e.target.value)}
+          >
+            <option value="">— كل المستودعات —</option>
+            {warehouses.map((w) => (
+              <option key={w.id} value={w.id}>
+                {w.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button type="button" className="io-btn-primary" onClick={loadItemCard} disabled={cardLoading}>
+          {cardLoading ? "جاري التحميل…" : "عرض الحركات"}
+        </button>
+      </div>
+
+      {cardMoves.length > 0 ? (
+        <div className="master-table-wrap" style={{ marginTop: 12 }}>
+          <table className="master-table">
+            <thead>
+              <tr>
+                <th>التاريخ</th>
+                <th>المستودع</th>
+                <th>النوع</th>
+                <th>الكمية</th>
+                <th>تكلفة الوحدة</th>
+                <th>الإجمالي</th>
+                <th>مرجع</th>
+              </tr>
+            </thead>
+            <tbody>
+              {cardMoves.map((m) => (
+                <tr key={m.id}>
+                  <td dir="ltr">{m.moveDate ? String(m.moveDate).slice(0, 19) : "—"}</td>
+                  <td>{m.warehouse?.name ?? "—"}</td>
+                  <td>{m.type}</td>
+                  <td dir="ltr">{String(m.qty)}</td>
+                  <td dir="ltr">{String(m.unitCost)}</td>
+                  <td dir="ltr">{String(m.totalCost)}</td>
+                  <td dir="ltr" style={{ fontSize: 11 }}>
+                    {m.referenceKind}
+                    {m.referenceId ? ` / ${m.referenceId.slice(0, 8)}…` : ""}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
 
       <form className="master-form" onSubmit={doTransfer}>
         <h3 className="master-form-title">تحويل بين مستودعات</h3>
