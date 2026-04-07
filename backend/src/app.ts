@@ -32,12 +32,27 @@ export function createApp() {
   const app = express();
   const corsOrigin = env.CORS_ORIGIN?.trim();
   const isProd = env.NODE_ENV === "production";
+  const allowedOrigins = new Set(
+    (corsOrigin ?? "")
+      .split(",")
+      .map((v) => v.trim())
+      .filter(Boolean),
+  );
+  const allowAnyOrigin = allowedOrigins.has("*");
 
   app.use(requestId);
   app.use(helmet());
   app.use(
     cors({
-      origin: isProd ? corsOrigin : false,
+      origin: isProd
+        ? (origin, callback) => {
+            if (allowAnyOrigin || !origin || allowedOrigins.has(origin)) {
+              callback(null, true);
+              return;
+            }
+            callback(null, false);
+          }
+        : false,
       credentials: true,
     }),
   );

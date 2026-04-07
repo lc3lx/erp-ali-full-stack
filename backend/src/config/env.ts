@@ -21,7 +21,7 @@ function loadEnv(): Env {
     console.error(parsed.error.flatten().fieldErrors);
     throw new Error("Invalid environment variables");
   }
-  if (parsed.data.NODE_ENV === "production" && !parsed.data.CORS_ORIGIN) {
+  if (parsed.data.NODE_ENV === "production" && !parsed.data.CORS_ORIGIN?.trim()) {
     throw new Error("CORS_ORIGIN is required in production");
   }
   return parsed.data;
