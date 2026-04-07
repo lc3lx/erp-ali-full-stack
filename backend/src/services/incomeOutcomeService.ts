@@ -3,6 +3,16 @@ import { prisma } from "../db/client.js";
 import { AppError } from "../utils/errors.js";
 import { skipTake, type PaginationQuery } from "../utils/pagination.js";
 
+const incomeOutcomeFieldNames = new Set(
+  (Prisma.dmmf.datamodel.models.find((m) => m.name === "IncomeOutcomeEntry")?.fields ?? []).map(
+    (field) => field.name,
+  ),
+);
+const hasAmountUsd = incomeOutcomeFieldNames.has("amountUsd");
+const hasLegacyUsdAmount = incomeOutcomeFieldNames.has("usdAmount");
+const hasAmountRmb = incomeOutcomeFieldNames.has("amountRmb");
+const hasAmountJineh = incomeOutcomeFieldNames.has("amountJineh");
+
 export async function listIncomeOutcome(
   query: PaginationQuery & { date?: string; currency?: string; kind?: "EXPENSE" | "REVENUE" },
 ) {
@@ -60,16 +70,26 @@ export async function incomeOutcomeTotals(query: { date?: string; currency?: str
       where.entryDate = { gte: d, lt: new Date(d.getTime() + 86400000) };
     }
   }
+  const sumSelect: Record<string, true> = { fees: true };
+  if (hasAmountUsd) sumSelect.amountUsd = true;
+  else if (hasLegacyUsdAmount) sumSelect.usdAmount = true;
+  if (hasAmountRmb) sumSelect.amountRmb = true;
+  if (hasAmountJineh) sumSelect.amountJineh = true;
+
   const agg = await prisma.incomeOutcomeEntry.aggregate({
     where,
-    _sum: { fees: true, amountUsd: true, amountRmb: true, amountJineh: true },
+    _sum: sumSelect as Prisma.IncomeOutcomeEntrySumAggregateInputType,
     _count: true,
   });
+  const sum = (((agg as unknown as { _sum?: Record<string, Prisma.Decimal | null | undefined> })._sum ??
+    {}) as Record<string, Prisma.Decimal | null | undefined>);
+  const amountUsd = sum.amountUsd ?? sum.usdAmount ?? null;
+
   return {
     count: agg._count,
-    sumFees: agg._sum.fees,
-    sumAmountUsd: agg._sum.amountUsd,
-    sumAmountRmb: agg._sum.amountRmb,
-    sumAmountJineh: agg._sum.amountJineh,
+    sumFees: sum.fees ?? null,
+    sumAmountUsd: amountUsd,
+    sumAmountRmb: sum.amountRmb ?? null,
+    sumAmountJineh: sum.amountJineh ?? null,
   };
 }

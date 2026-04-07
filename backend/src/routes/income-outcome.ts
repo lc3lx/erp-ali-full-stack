@@ -1,13 +1,22 @@
 import { Router } from "express";
 import { z } from "zod";
-import type { Prisma } from "@prisma/client";
-import { IncomeOutcomeKind } from "@prisma/client";
+import { IncomeOutcomeKind, Prisma } from "@prisma/client";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { paginationQuerySchema } from "../utils/pagination.js";
 import * as svc from "../services/incomeOutcomeService.js";
 import { routeParam } from "../utils/params.js";
 
 export const incomeOutcomeRouter = Router();
+
+const incomeOutcomeFieldNames = new Set(
+  (Prisma.dmmf.datamodel.models.find((m) => m.name === "IncomeOutcomeEntry")?.fields ?? []).map(
+    (field) => field.name,
+  ),
+);
+const hasAmountUsd = incomeOutcomeFieldNames.has("amountUsd");
+const hasLegacyUsdAmount = incomeOutcomeFieldNames.has("usdAmount");
+const hasAmountRmb = incomeOutcomeFieldNames.has("amountRmb");
+const hasAmountJineh = incomeOutcomeFieldNames.has("amountJineh");
 
 const nullableNumber = z.preprocess((value) => {
   if (value === null || value === undefined || value === "") return null;
@@ -38,31 +47,39 @@ const entryBody = z.object({
 });
 
 function toCreate(body: z.infer<typeof entryBody>): Prisma.IncomeOutcomeEntryCreateInput {
-  return {
+  const data: Record<string, unknown> = {
     kind: body.kind,
     entryDate: new Date(body.entryDate),
     currency: body.currency,
-    documentNo: body.documentNo ?? undefined,
-    fees: body.fees ?? undefined,
-    amountUsd: body.amountUsd ?? undefined,
-    amountRmb: body.amountRmb ?? undefined,
-    amountJineh: body.amountJineh ?? undefined,
-    detailsText: body.detailsText ?? undefined,
   };
+  if (body.documentNo !== undefined) data.documentNo = body.documentNo ?? undefined;
+  if (body.fees !== undefined) data.fees = body.fees ?? undefined;
+  if (body.amountUsd !== undefined) {
+    const value = body.amountUsd ?? undefined;
+    if (hasAmountUsd) data.amountUsd = value;
+    else if (hasLegacyUsdAmount) data.usdAmount = value;
+  }
+  if (body.amountRmb !== undefined && hasAmountRmb) data.amountRmb = body.amountRmb ?? undefined;
+  if (body.amountJineh !== undefined && hasAmountJineh) data.amountJineh = body.amountJineh ?? undefined;
+  if (body.detailsText !== undefined) data.detailsText = body.detailsText ?? undefined;
+  return data as Prisma.IncomeOutcomeEntryCreateInput;
 }
 
 function toUpdate(body: Partial<z.infer<typeof entryBody>>): Prisma.IncomeOutcomeEntryUpdateInput {
-  const d: Prisma.IncomeOutcomeEntryUpdateInput = {};
+  const d: Record<string, unknown> = {};
   if (body.kind !== undefined) d.kind = body.kind;
   if (body.entryDate !== undefined) d.entryDate = new Date(body.entryDate);
   if (body.currency !== undefined) d.currency = body.currency;
   if (body.documentNo !== undefined) d.documentNo = body.documentNo;
   if (body.fees !== undefined) d.fees = body.fees;
-  if (body.amountUsd !== undefined) d.amountUsd = body.amountUsd;
-  if (body.amountRmb !== undefined) d.amountRmb = body.amountRmb;
-  if (body.amountJineh !== undefined) d.amountJineh = body.amountJineh;
+  if (body.amountUsd !== undefined) {
+    if (hasAmountUsd) d.amountUsd = body.amountUsd;
+    else if (hasLegacyUsdAmount) d.usdAmount = body.amountUsd;
+  }
+  if (body.amountRmb !== undefined && hasAmountRmb) d.amountRmb = body.amountRmb;
+  if (body.amountJineh !== undefined && hasAmountJineh) d.amountJineh = body.amountJineh;
   if (body.detailsText !== undefined) d.detailsText = body.detailsText;
-  return d;
+  return d as Prisma.IncomeOutcomeEntryUpdateInput;
 }
 
 incomeOutcomeRouter.get(

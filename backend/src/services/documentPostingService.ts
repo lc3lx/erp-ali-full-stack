@@ -248,8 +248,10 @@ export async function postIncomeOutcomeToGl(
   const v = await prisma.incomeOutcomeEntry.findUnique({ where: { id: entryId } });
   if (!v) throw new AppError(404, "Entry not found");
   if (v.glJournalEntryId) throw new AppError(409, "Already posted to GL");
-  const base = amt(v.usdAmount).add(amt(v.fees));
-  if (base.lte(0)) throw new AppError(400, "Amount (usdAmount + fees) must be > 0");
+  const rawUsd = (v as unknown as Record<string, Prisma.Decimal | number | null | undefined>).amountUsd;
+  const legacyUsd = (v as unknown as Record<string, Prisma.Decimal | number | null | undefined>).usdAmount;
+  const base = amt(rawUsd ?? legacyUsd).add(amt(v.fees));
+  if (base.lte(0)) throw new AppError(400, "Amount (amountUsd + fees) must be > 0");
   const entryDate = v.entryDate;
   const kindLabel = v.kind === "REVENUE" ? "إيراد" : "مصروف";
   const desc = `${kindLabel} ${v.documentNo ?? entryId}`;
