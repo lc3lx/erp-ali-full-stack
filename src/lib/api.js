@@ -1,4 +1,25 @@
-const API_BASE = import.meta.env.VITE_API_BASE ?? ''
+function normalizeApiBase(raw) {
+  const base = String(raw ?? "").trim().replace(/\/+$/, "");
+  if (!base) return "";
+  try {
+    const url = new URL(base);
+    const isLocalHost = url.hostname === "localhost" || url.hostname === "127.0.0.1";
+    if (
+      typeof window !== "undefined" &&
+      window.location.protocol === "https:" &&
+      url.protocol === "http:" &&
+      !isLocalHost
+    ) {
+      url.protocol = "https:";
+      return url.toString().replace(/\/+$/, "");
+    }
+  } catch {
+    return base;
+  }
+  return base;
+}
+
+const API_BASE = normalizeApiBase(import.meta.env.VITE_API_BASE)
 
 const TOKEN_KEY = 'container_token'
 const USER_KEY = 'container_user'
