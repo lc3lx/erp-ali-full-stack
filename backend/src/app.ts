@@ -37,7 +37,7 @@ export function createApp() {
   app.use(helmet());
   app.use(
     cors({
-      origin: isProd ? corsOrigin : true,
+      origin: isProd ? corsOrigin : false,
       credentials: true,
     }),
   );
@@ -66,7 +66,11 @@ export function createApp() {
   v1.use("/hr", requireRole("ADMIN", "ACCOUNTANT"), hrRouter);
   v1.use("/crm", requireRole("ADMIN", "ACCOUNTANT", "DATA_ENTRY"), crmRouter);
   v1.use("/containers", requireRole("ADMIN", "ACCOUNTANT", "DATA_ENTRY"), containersRouter);
-  v1.use("/invoice-vouchers", requireRole("ADMIN", "ACCOUNTANT", "DATA_ENTRY"), invoiceVouchersRouter);
+  v1.use(
+    "/invoice-vouchers",
+    requireRole("ADMIN", "ACCOUNTANT", "DATA_ENTRY"),
+    invoiceVouchersRouter,
+  );
   v1.use("/invoice-sale", requireRole("ADMIN", "ACCOUNTANT", "DATA_ENTRY"), invoiceSaleRouter);
   v1.use("/income-outcome", incomeOutcomeRouter);
   v1.use("/accounting-moves", accountingMovesRouter);
