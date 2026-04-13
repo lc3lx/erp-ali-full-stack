@@ -26,6 +26,65 @@ function numOrNull(v) {
   return Number.isFinite(n) ? n : null;
 }
 
+const UI_TEXT_FIXES = {
+  "ظ‚ظپظ„": "إغلاق",
+  "طھط¹ط¯ظٹظ„": "تعديل",
+  "ط¹ظ…ظˆظ„ط© ط§ظ„ظ…ظƒطھط¨": "عمولة المكتب",
+  "ط³ط¹ط± ظ†ظ‚ظ„ ط§ظ„ظ…طھط± ط§ظ„ظ…ظƒط¹ط¨": "سعر نقل المتر المكعب",
+  "ط³ط¹ط± ط§ظ„طµط±ظپ": "سعر الصرف",
+  "ظ…ط¬ظ…ظˆط¹": "المجموع",
+  "ط±ظ‚ظ… ط§ظ„ط­ط§ظˆظٹط©": "رقم الحاوية",
+  "ط¬ط¯ظٹط¯": "جديد",
+  "ط­ط°ظپ": "حذف",
+  "ط§ظ„ط²ط¨ظˆظ†": "الزبون",
+  "طھط§ط±ظٹط® ط§ظ„ط¹ط§ظ…ط©": "تاريخ الفاتورة",
+  "طھ ط§ظ„ظ‚ط§ط¦ظ…ط©": "القائمة",
+  "ط¥ط±ط³ط§ظ„ ظ„ظ„ظ…ظˆط§ظپظ‚ط©": "إرسال للموافقة",
+  "ط§ط¹طھظ…ط§ط¯": "اعتماد",
+  "ط±ظپط¶": "رفض",
+  "ط§ظ„ط¹ظ…ظ„ط©": "العملة",
+  "ظ…ظ„ط§ط­ط¸ط§طھ": "ملاحظات",
+  "ط­ظپط¸ ط§ظ„ط³ظ†ط¯": "حفظ الفاتورة",
+  "ط­ط°ظپ ط³ط·ط±": "حذف سطر",
+  "طھط¹ط¯ظٹظ„ ط³ط·ط±": "تعديل سطر",
+  "ط³ط¹ط± طھط­ظˆظٹظ„": "سعر تحويل",
+  "ط§ظ„ط¯ظˆظ„ط§ط±": "دولار",
+  "ظ…ط¬ظ…ظˆط¹ ط³ط¹ط±": "مجموع سعر",
+  "ظ…ط¬ظ…ظˆط¹ ط§ظ„ظ…طھط±": "مجموع المتر",
+  "ط§ظ„ظ…ظƒط¹ط¨": "المكعب",
+  "ظˆط²ظ†": "وزن",
+  "ط¹ط¯ط¯": "عدد",
+  "ط§ظ„ظ‚ط§ط¦ظ…ط©": "القائمة",
+  "ط³ط¹ط± ظƒظ„": "سعر كل",
+  "ط§ظ„ظپ": "ألف",
+  "ظ‚ط·ط¹ط© ط¯ط§ط®ظ„": "قطعة داخل",
+  "ط§ظ„ظƒط§ط±طھظˆظ†": "الكرتون",
+  "ط§ظ„طھظپط§طµظٹظ„": "التفاصيل",
+  "ط±ظ‚ظ…": "الرقم",
+  "ظ„ط§ ط£ط³ط·ط±": "لا توجد أسطر",
+  "ط§ظ„ظ…ط­ط§ط³ط¨ط©": "المحاسبة",
+  "ط§ظ„ظ…ط­ط§ط³ط¨ط© ط¯ط§ط¦ظ†/ظ…ط¯ظٹظ†": "المحاسبة دائن/مدين",
+  "ط§ظ„ظ…ط¬ظ…ظˆط¹": "المجموع",
+  "ط§ظ„ظ…ط³ط¯ط¯": "المسدد",
+  "ط§ظ„ظ…ط¬ظ…ظˆط¹ ط§ظ„ط¨ط§ظ‚ظٹ": "المتبقي",
+  "ط£ط±ط¨ط§ط­": "الأرباح",
+  "ط¨ط¶ط§ط¹ط© ظ„ظ‡ط°ط§ ط§ظ„ظ…ط³طھط«ظ…ط±": "بضاعة لهذا المستثمر",
+  "ط·ط¨ط§ط¹ط©": "طباعة",
+  "ط¹ط±ط¨ظٹ": "عربي",
+  "ط§ط®طھط± ط§ظ„ط²ط¨ظˆظ†": "اختر الزبون",
+  "ط§ط¨ط­ط« ط¹ظ† ط²ط¨ظˆظ†...": "ابحث عن زبون...",
+  "â–¶": "▶",
+  "â€”": "—",
+};
+
+function fixUiText(input) {
+  let out = input;
+  for (const [from, to] of Object.entries(UI_TEXT_FIXES)) {
+    out = out.split(from).join(to);
+  }
+  return out;
+}
+
 export default function InvoiceSalePage() {
   const { user } = useAuth();
   const [list, setList] = useState([]);
@@ -50,6 +109,35 @@ export default function InvoiceSalePage() {
   const headerBlockRef = useRef(null);
   const linesBlockRef = useRef(null);
   const totalsBlockRef = useRef(null);
+
+  useEffect(() => {
+    const root = pageRootRef.current;
+    if (!root) return;
+
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    let current = walker.nextNode();
+    while (current) {
+      const node = current;
+      const original = node.nodeValue ?? "";
+      const fixed = fixUiText(original);
+      if (fixed !== original) node.nodeValue = fixed;
+      current = walker.nextNode();
+    }
+
+    root.querySelectorAll("[title]").forEach((el) => {
+      const title = el.getAttribute("title");
+      if (!title) return;
+      const fixed = fixUiText(title);
+      if (fixed !== title) el.setAttribute("title", fixed);
+    });
+
+    root.querySelectorAll("input[placeholder]").forEach((el) => {
+      const ph = el.getAttribute("placeholder");
+      if (!ph) return;
+      const fixed = fixUiText(ph);
+      if (fixed !== ph) el.setAttribute("placeholder", fixed);
+    });
+  }, [detail, lines, list, editing, selectedLineId, stockWarehouseName]);
 
   const reloadVoucher = useCallback(async (id) => {
     if (!id) return;
@@ -217,7 +305,7 @@ export default function InvoiceSalePage() {
   };
   const onWorkflowReject = async () => {
     if (!voucherId) return;
-    const comment = window.prompt("ط³ط¨ط¨ ط§ظ„ط±ظپط¶ (ط§ط®طھظٹط§ط±ظٹ)") ?? "";
+    const comment = window.prompt("سبب الرفض (اختياري)") ?? "";
     try {
       await api.post(`/invoice-sale/${voucherId}/workflow/reject`, { comment: comment || null });
       await reloadVoucher(voucherId);
@@ -258,10 +346,10 @@ export default function InvoiceSalePage() {
     const cid = containers[0]?.id;
     const custId = customers[0]?.id;
     if (!cid || !custId) {
-      window.alert("طھط­طھط§ط¬ ط­ط§ظˆظٹط© ظˆط²ط¨ظˆظ† ط¹ظ„ظ‰ ط§ظ„ط£ظ‚ظ„.");
+      window.alert("يجب اختيار حاوية وزبون على الأقل.");
       return;
     }
-    const vn = window.prompt("ط±ظ‚ظ… ط³ظ†ط¯ ط§ظ„ط¨ظٹط¹طں", `S-${Date.now()}`);
+    const vn = window.prompt("رقم فاتورة البيع", `S-${Date.now()}`);
     if (!vn || !vn.trim()) return;
     try {
       const v = await api.post("/invoice-sale", {
@@ -279,7 +367,7 @@ export default function InvoiceSalePage() {
   };
 
   const onDelete = async () => {
-    if (!voucherId || !window.confirm("ط­ط°ظپ ط³ظ†ط¯ ط§ظ„ط¨ظٹط¹طں")) return;
+    if (!voucherId || !window.confirm("حذف فاتورة البيع؟")) return;
     try {
       await api.delete(`/invoice-sale/${voucherId}`);
       const data = await api.get("/invoice-sale", { page: 1, pageSize: 100 });
@@ -294,7 +382,7 @@ export default function InvoiceSalePage() {
   const onAddLine = async () => {
     if (!voucherId) return;
     try {
-      await api.post(`/invoice-sale/${voucherId}/items`, { detail: "ط³ط·ط± ط¬ط¯ظٹط¯" });
+      await api.post(`/invoice-sale/${voucherId}/items`, { detail: "سطر جديد" });
       await reloadVoucher(voucherId);
     } catch (e) {
       setErr(e.message);
@@ -302,7 +390,7 @@ export default function InvoiceSalePage() {
   };
 
   const onDeleteLine = async () => {
-    if (!voucherId || !selectedLineId || !window.confirm("ط­ط°ظپ ط§ظ„ط³ط·ط±طں")) return;
+    if (!voucherId || !selectedLineId || !window.confirm("حذف السطر؟")) return;
     try {
       await api.delete(`/invoice-sale/${voucherId}/items/${selectedLineId}`);
       setSelectedLineId("");
@@ -316,13 +404,13 @@ export default function InvoiceSalePage() {
     if (!voucherId || !selectedLineId) return;
     const row = lines.find((x) => x.id === selectedLineId);
     if (!row) return;
-    const detailText = window.prompt("ط§ظ„طھظپط§طµظٹظ„", row.detail ?? "");
+    const detailText = window.prompt("التفاصيل", row.detail ?? "");
     if (detailText == null) return;
-    const itemNo = window.prompt("ط±ظ‚ظ… ط§ظ„ظ…ط§ط¯ط©", row.itemNo ?? "");
+    const itemNo = window.prompt("رقم المادة", row.itemNo ?? "");
     if (itemNo == null) return;
-    const qty = window.prompt("ط§ظ„ظƒظ…ظٹط©", str(row.listQty ?? ""));
+    const qty = window.prompt("الكمية", str(row.listQty ?? ""));
     if (qty == null) return;
-    const totalPrice = window.prompt("ظ…ط¬ظ…ظˆط¹ ط§ظ„ط³ط¹ط±", str(row.totalPrice ?? ""));
+    const totalPrice = window.prompt("إجمالي السعر", str(row.totalPrice ?? ""));
     if (totalPrice == null) return;
     try {
       await api.patch(`/invoice-sale/${voucherId}/items/${selectedLineId}`, {
@@ -401,16 +489,16 @@ export default function InvoiceSalePage() {
   const goLatestVoucher = () => {
     const id = list[0]?.id;
     if (id) setVoucherId(id);
-    else window.alert("ظ„ط§ طھظˆط¬ط¯ ظپظˆط§طھظٹط± ط¨ظٹط¹.");
+    else window.alert("لا توجد فواتير بيع.");
   };
 
   const showRecentVoucherList = () => {
     if (!list.length) {
-      window.alert("ظ„ط§ طھظˆط¬ط¯ ظپظˆط§طھظٹط±.");
+      window.alert("لا توجد فواتير.");
       return;
     }
-    const lines = list.slice(0, 20).map((v, i) => `${i + 1}. ${v.voucherNo} â€” ${v.container?.containerNo ?? "?"}`);
-    window.alert(`ط£ط­ط¯ط« ط³ظ†ط¯ط§طھ ط§ظ„ط¨ظٹط¹:\n\n${lines.join("\n")}`);
+    const lines = list.slice(0, 20).map((v, i) => `${i + 1}. ${v.voucherNo} — ${v.container?.containerNo ?? "?"}`);
+    window.alert(`أحدث فواتير البيع:\n\n${lines.join("\n")}`);
   };
 
   const scrollHeader = () => headerBlockRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -623,7 +711,7 @@ export default function InvoiceSalePage() {
               searchPlaceholder="ابحث عن مستودع..."
               clearLabel="— بدون مستودع —"
             />
-            <span className="is-lbl">Store Targit</span>
+            <span className="is-lbl">Store Target</span>
             <input
               className="is-notes-input"
               name="notes"
@@ -954,15 +1042,15 @@ export default function InvoiceSalePage() {
           EN
         </button>
         <button type="button" className="is-btn yellow" onClick={openContainerInList}>
-          In costomer
+          Open Container
           <br />
-          or wen house
+          in List
         </button>
         <button
           type="button"
           className="is-btn yellow"
           onClick={() => {
-            const usePride = window.confirm("ظ…ظˆط§ظپظ‚ = ظ†ط³ط®ط© Pride\nط¥ظ„ط؛ط§ط، = ظ†ط³ط®ط© Faqr");
+            const usePride = window.confirm("موافق = نسخة Pride\nإلغاء = نسخة Faqr");
             printWithBanner(pageRootRef.current, usePride ? "Pride copy" : "Faqr copy");
           }}
         >
@@ -983,7 +1071,7 @@ export default function InvoiceSalePage() {
           className="is-btn"
           onClick={() => voucherId && reloadVoucher(voucherId)}
         >
-          Re Load Last
+          Reload Last
           <br />
           Voucher
         </button>
@@ -1002,7 +1090,7 @@ export default function InvoiceSalePage() {
           third
         </button>
         <button type="button" className="is-btn blue" onClick={scrollLines}>
-          secoud
+          second
         </button>
         <button type="button" className="is-btn blue" onClick={scrollHeader}>
           main
