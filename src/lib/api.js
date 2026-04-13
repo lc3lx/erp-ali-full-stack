@@ -27,7 +27,7 @@ const USER_KEY = 'container_user'
 /** @type {() => void} */
 let unauthorizedHandler = () => {}
 
-/** Register session callback (e.g. from AuthProvider) for 401/403 responses */
+/** Register session callback (e.g. from AuthProvider) for unauthorized responses */
 export function setUnauthorizedHandler(fn) {
   unauthorizedHandler = typeof fn === 'function' ? fn : () => {}
 }
@@ -100,7 +100,9 @@ export async function apiRequest(path, options = {}) {
     data = { raw: text }
   }
 
-  if (res.status === 401 || res.status === 403) {
+  // Only auto-logout on 401 (invalid/expired token).
+  // 403 usually means permission/business rule issue and user should stay logged in.
+  if (res.status === 401) {
     setStoredSession(null, null)
     unauthorizedHandler()
   }
