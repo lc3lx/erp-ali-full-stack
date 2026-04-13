@@ -178,6 +178,14 @@ invoiceSaleRouter.get(
   }),
 );
 
+invoiceSaleRouter.get(
+  "/:id/stock",
+  asyncHandler(async (req, res) => {
+    const q = z.object({ itemId: z.string().uuid().optional() }).parse(req.query);
+    res.json(await svc.getSaleVoucherStock(routeParam(req.params.id), q.itemId));
+  }),
+);
+
 invoiceSaleRouter.post(
   "/:id/workflow/submit",
   requirePermission("invoice:submit"),

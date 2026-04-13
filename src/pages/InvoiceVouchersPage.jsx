@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+﻿import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../lib/api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { GlPurchaseVoucherPost } from "../components/GlDocumentPost.jsx";
 import { DocumentStatusBadge } from "../components/erp/DocumentStatusBadge.jsx";
 import { ItemLineLinkPanel } from "../components/ItemLineLinkPanel.jsx";
+import { SearchableDropdown } from "../components/SearchableDropdown.jsx";
 import { formatIsoToDisplay, toApiDateTime } from "../lib/dates.js";
 import { MASTERS_REFRESH_EVENT, navigateAppPage, printRootWithLocale } from "../lib/uiActions.js";
 import "../App.css";
@@ -31,6 +32,11 @@ export default function InvoiceVouchersPage() {
   const [containers, setContainers] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
   const [stores, setStores] = useState([]);
+  const [selectedSupplierId, setSelectedSupplierId] = useState("");
+  const [selectedStoreId, setSelectedStoreId] = useState("");
+  const [stockRows, setStockRows] = useState([]);
+  const [stockByItem, setStockByItem] = useState({});
+  const [stockWarehouseName, setStockWarehouseName] = useState("");
   const [selectedLineId, setSelectedLineId] = useState("");
   const [editing, setEditing] = useState(false);
   const [editingCell, setEditingCell] = useState(null);
@@ -142,10 +148,47 @@ export default function InvoiceVouchersPage() {
     setEditing(false);
   }, [voucherId]);
 
+  useEffect(() => {
+    setSelectedSupplierId(detail?.supplierId ?? "");
+    setSelectedStoreId(detail?.storeId ?? "");
+  }, [detail?.id, detail?.supplierId, detail?.storeId, detail?.updatedAt]);
+
+  useEffect(() => {
+    if (!voucherId) {
+      setStockRows([]);
+      setStockByItem({});
+      setStockWarehouseName("");
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const stock = await api.get(`/invoice-vouchers/${voucherId}/stock`);
+        if (cancelled) return;
+        const rows = stock.items ?? [];
+        setStockRows(rows);
+        setStockWarehouseName(stock.warehouse?.name ?? "");
+        const map = {};
+        for (const row of rows) {
+          map[row.itemId] = Number(row.qtyOnHand ?? 0);
+        }
+        setStockByItem(map);
+      } catch {
+        if (cancelled) return;
+        setStockRows([]);
+        setStockByItem({});
+        setStockWarehouseName("");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [voucherId, lines]);
+
   const exchangeRate = str(detail?.exchangeRate ?? "6.7");
   const date = detail?.voucherDate ? formatIsoToDisplay(detail.voucherDate) : "";
   const voucherNo = detail?.voucherNo ?? "";
-  const currency = detail?.currency ?? "دولار";
+  const currency = detail?.currency ?? "ط¯ظˆظ„ط§ط±";
   const agg = totals?.aggregates;
 
   const formId = "iv-header-form";
@@ -170,7 +213,7 @@ export default function InvoiceVouchersPage() {
   };
   const onWorkflowReject = async () => {
     if (!voucherId) return;
-    const comment = window.prompt("سبب الرفض (اختياري)") ?? "";
+    const comment = window.prompt("ط³ط¨ط¨ ط§ظ„ط±ظپط¶ (ط§ط®طھظٹط§ط±ظٹ)") ?? "";
     try {
       await api.post(`/invoice-vouchers/${voucherId}/workflow/reject`, { comment: comment || null });
       await reloadVoucher(voucherId);
@@ -194,8 +237,8 @@ export default function InvoiceVouchersPage() {
         cbmTransportPrice: fd.get("cbmTransportPrice") || undefined,
         currency: fd.get("currency") || undefined,
         containerId: fd.get("containerId") || undefined,
-        supplierId: fd.get("supplierId") || undefined,
-        storeId: fd.get("storeId") || null,
+        supplierId: selectedSupplierId || undefined,
+        storeId: selectedStoreId || null,
         notes: fd.get("notes") || null,
       });
       await reloadVoucher(voucherId);
@@ -211,17 +254,17 @@ export default function InvoiceVouchersPage() {
     const cid = containers[0]?.id;
     const sid = suppliers[0]?.id;
     if (!cid || !sid) {
-      window.alert("تحتاج على الأقل حاوية ومورد في الجداول.");
+      window.alert("طھط­طھط§ط¬ ط¹ظ„ظ‰ ط§ظ„ط£ظ‚ظ„ ط­ط§ظˆظٹط© ظˆظ…ظˆط±ط¯ ظپظٹ ط§ظ„ط¬ط¯ط§ظˆظ„.");
       return;
     }
-    const vn = window.prompt("رقم سند الشراء؟", `P-${Date.now()}`);
+    const vn = window.prompt("ط±ظ‚ظ… ط³ظ†ط¯ ط§ظ„ط´ط±ط§ط،طں", `P-${Date.now()}`);
     if (!vn || !vn.trim()) return;
     try {
       const v = await api.post("/invoice-vouchers", {
         voucherNo: vn.trim(),
         containerId: cid,
         supplierId: sid,
-        currency: "دولار",
+        currency: "ط¯ظˆظ„ط§ط±",
       });
       const data = await api.get("/invoice-vouchers", { page: 1, pageSize: 100 });
       setList(data.items ?? []);
@@ -232,7 +275,7 @@ export default function InvoiceVouchersPage() {
   };
 
   const onDelete = async () => {
-    if (!voucherId || !window.confirm("حذف السند؟")) return;
+    if (!voucherId || !window.confirm("ط­ط°ظپ ط§ظ„ط³ظ†ط¯طں")) return;
     try {
       await api.delete(`/invoice-vouchers/${voucherId}`);
       const data = await api.get("/invoice-vouchers", { page: 1, pageSize: 100 });
@@ -246,9 +289,9 @@ export default function InvoiceVouchersPage() {
 
   const onAddLine = async () => {
     if (!voucherId) return;
-    const itemName = window.prompt("اسم المادة", "سطر جديد");
+    const itemName = window.prompt("ط§ط³ظ… ط§ظ„ظ…ط§ط¯ط©", "ط³ط·ط± ط¬ط¯ظٹط¯");
     if (itemName == null) return;
-    const itemNo = window.prompt("رقم المادة", "");
+    const itemNo = window.prompt("ط±ظ‚ظ… ط§ظ„ظ…ط§ط¯ط©", "");
     if (itemNo == null) return;
     const priceToCustomerSum = window.prompt("Price to Customer Sum", "");
     if (priceToCustomerSum == null) return;
@@ -292,7 +335,7 @@ export default function InvoiceVouchersPage() {
   };
 
   const onDeleteLine = async () => {
-    if (!voucherId || !selectedLineId || !window.confirm("حذف السطر؟")) return;
+    if (!voucherId || !selectedLineId || !window.confirm("ط­ط°ظپ ط§ظ„ط³ط·ط±طں")) return;
     try {
       await api.delete(`/invoice-vouchers/${voucherId}/items/${selectedLineId}`);
       setSelectedLineId("");
@@ -306,13 +349,13 @@ export default function InvoiceVouchersPage() {
     if (!voucherId || !selectedLineId) return;
     const row = lines.find((x) => x.id === selectedLineId);
     if (!row) return;
-    const itemName = window.prompt("اسم المادة", row.itemName ?? "");
+    const itemName = window.prompt("ط§ط³ظ… ط§ظ„ظ…ط§ط¯ط©", row.itemName ?? "");
     if (itemName == null) return;
-    const itemNo = window.prompt("رقم المادة", row.itemNo ?? "");
+    const itemNo = window.prompt("ط±ظ‚ظ… ط§ظ„ظ…ط§ط¯ط©", row.itemNo ?? "");
     if (itemNo == null) return;
     const priceToCustomerSum = window.prompt("Price to Customer Sum", str(row.priceToCustomerSum ?? ""));
     if (priceToCustomerSum == null) return;
-    const weightSum = window.prompt("الوزن الإجمالي", str(row.weightSum ?? ""));
+    const weightSum = window.prompt("ط§ظ„ظˆط²ظ† ط§ظ„ط¥ط¬ظ…ط§ظ„ظٹ", str(row.weightSum ?? ""));
     if (weightSum == null) return;
     const weight = window.prompt("Weight", str(row.weight ?? ""));
     if (weight == null) return;
@@ -324,7 +367,7 @@ export default function InvoiceVouchersPage() {
     if (boxesSum == null) return;
     const piecesSum = window.prompt("Pieces Sum", str(row.piecesSum ?? ""));
     if (piecesSum == null) return;
-    const priceSum = window.prompt("مجموع السعر", str(row.priceSum ?? ""));
+    const priceSum = window.prompt("ظ…ط¬ظ…ظˆط¹ ط§ظ„ط³ط¹ط±", str(row.priceSum ?? ""));
     if (priceSum == null) return;
     const cartonPcs = window.prompt("Carton PCS", str(row.cartonPcs ?? ""));
     if (cartonPcs == null) return;
@@ -411,16 +454,16 @@ export default function InvoiceVouchersPage() {
   const goLatestVoucher = () => {
     const id = list[0]?.id;
     if (id) setVoucherId(id);
-    else window.alert("لا توجد فواتير شراء في القائمة.");
+    else window.alert("ظ„ط§ طھظˆط¬ط¯ ظپظˆط§طھظٹط± ط´ط±ط§ط، ظپظٹ ط§ظ„ظ‚ط§ط¦ظ…ط©.");
   };
 
   const showRecentVoucherList = () => {
     if (!list.length) {
-      window.alert("لا توجد فواتير.");
+      window.alert("ظ„ط§ طھظˆط¬ط¯ ظپظˆط§طھظٹط±.");
       return;
     }
-    const lines = list.slice(0, 20).map((v, i) => `${i + 1}. ${v.voucherNo} — ${v.container?.containerNo ?? "?"}`);
-    window.alert(`أحدث السندات (حسب التعديل):\n\n${lines.join("\n")}`);
+    const lines = list.slice(0, 20).map((v, i) => `${i + 1}. ${v.voucherNo} â€” ${v.container?.containerNo ?? "?"}`);
+    window.alert(`ط£ط­ط¯ط« ط§ظ„ط³ظ†ط¯ط§طھ (ط­ط³ط¨ ط§ظ„طھط¹ط¯ظٹظ„):\n\n${lines.join("\n")}`);
   };
 
   const scrollHeader = () => headerBlockRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -485,7 +528,7 @@ export default function InvoiceVouchersPage() {
             defaultValue={exchangeRate}
             key={`er-${voucherId}-${detail?.updatedAt}`}
           />
-          <span className="iv-lbl-small">سعر الصرف</span>
+          <span className="iv-lbl-small">ط³ط¹ط± ط§ظ„طµط±ظپ</span>
 
           <input
             className="iv-date-input"
@@ -523,20 +566,22 @@ export default function InvoiceVouchersPage() {
           </select>
           <span className="iv-lbl-small">Container No</span>
 
-          <select
-            className="iv-balance-input"
+          <SearchableDropdown
             name="supplierId"
-            disabled={!editing}
-            defaultValue={detail?.supplierId ?? ""}
-            key={`sp-${voucherId}-${detail?.updatedAt}`}
             dir="rtl"
-          >
-            {suppliers.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
+            className="iv-search-select"
+            inputClassName="iv-balance-input"
+            disabled={!editing}
+            value={selectedSupplierId}
+            onChange={setSelectedSupplierId}
+            options={suppliers}
+            getOptionValue={(party) => party.id}
+            getOptionLabel={(party) => party.name}
+            placeholder="ط§ط®طھط± ط§ظ„ظ…ظˆط±ط¯"
+            searchPlaceholder="ط§ط¨ط­ط« ط¹ظ† ظ…ظˆط±ط¯..."
+            clearLabel="â€” ط§ط®طھط± ط§ظ„ظ…ظˆط±ط¯ â€”"
+            allowClear={false}
+          />
           <span className="iv-lbl-small">Supplier</span>
 
           <div className="iv-voucher-stack">
@@ -547,8 +592,8 @@ export default function InvoiceVouchersPage() {
               defaultValue={currency}
               key={`cur-${voucherId}-${detail?.updatedAt}`}
             >
-              <option value="دولار">دولار</option>
-              <option value="دينار">دينار</option>
+              <option value="ط¯ظˆظ„ط§ط±">ط¯ظˆظ„ط§ط±</option>
+              <option value="ط¯ظٹظ†ط§ط±">ط¯ظٹظ†ط§ط±</option>
             </select>
             <select
               className="iv-voucher-list"
@@ -557,7 +602,7 @@ export default function InvoiceVouchersPage() {
               onChange={(e) => setVoucherId(e.target.value)}
             >
               {list.length === 0 ? (
-                <option value="">—</option>
+                <option value="">â€”</option>
               ) : (
                 list.map((v) => (
                   <option key={v.id} value={v.id}>
@@ -573,42 +618,42 @@ export default function InvoiceVouchersPage() {
           <DocumentStatusBadge status={detail?.documentStatus} />
           {detail?.documentStatus === "DRAFT" && (user?.role === "DATA_ENTRY" || user?.role === "ACCOUNTANT" || user?.role === "ADMIN") ? (
             <button type="button" onClick={onWorkflowSubmit}>
-              إرسال للموافقة
+              ط¥ط±ط³ط§ظ„ ظ„ظ„ظ…ظˆط§ظپظ‚ط©
             </button>
           ) : null}
           {detail?.documentStatus === "SUBMITTED" && (user?.role === "ACCOUNTANT" || user?.role === "ADMIN") ? (
             <>
               <button type="button" onClick={onWorkflowApprove}>
-                اعتماد
+                ط§ط¹طھظ…ط§ط¯
               </button>
               <button type="button" onClick={onWorkflowReject}>
-                رفض
+                ط±ظپط¶
               </button>
             </>
           ) : null}
         </div>
 
         <div className="iv-controls-row third">
-          <button type="button" className="iv-blue-wide" onClick={openLinkedContainer} title="فتح الحاوية في قائمة الحاويات">
+          <button type="button" className="iv-blue-wide" onClick={openLinkedContainer} title="ظپطھط­ ط§ظ„ط­ط§ظˆظٹط© ظپظٹ ظ‚ط§ط¦ظ…ط© ط§ظ„ط­ط§ظˆظٹط§طھ">
             container vouchers
           </button>
 
           <div className="iv-spacer" />
 
-          <select
-            className="iv-small-select"
+          <SearchableDropdown
             name="storeId"
+            className="iv-search-select"
+            inputClassName="iv-small-select"
             disabled={!editing}
-            defaultValue={detail?.storeId ?? ""}
-            key={`st-${voucherId}-${detail?.updatedAt}`}
-          >
-            <option value="">—</option>
-            {stores.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
+            value={selectedStoreId}
+            onChange={setSelectedStoreId}
+            options={stores}
+            getOptionValue={(store) => store.id}
+            getOptionLabel={(store) => store.name}
+            placeholder="—"
+            searchPlaceholder="ابحث عن مستودع..."
+            clearLabel="— بدون مستودع —"
+          />
           <span className="iv-lbl-small">Store Targit</span>
 
           <input
@@ -686,6 +731,7 @@ export default function InvoiceVouchersPage() {
               <th>price</th>
               <th>Item Name</th>
               <th>item no</th>
+              <th>available</th>
               <th>seq</th>
               <th>pic</th>
             </tr>
@@ -693,8 +739,8 @@ export default function InvoiceVouchersPage() {
           <tbody>
             {lines.length === 0 ? (
               <tr>
-                <td colSpan={15} style={{ textAlign: "center", padding: 12 }}>
-                  لا أسطر
+                <td colSpan={16} style={{ textAlign: "center", padding: 12 }}>
+                  ظ„ط§ ط£ط³ط·ط±
                 </td>
               </tr>
             ) : (
@@ -704,7 +750,7 @@ export default function InvoiceVouchersPage() {
                   style={{ cursor: "pointer", background: selectedLineId === r.id ? "#e8f4ff" : undefined }}
                   onClick={() => setSelectedLineId(r.id)}
                 >
-                  <td className="iv-arrow">▶</td>
+                  <td className="iv-arrow">â–¶</td>
                   <td onDoubleClick={() => beginCellEdit(r.id, "priceToCustomerSum", r.priceToCustomerSum)}>
                     {editingCell?.lineId === r.id && editingCell?.field === "priceToCustomerSum" ? (
                       <input
@@ -799,8 +845,9 @@ export default function InvoiceVouchersPage() {
                       r.itemNo ?? ""
                     )}
                   </td>
+                  <td>{r.itemId ? str(stockByItem[r.itemId] ?? 0) : "—"}</td>
                   <td>{r.seq}</td>
-                  <td>{r.itemId ? "linked" : "—"}</td>
+                  <td>{r.itemId ? "linked" : "â€”"}</td>
                 </tr>
               ))
             )}
@@ -808,6 +855,11 @@ export default function InvoiceVouchersPage() {
         </table>
       </div>
 
+      {stockWarehouseName ? (
+        <div style={{ marginTop: 6, fontSize: 12, color: "#334155" }}>
+          Warehouse: <strong>{stockWarehouseName}</strong> ({stockRows.length} items)
+        </div>
+      ) : null}
       <ItemLineLinkPanel
         mode="purchase"
         voucherId={voucherId}
@@ -876,9 +928,9 @@ export default function InvoiceVouchersPage() {
           className="iv-bottom-btn yellow"
           onClick={() => printRootWithLocale(pageRootRef.current, { dir: "rtl", lang: "ar" })}
         >
-          طباعة
+          ط·ط¨ط§ط¹ط©
           <br />
-          عربي
+          ط¹ط±ط¨ظٹ
         </button>
         <button
           type="button"
@@ -930,3 +982,4 @@ export default function InvoiceVouchersPage() {
     </div>
   );
 }
+

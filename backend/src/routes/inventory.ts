@@ -33,6 +33,37 @@ inventoryRouter.get(
 );
 
 inventoryRouter.get(
+  "/stock-totals",
+  asyncHandler(async (req, res) => {
+    const q = z.object({ itemId: z.string().uuid().optional() }).parse(req.query);
+    const whereBal: Prisma.InvStockBalanceWhereInput = {};
+    if (q.itemId) whereBal.itemId = q.itemId;
+    const rows = await prisma.invStockBalance.findMany({
+      where: whereBal,
+      include: {
+        item: { select: { id: true, name: true, itemNo: true, barcode: true } },
+      },
+      orderBy: [{ itemId: "asc" }, { warehouseId: "asc" }],
+    });
+
+    const totals = new Map<string, { item: (typeof rows)[number]["item"]; qtyOnHand: Prisma.Decimal }>();
+    for (const row of rows) {
+      const prev = totals.get(row.itemId);
+      if (!prev) {
+        totals.set(row.itemId, { item: row.item, qtyOnHand: new Prisma.Decimal(row.qtyOnHand) });
+      } else {
+        prev.qtyOnHand = prev.qtyOnHand.add(row.qtyOnHand);
+      }
+    }
+
+    const items = Array.from(totals.entries())
+      .map(([itemId, val]) => ({ itemId, item: val.item, qtyOnHand: val.qtyOnHand }))
+      .sort((a, b) => a.item.name.localeCompare(b.item.name));
+    res.json({ items });
+  }),
+);
+
+inventoryRouter.get(
   "/stock-moves",
   asyncHandler(async (req, res) => {
     const q = z
@@ -100,6 +131,56 @@ inventoryRouter.post(
       qtyDelta: new Prisma.Decimal(String(body.qtyDelta)),
       unitCost: new Prisma.Decimal(String(body.unitCost ?? 0)),
       moveDate: body.moveDate ? new Date(body.moveDate) : new Date(),
+      userId: (req as Express.Request & { user?: { id: string } }).user?.id,
+    });
+    res.status(201).json(r);
+  }),
+);
+
+inventoryRouter.post(
+  "/purchase-receipt",
+  asyncHandler(async (req, res) => {
+    const body = z
+      .object({
+        warehouseId: z.string().uuid(),
+        itemId: z.string().uuid(),
+        qty: z.union([z.number(), z.string()]),
+        unitCost: z.union([z.number(), z.string()]).optional().default(0),
+        moveDate: z.string().datetime().optional(),
+        referenceId: z.string().optional().nullable(),
+      })
+      .parse(req.body);
+    const r = await inv.postPurchaseReceipt({
+      warehouseId: body.warehouseId,
+      itemId: body.itemId,
+      qty: new Prisma.Decimal(String(body.qty)),
+      unitCost: new Prisma.Decimal(String(body.unitCost)),
+      moveDate: body.moveDate ? new Date(body.moveDate) : new Date(),
+      referenceId: body.referenceId ?? null,
+      userId: (req as Express.Request & { user?: { id: string } }).user?.id,
+    });
+    res.status(201).json(r);
+  }),
+);
+
+inventoryRouter.post(
+  "/sale-issue",
+  asyncHandler(async (req, res) => {
+    const body = z
+      .object({
+        warehouseId: z.string().uuid(),
+        itemId: z.string().uuid(),
+        qty: z.union([z.number(), z.string()]),
+        moveDate: z.string().datetime().optional(),
+        referenceId: z.string().optional().nullable(),
+      })
+      .parse(req.body);
+    const r = await inv.postSaleIssue({
+      warehouseId: body.warehouseId,
+      itemId: body.itemId,
+      qty: new Prisma.Decimal(String(body.qty)),
+      moveDate: body.moveDate ? new Date(body.moveDate) : new Date(),
+      referenceId: body.referenceId ?? null,
       userId: (req as Express.Request & { user?: { id: string } }).user?.id,
     });
     res.status(201).json(r);

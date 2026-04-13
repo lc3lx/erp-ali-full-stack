@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+﻿import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../lib/api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { GlSaleVoucherPost } from "../components/GlDocumentPost.jsx";
 import { DocumentStatusBadge } from "../components/erp/DocumentStatusBadge.jsx";
 import { ItemLineLinkPanel } from "../components/ItemLineLinkPanel.jsx";
+import { SearchableDropdown } from "../components/SearchableDropdown.jsx";
 import { formatIsoToDisplay, toApiDateTime } from "../lib/dates.js";
 import {
   MASTERS_REFRESH_EVENT,
@@ -36,6 +37,11 @@ export default function InvoiceSalePage() {
   const [containers, setContainers] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [stores, setStores] = useState([]);
+  const [selectedCustomerId, setSelectedCustomerId] = useState("");
+  const [selectedStoreId, setSelectedStoreId] = useState("");
+  const [stockRows, setStockRows] = useState([]);
+  const [stockByItem, setStockByItem] = useState({});
+  const [stockWarehouseName, setStockWarehouseName] = useState("");
   const [selectedLineId, setSelectedLineId] = useState("");
   const [editing, setEditing] = useState(false);
   const [editingCell, setEditingCell] = useState(null);
@@ -147,10 +153,47 @@ export default function InvoiceSalePage() {
     setEditing(false);
   }, [voucherId]);
 
+  useEffect(() => {
+    setSelectedCustomerId(detail?.customerId ?? "");
+    setSelectedStoreId(detail?.storeId ?? "");
+  }, [detail?.id, detail?.customerId, detail?.storeId, detail?.updatedAt]);
+
+  useEffect(() => {
+    if (!voucherId) {
+      setStockRows([]);
+      setStockByItem({});
+      setStockWarehouseName("");
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const stock = await api.get(`/invoice-sale/${voucherId}/stock`);
+        if (cancelled) return;
+        const rows = stock.items ?? [];
+        setStockRows(rows);
+        setStockWarehouseName(stock.warehouse?.name ?? "");
+        const map = {};
+        for (const row of rows) {
+          map[row.itemId] = Number(row.qtyOnHand ?? 0);
+        }
+        setStockByItem(map);
+      } catch {
+        if (cancelled) return;
+        setStockRows([]);
+        setStockByItem({});
+        setStockWarehouseName("");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [voucherId, lines]);
+
   const exchangeRate = str(detail?.exchangeRate ?? "6.8");
   const date = detail?.voucherDate ? formatIsoToDisplay(detail.voucherDate) : "";
   const voucherNo = detail?.voucherNo ?? "";
-  const currency = detail?.currency ?? "دولار";
+  const currency = detail?.currency ?? "ط¯ظˆظ„ط§ط±";
   const agg = totals?.aggregates;
   const formId = "is-header-form";
 
@@ -174,7 +217,7 @@ export default function InvoiceSalePage() {
   };
   const onWorkflowReject = async () => {
     if (!voucherId) return;
-    const comment = window.prompt("سبب الرفض (اختياري)") ?? "";
+    const comment = window.prompt("ط³ط¨ط¨ ط§ظ„ط±ظپط¶ (ط§ط®طھظٹط§ط±ظٹ)") ?? "";
     try {
       await api.post(`/invoice-sale/${voucherId}/workflow/reject`, { comment: comment || null });
       await reloadVoucher(voucherId);
@@ -198,8 +241,8 @@ export default function InvoiceSalePage() {
         cbmTransportPrice: fd.get("cbmTransportPrice") || undefined,
         currency: fd.get("currency") || undefined,
         containerId: fd.get("containerId") || undefined,
-        customerId: fd.get("customerId") || undefined,
-        storeId: fd.get("storeId") || null,
+        customerId: selectedCustomerId || undefined,
+        storeId: selectedStoreId || null,
         notes: fd.get("notes") || null,
       });
       await reloadVoucher(voucherId);
@@ -215,17 +258,17 @@ export default function InvoiceSalePage() {
     const cid = containers[0]?.id;
     const custId = customers[0]?.id;
     if (!cid || !custId) {
-      window.alert("تحتاج حاوية وزبون على الأقل.");
+      window.alert("طھط­طھط§ط¬ ط­ط§ظˆظٹط© ظˆط²ط¨ظˆظ† ط¹ظ„ظ‰ ط§ظ„ط£ظ‚ظ„.");
       return;
     }
-    const vn = window.prompt("رقم سند البيع؟", `S-${Date.now()}`);
+    const vn = window.prompt("ط±ظ‚ظ… ط³ظ†ط¯ ط§ظ„ط¨ظٹط¹طں", `S-${Date.now()}`);
     if (!vn || !vn.trim()) return;
     try {
       const v = await api.post("/invoice-sale", {
         voucherNo: vn.trim(),
         containerId: cid,
         customerId: custId,
-        currency: "دولار",
+        currency: "ط¯ظˆظ„ط§ط±",
       });
       const data = await api.get("/invoice-sale", { page: 1, pageSize: 100 });
       setList(data.items ?? []);
@@ -236,7 +279,7 @@ export default function InvoiceSalePage() {
   };
 
   const onDelete = async () => {
-    if (!voucherId || !window.confirm("حذف سند البيع؟")) return;
+    if (!voucherId || !window.confirm("ط­ط°ظپ ط³ظ†ط¯ ط§ظ„ط¨ظٹط¹طں")) return;
     try {
       await api.delete(`/invoice-sale/${voucherId}`);
       const data = await api.get("/invoice-sale", { page: 1, pageSize: 100 });
@@ -251,7 +294,7 @@ export default function InvoiceSalePage() {
   const onAddLine = async () => {
     if (!voucherId) return;
     try {
-      await api.post(`/invoice-sale/${voucherId}/items`, { detail: "سطر جديد" });
+      await api.post(`/invoice-sale/${voucherId}/items`, { detail: "ط³ط·ط± ط¬ط¯ظٹط¯" });
       await reloadVoucher(voucherId);
     } catch (e) {
       setErr(e.message);
@@ -259,7 +302,7 @@ export default function InvoiceSalePage() {
   };
 
   const onDeleteLine = async () => {
-    if (!voucherId || !selectedLineId || !window.confirm("حذف السطر؟")) return;
+    if (!voucherId || !selectedLineId || !window.confirm("ط­ط°ظپ ط§ظ„ط³ط·ط±طں")) return;
     try {
       await api.delete(`/invoice-sale/${voucherId}/items/${selectedLineId}`);
       setSelectedLineId("");
@@ -273,13 +316,13 @@ export default function InvoiceSalePage() {
     if (!voucherId || !selectedLineId) return;
     const row = lines.find((x) => x.id === selectedLineId);
     if (!row) return;
-    const detailText = window.prompt("التفاصيل", row.detail ?? "");
+    const detailText = window.prompt("ط§ظ„طھظپط§طµظٹظ„", row.detail ?? "");
     if (detailText == null) return;
-    const itemNo = window.prompt("رقم المادة", row.itemNo ?? "");
+    const itemNo = window.prompt("ط±ظ‚ظ… ط§ظ„ظ…ط§ط¯ط©", row.itemNo ?? "");
     if (itemNo == null) return;
-    const qty = window.prompt("الكمية", str(row.listQty ?? ""));
+    const qty = window.prompt("ط§ظ„ظƒظ…ظٹط©", str(row.listQty ?? ""));
     if (qty == null) return;
-    const totalPrice = window.prompt("مجموع السعر", str(row.totalPrice ?? ""));
+    const totalPrice = window.prompt("ظ…ط¬ظ…ظˆط¹ ط§ظ„ط³ط¹ط±", str(row.totalPrice ?? ""));
     if (totalPrice == null) return;
     try {
       await api.patch(`/invoice-sale/${voucherId}/items/${selectedLineId}`, {
@@ -358,16 +401,16 @@ export default function InvoiceSalePage() {
   const goLatestVoucher = () => {
     const id = list[0]?.id;
     if (id) setVoucherId(id);
-    else window.alert("لا توجد فواتير بيع.");
+    else window.alert("ظ„ط§ طھظˆط¬ط¯ ظپظˆط§طھظٹط± ط¨ظٹط¹.");
   };
 
   const showRecentVoucherList = () => {
     if (!list.length) {
-      window.alert("لا توجد فواتير.");
+      window.alert("ظ„ط§ طھظˆط¬ط¯ ظپظˆط§طھظٹط±.");
       return;
     }
-    const lines = list.slice(0, 20).map((v, i) => `${i + 1}. ${v.voucherNo} — ${v.container?.containerNo ?? "?"}`);
-    window.alert(`أحدث سندات البيع:\n\n${lines.join("\n")}`);
+    const lines = list.slice(0, 20).map((v, i) => `${i + 1}. ${v.voucherNo} â€” ${v.container?.containerNo ?? "?"}`);
+    window.alert(`ط£ط­ط¯ط« ط³ظ†ط¯ط§طھ ط§ظ„ط¨ظٹط¹:\n\n${lines.join("\n")}`);
   };
 
   const scrollHeader = () => headerBlockRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -380,6 +423,14 @@ export default function InvoiceSalePage() {
     navigateAppPage("list");
   };
 
+  const lowStockLines = lines.filter((line) => {
+    if (!line.itemId) return false;
+    const required = Number(line.listQty ?? 0);
+    if (required <= 0) return false;
+    const available = Number(stockByItem[line.itemId] ?? 0);
+    return required > available;
+  });
+
   return (
     <div className="is-page" dir="ltr" ref={pageRootRef}>
       {err ? <div className="alert-error" style={{ margin: 6 }}>{err}</div> : null}
@@ -388,10 +439,10 @@ export default function InvoiceSalePage() {
       <div className="is-top-wrap" ref={headerBlockRef}>
         <div className="is-top-row">
           <button type="button" className="is-btn-edit" onClick={() => setEditing((x) => !x)}>
-            {editing ? "قفل" : "تعديل"}
+            {editing ? "ظ‚ظپظ„" : "طھط¹ط¯ظٹظ„"}
           </button>
           <span className="is-lbl">%0</span>
-          <span className="is-lbl">عمولة المكتب</span>
+          <span className="is-lbl">ط¹ظ…ظˆظ„ط© ط§ظ„ظ…ظƒطھط¨</span>
           <input
             className="is-small-input"
             name="officeCommission"
@@ -400,7 +451,7 @@ export default function InvoiceSalePage() {
             defaultValue={str(detail?.officeCommission ?? "0")}
             key={`oc-${voucherId}-${detail?.updatedAt}`}
           />
-          <span className="is-lbl">سعر نقل المتر المكعب</span>
+          <span className="is-lbl">ط³ط¹ط± ظ†ظ‚ظ„ ط§ظ„ظ…طھط± ط§ظ„ظ…ظƒط¹ط¨</span>
           <input
             className="is-small-input"
             name="cbmTransportPrice"
@@ -420,14 +471,14 @@ export default function InvoiceSalePage() {
             defaultValue={exchangeRate}
             key={`er-${voucherId}-${detail?.updatedAt}`}
           />
-          <span className="is-rate-lbl">سعر الصرف</span>
+          <span className="is-rate-lbl">ط³ط¹ط± ط§ظ„طµط±ظپ</span>
         </div>
 
         <form id={formId} onSubmit={onSave}>
           <div className="is-mid-row">
             <div className="is-left-cluster">
               <div className="is-balance-line">
-                <span className="is-mini-title">مجموع</span>
+                <span className="is-mini-title">ظ…ط¬ظ…ظˆط¹</span>
                 <input className="is-balance-input" value={str(totals?.total ?? "")} readOnly />
               </div>
               <div className="is-container-line">
@@ -444,45 +495,46 @@ export default function InvoiceSalePage() {
                     </option>
                   ))}
                 </select>
-                <span className="is-lbl">رقم الحاوية</span>
+                <span className="is-lbl">ط±ظ‚ظ… ط§ظ„ط­ط§ظˆظٹط©</span>
               </div>
               <button
                 type="button"
                 className="is-blue-pill"
                 onClick={() =>
-                  window.alert(`عملة السند: ${detail?.currency ?? "—"}\nسعر الصرف الحالي في النموذج: ${exchangeRate}`)
+                  window.alert(`ط¹ظ…ظ„ط© ط§ظ„ط³ظ†ط¯: ${detail?.currency ?? "â€”"}\nط³ط¹ط± ط§ظ„طµط±ظپ ط§ظ„ط­ط§ظ„ظٹ ظپظٹ ط§ظ„ظ†ظ…ظˆط°ط¬: ${exchangeRate}`)
                 }
-                title="عرض العملة وسعر الصرف"
+                title="ط¹ط±ط¶ ط§ظ„ط¹ظ…ظ„ط© ظˆط³ط¹ط± ط§ظ„طµط±ظپ"
               >
-                {detail?.currency ?? "العملة"}
+                {detail?.currency ?? "ط§ظ„ط¹ظ…ظ„ط©"}
               </button>
             </div>
 
             <div className="is-mini-actions">
               <button type="button" className="is-mini-act" onClick={onNew}>
-                جديد
+                ط¬ط¯ظٹط¯
               </button>
               <button type="button" className="is-mini-act red" onClick={onDelete}>
-                حذف
+                ط­ط°ظپ
               </button>
             </div>
 
-            <select
-              className="is-supplier-box"
+            <SearchableDropdown
               name="customerId"
               dir="rtl"
+              className="is-search-select"
+              inputClassName="is-supplier-box"
               disabled={!editing}
-              defaultValue={detail?.customerId ?? ""}
-              key={`cu-${voucherId}-${detail?.updatedAt}`}
-              style={{ border: "1px solid #ccc", minHeight: 36 }}
-            >
-              {customers.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-            <span className="is-lbl">الزبون</span>
+              value={selectedCustomerId}
+              onChange={setSelectedCustomerId}
+              options={customers}
+              getOptionValue={(party) => party.id}
+              getOptionLabel={(party) => party.name}
+              placeholder="ط§ط®طھط± ط§ظ„ط²ط¨ظˆظ†"
+              searchPlaceholder="ط§ط¨ط­ط« ط¹ظ† ط²ط¨ظˆظ†..."
+              clearLabel="â€” ط§ط®طھط± ط§ظ„ط²ط¨ظˆظ† â€”"
+              allowClear={false}
+            />
+            <span className="is-lbl">ط§ظ„ط²ط¨ظˆظ†</span>
 
             <div className="is-spacer" />
 
@@ -494,7 +546,7 @@ export default function InvoiceSalePage() {
               defaultValue={date}
               key={`vd-${voucherId}-${detail?.updatedAt}`}
             />
-            <span className="is-lbl">تاريخ العامة</span>
+            <span className="is-lbl">طھط§ط±ظٹط® ط§ظ„ط¹ط§ظ…ط©</span>
 
             <div className="is-voucher-stack">
               <input
@@ -511,7 +563,7 @@ export default function InvoiceSalePage() {
                 onChange={(e) => setVoucherId(e.target.value)}
               >
                 {list.length === 0 ? (
-                  <option value="">—</option>
+                  <option value="">â€”</option>
                 ) : (
                   list.map((v) => (
                     <option key={v.id} value={v.id}>
@@ -521,22 +573,22 @@ export default function InvoiceSalePage() {
                 )}
               </select>
             </div>
-            <span className="is-lbl">ت القائمة</span>
+            <span className="is-lbl">طھ ط§ظ„ظ‚ط§ط¦ظ…ط©</span>
 
             <div className="erp-workflow-row" style={{ gridColumn: "1 / -1" }}>
               <DocumentStatusBadge status={detail?.documentStatus} />
               {detail?.documentStatus === "DRAFT" && (user?.role === "DATA_ENTRY" || user?.role === "ACCOUNTANT" || user?.role === "ADMIN") ? (
                 <button type="button" onClick={onWorkflowSubmit}>
-                  إرسال للموافقة
+                  ط¥ط±ط³ط§ظ„ ظ„ظ„ظ…ظˆط§ظپظ‚ط©
                 </button>
               ) : null}
               {detail?.documentStatus === "SUBMITTED" && (user?.role === "ACCOUNTANT" || user?.role === "ADMIN") ? (
                 <>
                   <button type="button" onClick={onWorkflowApprove}>
-                    اعتماد
+                    ط§ط¹طھظ…ط§ط¯
                   </button>
                   <button type="button" onClick={onWorkflowReject}>
-                    رفض
+                    ط±ظپط¶
                   </button>
                 </>
               ) : null}
@@ -549,28 +601,28 @@ export default function InvoiceSalePage() {
               defaultValue={currency}
               key={`cur-${voucherId}-${detail?.updatedAt}`}
             >
-              <option value="دولار">دولار</option>
-              <option value="دينار">دينار</option>
+              <option value="ط¯ظˆظ„ط§ط±">ط¯ظˆظ„ط§ط±</option>
+              <option value="ط¯ظٹظ†ط§ط±">ط¯ظٹظ†ط§ط±</option>
             </select>
-            <span className="is-lbl">العملة</span>
+            <span className="is-lbl">ط§ظ„ط¹ظ…ظ„ط©</span>
           </div>
 
           <div className="is-top-row third">
             <div className="is-spacer" />
-            <select
-              className="is-store-select"
+            <SearchableDropdown
               name="storeId"
+              className="is-search-select"
+              inputClassName="is-store-select"
               disabled={!editing}
-              defaultValue={detail?.storeId ?? ""}
-              key={`st-${voucherId}-${detail?.updatedAt}`}
-            >
-              <option value="">—</option>
-              {stores.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
+              value={selectedStoreId}
+              onChange={setSelectedStoreId}
+              options={stores}
+              getOptionValue={(store) => store.id}
+              getOptionLabel={(store) => store.name}
+              placeholder="—"
+              searchPlaceholder="ابحث عن مستودع..."
+              clearLabel="— بدون مستودع —"
+            />
             <span className="is-lbl">Store Targit</span>
             <input
               className="is-notes-input"
@@ -579,20 +631,20 @@ export default function InvoiceSalePage() {
               defaultValue={detail?.notes ?? ""}
               key={`nt-${voucherId}-${detail?.updatedAt}`}
             />
-            <span className="is-lbl">ملاحظات</span>
+            <span className="is-lbl">ظ…ظ„ط§ط­ط¸ط§طھ</span>
           </div>
           <div className="is-top-row" style={{ marginTop: 8 }}>
             <button type="submit" className="is-btn">
-              حفظ السند
+              ط­ظپط¸ ط§ظ„ط³ظ†ط¯
             </button>
             <button type="button" className="is-item-btn green" onClick={onAddLine}>
-              + سطر
+              + ط³ط·ط±
             </button>
             <button type="button" className="is-item-btn red" onClick={onDeleteLine} disabled={!selectedLineId}>
-              حذف سطر
+              ط­ط°ظپ ط³ط·ط±
             </button>
             <button type="button" className="is-item-btn green" onClick={onEditLine} disabled={!selectedLineId}>
-              تعديل سطر
+              طھط¹ط¯ظٹظ„ ط³ط·ط±
             </button>
           </div>
         </form>
@@ -604,55 +656,56 @@ export default function InvoiceSalePage() {
             <tr>
               <th />
               <th>
-                سعر تحويل
+                ط³ط¹ط± طھط­ظˆظٹظ„
                 <br />
-                الدولار
+                ط§ظ„ط¯ظˆظ„ط§ط±
               </th>
               <th>
-                مجموع سعر
+                ظ…ط¬ظ…ظˆط¹ ط³ط¹ط±
                 <br />
-                الدولار
+                ط§ظ„ط¯ظˆظ„ط§ط±
               </th>
               <th>
-                سعر
+                ط³ط¹ط±
                 <br />
-                الدولار
+                ط§ظ„ط¯ظˆظ„ط§ط±
               </th>
               <th>
-                مجموع المتر
+                ظ…ط¬ظ…ظˆط¹ ط§ظ„ظ…طھط±
                 <br />
-                المكعب
+                ط§ظ„ظ…ظƒط¹ط¨
               </th>
-              <th>وزن</th>
+              <th>ظˆط²ظ†</th>
               <th>cbm</th>
               <th>cbm</th>
               <th>
-                عدد
+                ط¹ط¯ط¯
                 <br />
-                القائمة
+                ط§ظ„ظ‚ط§ط¦ظ…ط©
               </th>
               <th>
-                سعر كل
+                ط³ط¹ط± ظƒظ„
                 <br />
-                الف
+                ط§ظ„ظپ
               </th>
-              <th>مجموع سعر</th>
+              <th>ظ…ط¬ظ…ظˆط¹ ط³ط¹ط±</th>
               <th>
-                قطعة داخل
+                ظ‚ط·ط¹ط© ط¯ط§ط®ظ„
                 <br />
-                الكارتون
+                ط§ظ„ظƒط§ط±طھظˆظ†
               </th>
-              <th>سعر</th>
-              <th>التفاصيل</th>
-              <th>رقم</th>
-              <th>ت</th>
+              <th>ط³ط¹ط±</th>
+              <th>ط§ظ„طھظپط§طµظٹظ„</th>
+              <th>ط±ظ‚ظ…</th>
+              <th>Available</th>
+              <th>طھ</th>
             </tr>
           </thead>
           <tbody>
             {lines.length === 0 ? (
               <tr>
-                <td colSpan={16} style={{ textAlign: "center", padding: 12 }}>
-                  لا أسطر
+                <td colSpan={17} style={{ textAlign: "center", padding: 12 }}>
+                  ظ„ط§ ط£ط³ط·ط±
                 </td>
               </tr>
             ) : (
@@ -665,7 +718,7 @@ export default function InvoiceSalePage() {
                   }}
                   onClick={() => setSelectedLineId(r.id)}
                 >
-                  <td className="is-arrow">▶</td>
+                  <td className="is-arrow">â–¶</td>
                   <td onDoubleClick={() => beginCellEdit(r.id, "usdConvertRate", r.usdConvertRate)}>
                     {editingCell?.lineId === r.id && editingCell?.field === "usdConvertRate" ? (
                       <input
@@ -774,6 +827,20 @@ export default function InvoiceSalePage() {
                       r.itemNo ?? ""
                     )}
                   </td>
+                  <td
+                    style={{
+                      color:
+                        r.itemId && Number(r.listQty ?? 0) > Number(stockByItem[r.itemId] ?? 0)
+                          ? "crimson"
+                          : undefined,
+                      fontWeight:
+                        r.itemId && Number(r.listQty ?? 0) > Number(stockByItem[r.itemId] ?? 0)
+                          ? 700
+                          : undefined,
+                    }}
+                  >
+                    {r.itemId ? str(stockByItem[r.itemId] ?? 0) : "—"}
+                  </td>
                   <td>{str(r.seq)}</td>
                 </tr>
               ))
@@ -781,6 +848,16 @@ export default function InvoiceSalePage() {
           </tbody>
         </table>
       </div>
+      {stockWarehouseName ? (
+        <div style={{ marginTop: 6, fontSize: 12, color: "#334155" }}>
+          Warehouse: <strong>{stockWarehouseName}</strong> ({stockRows.length} items)
+        </div>
+      ) : null}
+      {lowStockLines.length > 0 ? (
+        <div className="alert-error" style={{ marginTop: 6 }}>
+          يوجد {lowStockLines.length} سطر بيع بكمية أكبر من المتاح في المستودع المحدد.
+        </div>
+      ) : null}
 
       <div className="is-sum-row">
         <div className="is-sum-grid">
@@ -806,9 +883,9 @@ export default function InvoiceSalePage() {
           </div>
         </div>
         <div className="is-accounting-row">
-          <span className="is-sum-label">المحاسبة</span>
+          <span className="is-sum-label">ط§ظ„ظ…ط­ط§ط³ط¨ط©</span>
           <input className="is-sum-input yellow" value={str(detail?.accountingDebit ?? "0")} readOnly />
-          <span className="is-sum-label">المحاسبة دائن/مدين</span>
+          <span className="is-sum-label">ط§ظ„ظ…ط­ط§ط³ط¨ط© ط¯ط§ط¦ظ†/ظ…ط¯ظٹظ†</span>
         </div>
       </div>
 
@@ -816,22 +893,22 @@ export default function InvoiceSalePage() {
         <div className="is-total-box">
           <div className="is-total-line">
             <input value={str(totals?.total ?? "")} readOnly />
-            <span>المجموع</span>
+            <span>ط§ظ„ظ…ط¬ظ…ظˆط¹</span>
           </div>
           <div className="is-total-line">
             <input value={str(totals?.paid ?? "")} readOnly />
-            <span>المسدد</span>
+            <span>ط§ظ„ظ…ط³ط¯ط¯</span>
           </div>
           <div className="is-total-line">
             <input value={str(totals?.remaining ?? "")} readOnly />
-            <span>المجموع الباقي</span>
+            <span>ط§ظ„ظ…ط¬ظ…ظˆط¹ ط§ظ„ط¨ط§ظ‚ظٹ</span>
           </div>
           <div className="is-total-line">
             <input value={str(totals?.profit ?? "")} readOnly />
-            <span>أرباح</span>
+            <span>ط£ط±ط¨ط§ط­</span>
           </div>
         </div>
-        <div className="is-yellow-note">بضاعة لهذا المستثمر</div>
+        <div className="is-yellow-note">ط¨ط¶ط§ط¹ط© ظ„ظ‡ط°ط§ ط§ظ„ظ…ط³طھط«ظ…ط±</div>
       </div>
 
       <ItemLineLinkPanel
@@ -863,9 +940,9 @@ export default function InvoiceSalePage() {
           className="is-btn yellow"
           onClick={() => printRootWithLocale(pageRootRef.current, { dir: "rtl", lang: "ar" })}
         >
-          طباعة
+          ط·ط¨ط§ط¹ط©
           <br />
-          عربي
+          ط¹ط±ط¨ظٹ
         </button>
         <button
           type="button"
@@ -885,7 +962,7 @@ export default function InvoiceSalePage() {
           type="button"
           className="is-btn yellow"
           onClick={() => {
-            const usePride = window.confirm("موافق = نسخة Pride\nإلغاء = نسخة Faqr");
+            const usePride = window.confirm("ظ…ظˆط§ظپظ‚ = ظ†ط³ط®ط© Pride\nط¥ظ„ط؛ط§ط، = ظ†ط³ط®ط© Faqr");
             printWithBanner(pageRootRef.current, usePride ? "Pride copy" : "Faqr copy");
           }}
         >
@@ -934,3 +1011,4 @@ export default function InvoiceSalePage() {
     </div>
   );
 }
+

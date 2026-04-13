@@ -279,15 +279,20 @@ export async function applyPurchaseVoucherInventory(
     where: { id: voucherId },
     include: { lines: true, store: true, container: { include: { costLines: true } } },
   });
-  if (!v || !v.storeId) return;
-
-  const wh = await ensureWarehouseForStore(tx, v.storeId);
-  if (!wh) return;
+  if (!v) return;
 
   await removeInventoryMovesForReference(tx, voucherId, ["PURCHASE_VOUCHER"]);
 
-  const linesWithItems = v.lines.filter((l) => l.itemId);
+  const linesWithItems = v.lines.filter((l) => l.itemId && lineQty(l).gt(0));
   if (linesWithItems.length === 0) return;
+  if (!v.storeId) {
+    throw new AppError(409, "Select a store/warehouse before posting purchase inventory lines");
+  }
+
+  const wh = await ensureWarehouseForStore(tx, v.storeId);
+  if (!wh) {
+    throw new AppError(409, "Warehouse is not configured for the selected store");
+  }
 
   for (const line of linesWithItems) {
     const qty = lineQty(line);
@@ -336,14 +341,22 @@ export async function applySaleVoucherInventory(
     where: { id: voucherId },
     include: { lines: true },
   });
-  if (!v || !v.storeId) return;
-
-  const wh = await ensureWarehouseForStore(tx, v.storeId);
-  if (!wh) return;
+  if (!v) return;
 
   await removeInventoryMovesForReference(tx, voucherId, ["SALE_VOUCHER"]);
 
-  for (const line of v.lines) {
+  const linesWithItems = v.lines.filter((l) => l.itemId && D(l.listQty).gt(0));
+  if (linesWithItems.length === 0) return;
+  if (!v.storeId) {
+    throw new AppError(409, "Select a store/warehouse before posting sale inventory lines");
+  }
+
+  const wh = await ensureWarehouseForStore(tx, v.storeId);
+  if (!wh) {
+    throw new AppError(409, "Warehouse is not configured for the selected store");
+  }
+
+  for (const line of linesWithItems) {
     if (!line.itemId) continue;
     const qty = D(line.listQty);
     if (qty.lte(0)) continue;
@@ -379,6 +392,149 @@ export async function applySaleVoucherInventory(
     });
     await recomputeStockBalance(tx, wh.id, line.itemId);
   }
+}
+
+/** شراء مباشر (وارد مستودع) */
+export async function postPurchaseReceipt(input: {
+  warehouseId: string;
+  itemId: string;
+  qty: Prisma.Decimal;
+  unitCost: Prisma.Decimal;
+  moveDate: Date;
+  referenceId?: string | null;
+  userId?: string;
+}) {
+  if (input.qty.lte(0)) throw new AppError(400, "Quantity must be greater than zero");
+  if (input.unitCost.lt(0)) throw new AppError(400, "Unit cost cannot be negative");
+
+  return prisma.$transaction(async (tx) => {
+    const [warehouse, item] = await Promise.all([
+      tx.invWarehouse.findUnique({ where: { id: input.warehouseId } }),
+      tx.item.findUnique({ where: { id: input.itemId } }),
+    ]);
+    if (!warehouse || warehouse.isActive === false) {
+      throw new AppError(404, "Warehouse not found or inactive");
+    }
+    if (!item || item.isActive === false) throw new AppError(404, "Item not found or inactive");
+
+    const move = await tx.invStockMove.create({
+      data: {
+        moveDate: input.moveDate,
+        warehouseId: input.warehouseId,
+        itemId: input.itemId,
+        type: "PURCHASE_RECEIPT",
+        qty: input.qty,
+        unitCost: input.unitCost,
+        totalCost: input.qty.mul(input.unitCost),
+        referenceKind: "INVENTORY",
+        referenceId: input.referenceId ?? null,
+      },
+    });
+
+    if (item.costingMethod === "FIFO") {
+      await tx.invCostLayer.create({
+        data: {
+          warehouseId: input.warehouseId,
+          itemId: input.itemId,
+          sourceMoveId: move.id,
+          qtyRemaining: input.qty,
+          unitCost: input.unitCost,
+        },
+      });
+    }
+
+    await recomputeStockBalance(tx, input.warehouseId, input.itemId);
+    await tx.auditLog.create({
+      data: {
+        userId: input.userId ?? null,
+        action: "STOCK_PURCHASE_RECEIPT",
+        entityType: "InvStockMove",
+        entityId: move.id,
+        details: {
+          warehouseId: input.warehouseId,
+          itemId: input.itemId,
+          qty: input.qty.toString(),
+          unitCost: input.unitCost.toString(),
+          referenceId: input.referenceId ?? null,
+        },
+      },
+    });
+
+    return { ok: true, move };
+  });
+}
+
+/** بيع مباشر (صادر مستودع) */
+export async function postSaleIssue(input: {
+  warehouseId: string;
+  itemId: string;
+  qty: Prisma.Decimal;
+  moveDate: Date;
+  referenceId?: string | null;
+  userId?: string;
+}) {
+  if (input.qty.lte(0)) throw new AppError(400, "Quantity must be greater than zero");
+
+  return prisma.$transaction(async (tx) => {
+    const [warehouse, item] = await Promise.all([
+      tx.invWarehouse.findUnique({ where: { id: input.warehouseId } }),
+      tx.item.findUnique({ where: { id: input.itemId } }),
+    ]);
+    if (!warehouse || warehouse.isActive === false) {
+      throw new AppError(404, "Warehouse not found or inactive");
+    }
+    if (!item || item.isActive === false) throw new AppError(404, "Item not found or inactive");
+
+    let unitCost = D(0);
+    let totalCost = D(0);
+    if (item.costingMethod === "FIFO") {
+      const consumed = await consumeFIFO(tx, input.warehouseId, input.itemId, input.qty);
+      totalCost = consumed.totalCost;
+      unitCost = input.qty.gt(0) ? totalCost.div(input.qty) : D(0);
+    } else {
+      const bal = await tx.invStockBalance.findUnique({
+        where: { warehouseId_itemId: { warehouseId: input.warehouseId, itemId: input.itemId } },
+      });
+      const onHand = D(bal?.qtyOnHand);
+      if (onHand.lt(input.qty)) {
+        throw new AppError(409, "Insufficient stock in selected warehouse");
+      }
+      unitCost = D(bal?.avgUnitCost);
+      totalCost = unitCost.mul(input.qty);
+    }
+
+    const move = await tx.invStockMove.create({
+      data: {
+        moveDate: input.moveDate,
+        warehouseId: input.warehouseId,
+        itemId: input.itemId,
+        type: "SALE_ISSUE",
+        qty: input.qty,
+        unitCost,
+        totalCost,
+        referenceKind: "INVENTORY",
+        referenceId: input.referenceId ?? null,
+      },
+    });
+
+    await recomputeStockBalance(tx, input.warehouseId, input.itemId);
+    await tx.auditLog.create({
+      data: {
+        userId: input.userId ?? null,
+        action: "STOCK_SALE_ISSUE",
+        entityType: "InvStockMove",
+        entityId: move.id,
+        details: {
+          warehouseId: input.warehouseId,
+          itemId: input.itemId,
+          qty: input.qty.toString(),
+          referenceId: input.referenceId ?? null,
+        },
+      },
+    });
+
+    return { ok: true, move };
+  });
 }
 
 /** تحويل بين مستودعين */

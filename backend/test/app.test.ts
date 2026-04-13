@@ -166,6 +166,18 @@ describe("api (PostgreSQL + seed optional)", () => {
     expect(Number(totals.body.summation)).toBe(120);
     expect(Number(totals.body.balance)).toBe(120);
 
+    const submit = await request(app)
+      .post(`/api/v1/invoice-vouchers/${voucherId}/workflow/submit`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({});
+    expect(submit.status).toBe(200);
+
+    const approve = await request(app)
+      .post(`/api/v1/invoice-vouchers/${voucherId}/workflow/approve`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({});
+    expect(approve.status).toBe(200);
+
     const post = await request(app)
       .post(`/api/v1/finance/post/purchase-voucher/${voucherId}`)
       .set("Authorization", `Bearer ${token}`)
@@ -209,6 +221,18 @@ describe("api (PostgreSQL + seed optional)", () => {
     expect(totals.status).toBe(200);
     expect(Number(totals.body.total)).toBe(250);
     expect(Number(totals.body.remaining)).toBe(250);
+
+    const submit = await request(app)
+      .post(`/api/v1/invoice-sale/${voucherId}/workflow/submit`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({});
+    expect(submit.status).toBe(200);
+
+    const approve = await request(app)
+      .post(`/api/v1/invoice-sale/${voucherId}/workflow/approve`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({});
+    expect(approve.status).toBe(200);
 
     const post = await request(app)
       .post(`/api/v1/finance/post/sale-voucher/${voucherId}`)
