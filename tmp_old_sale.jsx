@@ -91,64 +91,8 @@ const Lf = {
   "ابحث عن مستودع...": "ابحث عن مستودع...",
   "— بدون مستودع —": "— بدون مستودع —",
 };
-const mojibakeHintRegex = /(?:â€|Ã|Â|�|ط[\u00a0-\u00ff]|ظ[\u00a0-\u00ff])/g;
-const windows1256EncodeMap = (() => {
-  if (typeof TextDecoder === "undefined" || typeof Uint8Array === "undefined")
-    return null;
-  try {
-    const e = new TextDecoder("windows-1256");
-    const t = new Map();
-    for (let n = 0; n < 256; n += 1) {
-      const r = e.decode(Uint8Array.of(n));
-      t.has(r) || t.set(r, n);
-    }
-    return t;
-  } catch {
-    return null;
-  }
-})();
-const utf8Decoder =
-  typeof TextDecoder !== "undefined"
-    ? new TextDecoder("utf-8", { fatal: !1 })
-    : null;
-function mojibakeScore(e) {
-  if (!e) return 0;
-  const t = e.match(mojibakeHintRegex);
-  return t ? t.length : 0;
-}
-function decodeMojibakeWindows1256ToUtf8(e) {
-  if (!e || !windows1256EncodeMap || !utf8Decoder) return e;
-  let t = e;
-  for (let n = 0; n < 3; n += 1) {
-    const r = mojibakeScore(t);
-    if (!r) break;
-    const l = [];
-    let a = !0;
-    for (const i of t) {
-      const o = windows1256EncodeMap.get(i);
-      if (o == null) {
-        a = !1;
-        break;
-      }
-      l.push(o);
-    }
-    if (!a || !l.length) break;
-    let i = t;
-    try {
-      i = utf8Decoder.decode(new Uint8Array(l));
-    } catch {
-      break;
-    }
-    if (!i || i === t) break;
-    if (mojibakeScore(i) > r) break;
-    t = i;
-  }
-  return t;
-}
 function br(e) {
-  let t = he(e);
-  for (const [n, r] of Object.entries(Lf)) t = t.split(n).join(r);
-  t = decodeMojibakeWindows1256ToUtf8(t);
+  let t = e;
   for (const [n, r] of Object.entries(Lf)) t = t.split(n).join(r);
   return t;
 }
@@ -233,7 +177,7 @@ function Rf() {
             P(ee.items ?? []),
             m(oe.items ?? []));
         } catch (w) {
-          v || h(br(w.message));
+          v || h(w.message);
         }
       })(),
       () => {
@@ -268,7 +212,7 @@ function Rf() {
                 D(oe.items ?? []);
               }
             } catch (oe) {
-              h(br(oe.message));
+              h(oe.message);
             }
           })();
       };
@@ -305,7 +249,7 @@ function Rf() {
           try {
             (await ge(r), v || h(""));
           } catch (w) {
-            v || h(br(w.message));
+            v || h(w.message);
           }
         })(),
         () => {
@@ -363,7 +307,7 @@ function Rf() {
         try {
           (await E.post(`/invoice-sale/${r}/workflow/submit`, {}), await ge(r));
         } catch (v) {
-          window.alert(br(v.message));
+          window.alert(v.message);
         }
     },
     Be = async () => {
@@ -372,7 +316,7 @@ function Rf() {
           (await E.post(`/invoice-sale/${r}/workflow/approve`, {}),
             await ge(r));
         } catch (v) {
-          window.alert(br(v.message));
+          window.alert(v.message);
         }
     },
     Se = async () => {
@@ -384,7 +328,7 @@ function Rf() {
         }),
           await ge(r));
       } catch (w) {
-        window.alert(br(w.message));
+        window.alert(w.message);
       }
     },
     Re = async (v) => {
@@ -409,7 +353,7 @@ function Rf() {
         const ee = await E.get("/invoice-sale", { page: 1, pageSize: 100 });
         (n(ee.items ?? []), se(!1));
       } catch (ee) {
-        h(br(ee.message));
+        h(ee.message);
       }
     },
     T = async () => {
@@ -432,7 +376,7 @@ function Rf() {
             Nt = await E.get("/invoice-sale", { page: 1, pageSize: 100 });
           (n(Nt.items ?? []), l(ve.id));
         } catch (ve) {
-          h(br(ve.message));
+          h(ve.message);
         }
     },
     q = async () => {
@@ -445,7 +389,7 @@ function Rf() {
             [];
           (n(B), l(((v = B[0]) == null ? void 0 : v.id) ?? ""));
         } catch (w) {
-          h(br(w.message));
+          h(w.message);
         }
     },
     G = async () => {
@@ -456,7 +400,7 @@ function Rf() {
           }),
             await ge(r));
         } catch (v) {
-          h(br(v.message));
+          h(v.message);
         }
     },
     Ee = async () => {
@@ -466,7 +410,7 @@ function Rf() {
             ie(""),
             await ge(r));
         } catch (v) {
-          h(br(v.message));
+          h(v.message);
         }
     },
     Ne = async () => {
@@ -490,7 +434,7 @@ function Rf() {
           }),
             await ge(r));
         } catch (ve) {
-          h(br(ve.message));
+          h(ve.message);
         }
     },
     Pe = new Set([
@@ -534,7 +478,7 @@ function Rf() {
       try {
         (await E.patch(`/invoice-sale/${r}/items/${v}`, B), await ge(r));
       } catch (ee) {
-        h(br(ee.message));
+        h(ee.message);
       } finally {
         (V(null), W(""));
       }
@@ -554,7 +498,7 @@ function Rf() {
       }
       const v = t.slice(0, 20).map((w, B) => {
         var ee;
-        return `${B + 1}. ${br(w.voucherNo)} — ${br(((ee = w.container) == null ? void 0 : ee.containerNo) ?? "?")}`;
+        return `${B + 1}. ${w.voucherNo} — ${((ee = w.container) == null ? void 0 : ee.containerNo) ?? "?"}`;
       });
       window.alert(`أحدث فواتير البيع:
 
@@ -715,7 +659,7 @@ ${v.join(`
                               children: C.map((v) =>
                                 s.jsx(
                                   "option",
-                                  { value: v.id, children: br(v.containerNo) },
+                                  { value: v.id, children: v.containerNo },
                                   v.id,
                                 ),
                               ),
@@ -733,11 +677,11 @@ ${v.join(`
                         type: "button",
                         className: "is-blue-pill",
                         onClick: () =>
-                          window.alert(`عملة السند: ${br((a == null ? void 0 : a.currency) ?? "—")}
+                          window.alert(`عملة السند: ${(a == null ? void 0 : a.currency) ?? "—"}
 سعر الصرف الحالي في النموذج: ${xe}`),
                         title: "عرض العملة وسعر الصرف",
                         children:
-                          br((a == null ? void 0 : a.currency) ?? "العملة"),
+                          (a == null ? void 0 : a.currency) ?? "العملة",
                       }),
                     ],
                   }),
@@ -768,7 +712,7 @@ ${v.join(`
                     onChange: f,
                     options: k,
                     getOptionValue: (v) => v.id,
-                    getOptionLabel: (v) => br(v.name),
+                    getOptionLabel: (v) => v.name,
                     placeholder: "اختر الزبون",
                     searchPlaceholder:
                       "ابحث عن زبون...",
@@ -805,7 +749,7 @@ ${v.join(`
                           className: "is-voucher-input",
                           name: "voucherNo",
                           readOnly: !J,
-                          defaultValue: br(ye),
+                          defaultValue: ye,
                         },
                         `vn-${r}-${a == null ? void 0 : a.updatedAt}`,
                       ),
@@ -826,9 +770,9 @@ ${v.join(`
                                   {
                                     value: v.id,
                                     children: [
-                                      br(v.voucherNo),
+                                      v.voucherNo,
                                       " (",
-                                      br(v.currency),
+                                      v.currency,
                                       ")",
                                     ],
                                   },
@@ -919,7 +863,7 @@ ${v.join(`
                     onChange: b,
                     options: p,
                     getOptionValue: (v) => v.id,
-                    getOptionLabel: (v) => br(v.name),
+                    getOptionLabel: (v) => v.name,
                     placeholder: "—",
                     searchPlaceholder: "ابحث عن مستودع...",
                     clearLabel: "— بدون مستودع —",
@@ -934,7 +878,7 @@ ${v.join(`
                       className: "is-notes-input",
                       name: "notes",
                       readOnly: !J,
-                      defaultValue: br((a == null ? void 0 : a.notes) ?? ""),
+                      defaultValue: (a == null ? void 0 : a.notes) ?? "",
                     },
                     `nt-${r}-${a == null ? void 0 : a.updatedAt}`,
                   ),
@@ -1038,7 +982,7 @@ ${v.join(`
                                           w.key === "Escape" && _e());
                                       },
                                     })
-                                  : br(v.itemNo ?? ""),
+                                  : (v.itemNo ?? ""),
                             }),
                             s.jsx("td", {
                               children: "[Image]",
@@ -1060,7 +1004,7 @@ ${v.join(`
                                           w.key === "Escape" && _e());
                                       },
                                     })
-                                  : br(v.detail ?? ""),
+                                  : (v.detail ?? ""),
                             }),
                             s.jsx("td", {
                               onDoubleClick: () =>
@@ -1117,7 +1061,7 @@ ${v.join(`
             style: { marginTop: 6, fontSize: 12, color: "#334155" },
             children: [
               "Warehouse: ",
-              s.jsx("strong", { children: br(R) }),
+              s.jsx("strong", { children: R }),
               " (",
               L.length,
               " items)",
