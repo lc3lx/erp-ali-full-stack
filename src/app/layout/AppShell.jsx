@@ -47,6 +47,9 @@ export function AppShell({ user, logout, page, setPage, children }) {
             {user.role ? ` · ${user.role}` : ''}
           </span>
         ) : null}
+        <button type="button" className="erp-topbar-link" onClick={() => setPage('pp')}>
+          منتجات الشراء
+        </button>
         <button type="button" className="erp-topbar-logout" onClick={logout}>
           خروج
         </button>

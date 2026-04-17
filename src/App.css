@@ -3599,6 +3599,15 @@
   font-size: 12px;
   opacity: 0.9;
 }
+.erp-topbar-link {
+  background: #0f766e;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+}
 .erp-topbar-logout {
   background: #334155;
   color: #fff;
