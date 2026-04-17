@@ -44,7 +44,7 @@ export function AppShell({ user, logout, page, setPage, children }) {
         {user?.email ? (
           <span className="erp-topbar-user">
             {user.email}
-            {user.role ? ` · ${user.role}` : ''}
+            {user.role ? ` • ${user.role}` : ''}
           </span>
         ) : null}
         <button type="button" className="erp-topbar-link" onClick={() => setPage('pp')}>
