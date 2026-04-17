@@ -191,6 +191,57 @@ describe("api (PostgreSQL + seed optional)", () => {
     expect(repost.status).toBe(409);
   });
 
+  it("purchase line auto-links/creates item and updates stock", async (ctx) => {
+    if (!dbReady) ctx.skip();
+
+    const store = await prisma.store.findFirst({ select: { id: true } });
+    if (!store) ctx.skip();
+
+    const voucherNo = `PV-AUTO-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const create = await request(app)
+      .post("/api/v1/invoice-vouchers")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        voucherNo,
+        currency: "USD",
+        containerId,
+        supplierId,
+        storeId: store.id,
+        paid: 0,
+      });
+    expect(create.status).toBe(201);
+    const voucherId = create.body.id as string;
+
+    const uniqueNo = `IT-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const addLine = await request(app)
+      .post(`/api/v1/invoice-vouchers/${voucherId}/items`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        itemName: `Auto Item ${uniqueNo}`,
+        itemNo: uniqueNo,
+        piecesSum: "12",
+        priceToCustomerSum: "120",
+      });
+    expect(addLine.status).toBe(201);
+
+    const linesRes = await request(app)
+      .get(`/api/v1/invoice-vouchers/${voucherId}/items`)
+      .set("Authorization", `Bearer ${token}`);
+    expect(linesRes.status).toBe(200);
+    const createdLine = (linesRes.body.items ?? []).find((x: { id: string }) => x.id === addLine.body.id);
+    const lineItemId = createdLine?.itemId as string;
+    expect(lineItemId).toBeTruthy();
+
+    const stock = await request(app)
+      .get("/api/v1/inventory/stock-balances")
+      .query({ itemId: lineItemId })
+      .set("Authorization", `Bearer ${token}`);
+    expect(stock.status).toBe(200);
+    expect(Array.isArray(stock.body.items)).toBe(true);
+    expect(stock.body.items.length).toBeGreaterThan(0);
+    expect(Number(stock.body.items[0].qtyOnHand)).toBe(12);
+  });
+
   it("sale voucher totals + post + repost reject", async (ctx) => {
     if (!dbReady) ctx.skip();
     const voucherNo = `SV-${Date.now()}-${Math.floor(Math.random() * 1000)}`;

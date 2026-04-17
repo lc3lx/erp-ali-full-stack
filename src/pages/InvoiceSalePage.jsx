@@ -7,15 +7,1615 @@ import { DocumentStatusBadge as Id } from "../components/erp/DocumentStatusBadge
 import { ItemLineLinkPanel as Dd } from "../components/ItemLineLinkPanel.jsx";
 import { SearchableDropdown as Zs } from "../components/SearchableDropdown.jsx";
 import { formatIsoToDisplay as Et, toApiDateTime as Ct } from "../lib/dates.js";
-import { MASTERS_REFRESH_EVENT as $n, navigateAppPage as kn, printRootWithLocale as Vt, printWithBanner as Ja } from "../lib/uiActions.js";
+import {
+  MASTERS_REFRESH_EVENT as $n,
+  navigateAppPage as kn,
+  printRootWithLocale as Vt,
+  printWithBanner as Ja,
+} from "../lib/uiActions.js";
 import "../App.css";
 
 const s = { jsx, jsxs, Fragment };
-function he(e){return e==null||e===""?"":String(e)}function Df(e){const t=String(e??"").trim();if(!t)return null;const n=Number(t);return Number.isFinite(n)?n:null}const Lf={"ط¸â€ڑط¸ظ¾ط¸â€‍":"ط¥ط؛ظ„ط§ظ‚","ط·ع¾ط·آ¹ط·آ¯ط¸ظ¹ط¸â€‍":"طھط¹ط¯ظٹظ„","ط·آ¹ط¸â€¦ط¸ث†ط¸â€‍ط·آ© ط·آ§ط¸â€‍ط¸â€¦ط¸ئ’ط·ع¾ط·آ¨":"ط¹ظ…ظˆظ„ط© ط§ظ„ظ…ظƒطھط¨","ط·آ³ط·آ¹ط·آ± ط¸â€ ط¸â€ڑط¸â€‍ ط·آ§ط¸â€‍ط¸â€¦ط·ع¾ط·آ± ط·آ§ط¸â€‍ط¸â€¦ط¸ئ’ط·آ¹ط·آ¨":"ط³ط¹ط± ظ†ظ‚ظ„ ط§ظ„ظ…طھط± ط§ظ„ظ…ظƒط¹ط¨","ط·آ³ط·آ¹ط·آ± ط·آ§ط¸â€‍ط·آµط·آ±ط¸ظ¾":"ط³ط¹ط± ط§ظ„طµط±ظپ","ط¸â€¦ط·آ¬ط¸â€¦ط¸ث†ط·آ¹":"ط§ظ„ظ…ط¬ظ…ظˆط¹","ط·آ±ط¸â€ڑط¸â€¦ ط·آ§ط¸â€‍ط·آ­ط·آ§ط¸ث†ط¸ظ¹ط·آ©":"ط±ظ‚ظ… ط§ظ„ط­ط§ظˆظٹط©","ط·آ¬ط·آ¯ط¸ظ¹ط·آ¯":"ط¬ط¯ظٹط¯","ط·آ­ط·آ°ط¸ظ¾":"ط­ط°ظپ","ط·آ§ط¸â€‍ط·آ²ط·آ¨ط¸ث†ط¸â€ ":"ط§ظ„ط²ط¨ظˆظ†","ط·ع¾ط·آ§ط·آ±ط¸ظ¹ط·آ® ط·آ§ط¸â€‍ط·آ¹ط·آ§ط¸â€¦ط·آ©":"طھط§ط±ظٹط® ط§ظ„ظپط§طھظˆط±ط©","ط·ع¾ ط·آ§ط¸â€‍ط¸â€ڑط·آ§ط·آ¦ط¸â€¦ط·آ©":"ط§ظ„ظ‚ط§ط¦ظ…ط©","ط·آ¥ط·آ±ط·آ³ط·آ§ط¸â€‍ ط¸â€‍ط¸â€‍ط¸â€¦ط¸ث†ط·آ§ط¸ظ¾ط¸â€ڑط·آ©":"ط¥ط±ط³ط§ظ„ ظ„ظ„ظ…ظˆط§ظپظ‚ط©","ط·آ§ط·آ¹ط·ع¾ط¸â€¦ط·آ§ط·آ¯":"ط§ط¹طھظ…ط§ط¯","ط·آ±ط¸ظ¾ط·آ¶":"ط±ظپط¶","ط·آ§ط¸â€‍ط·آ¹ط¸â€¦ط¸â€‍ط·آ©":"ط§ظ„ط¹ظ…ظ„ط©","ط¸â€¦ط¸â€‍ط·آ§ط·آ­ط·آ¸ط·آ§ط·ع¾":"ظ…ظ„ط§ط­ط¸ط§طھ","ط·آ­ط¸ظ¾ط·آ¸ ط·آ§ط¸â€‍ط·آ³ط¸â€ ط·آ¯":"ط­ظپط¸ ط§ظ„ظپط§طھظˆط±ط©","ط·آ­ط·آ°ط¸ظ¾ ط·آ³ط·آ·ط·آ±":"ط­ط°ظپ ط³ط·ط±","ط·ع¾ط·آ¹ط·آ¯ط¸ظ¹ط¸â€‍ ط·آ³ط·آ·ط·آ±":"طھط¹ط¯ظٹظ„ ط³ط·ط±","ط·آ³ط·آ¹ط·آ± ط·ع¾ط·آ­ط¸ث†ط¸ظ¹ط¸â€‍":"ط³ط¹ط± طھط­ظˆظٹظ„","ط·آ¯ط¸ث†ط¸â€‍ط·آ§ط·آ±":"ط¯ظˆظ„ط§ط±","ط·آ¯ط¸ظ¹ط¸â€ ط·آ§ط·آ±":"ط¯ظٹظ†ط§ط±","ط·آ§ط¸â€‍ط·آ¯ط¸ث†ط¸â€‍ط·آ§ط·آ±":"ط¯ظˆظ„ط§ط±","ط¸â€¦ط·آ¬ط¸â€¦ط¸ث†ط·آ¹ ط·آ³ط·آ¹ط·آ±":"ظ…ط¬ظ…ظˆط¹ ط³ط¹ط±","ط¸â€¦ط·آ¬ط¸â€¦ط¸ث†ط·آ¹ ط·آ§ط¸â€‍ط¸â€¦ط·ع¾ط·آ±":"ظ…ط¬ظ…ظˆط¹ ط§ظ„ظ…طھط±","ط·آ§ط¸â€‍ط¸â€¦ط¸ئ’ط·آ¹ط·آ¨":"ط§ظ„ظ…ظƒط¹ط¨","ط¸ث†ط·آ²ط¸â€ ":"ظˆط²ظ†","ط·آ¹ط·آ¯ط·آ¯":"ط¹ط¯ط¯","ط·آ§ط¸â€‍ط¸â€ڑط·آ§ط·آ¦ط¸â€¦ط·آ©":"ط§ظ„ظ‚ط§ط¦ظ…ط©","ط·آ³ط·آ¹ط·آ± ط¸ئ’ط¸â€‍":"ط³ط¹ط± ظƒظ„","ط·آ§ط¸â€‍ط¸ظ¾":"ط£ظ„ظپ","ط¸â€ڑط·آ·ط·آ¹ط·آ© ط·آ¯ط·آ§ط·آ®ط¸â€‍":"ظ‚ط·ط¹ط© ط¯ط§ط®ظ„","ط·آ§ط¸â€‍ط¸ئ’ط·آ§ط·آ±ط·ع¾ط¸ث†ط¸â€ ":"ط§ظ„ظƒط±طھظˆظ†","ط·آ§ط¸â€‍ط·ع¾ط¸ظ¾ط·آ§ط·آµط¸ظ¹ط¸â€‍":"ط§ظ„طھظپط§طµظٹظ„","ط·آ±ط¸â€ڑط¸â€¦":"ط§ظ„ط±ظ‚ظ…","ط¸â€‍ط·آ§ ط·آ£ط·آ³ط·آ·ط·آ±":"ظ„ط§ طھظˆط¬ط¯ ط£ط³ط·ط±","ط·آ§ط¸â€‍ط¸â€¦ط·آ­ط·آ§ط·آ³ط·آ¨ط·آ©":"ط§ظ„ظ…ط­ط§ط³ط¨ط©","ط·آ§ط¸â€‍ط¸â€¦ط·آ­ط·آ§ط·آ³ط·آ¨ط·آ© ط·آ¯ط·آ§ط·آ¦ط¸â€ /ط¸â€¦ط·آ¯ط¸ظ¹ط¸â€ ":"ط§ظ„ظ…ط­ط§ط³ط¨ط© ط¯ط§ط¦ظ†/ظ…ط¯ظٹظ†","ط·آ§ط¸â€‍ط¸â€¦ط·آ¬ط¸â€¦ط¸ث†ط·آ¹":"ط§ظ„ظ…ط¬ظ…ظˆط¹","ط·آ§ط¸â€‍ط¸â€¦ط·آ³ط·آ¯ط·آ¯":"ط§ظ„ظ…ط³ط¯ط¯","ط·آ§ط¸â€‍ط¸â€¦ط·آ¬ط¸â€¦ط¸ث†ط·آ¹ ط·آ§ط¸â€‍ط·آ¨ط·آ§ط¸â€ڑط¸ظ¹":"ط§ظ„ظ…طھط¨ظ‚ظٹ","ط·آ£ط·آ±ط·آ¨ط·آ§ط·آ­":"ط§ظ„ط£ط±ط¨ط§ط­","ط·آ¨ط·آ¶ط·آ§ط·آ¹ط·آ© ط¸â€‍ط¸â€،ط·آ°ط·آ§ ط·آ§ط¸â€‍ط¸â€¦ط·آ³ط·ع¾ط·آ«ط¸â€¦ط·آ±":"ط¨ط¶ط§ط¹ط© ظ„ظ‡ط°ط§ ط§ظ„ظ…ط³طھط«ظ…ط±","ط·آ·ط·آ¨ط·آ§ط·آ¹ط·آ©":"ط·ط¨ط§ط¹ط©","ط·آ¹ط·آ±ط·آ¨ط¸ظ¹":"ط¹ط±ط¨ظٹ","ط·آ§ط·آ®ط·ع¾ط·آ± ط·آ§ط¸â€‍ط·آ²ط·آ¨ط¸ث†ط¸â€ ":"ط§ط®طھط± ط§ظ„ط²ط¨ظˆظ†","ط·آ§ط·آ¨ط·آ­ط·آ« ط·آ¹ط¸â€  ط·آ²ط·آ¨ط¸ث†ط¸â€ ...":"ط§ط¨ط­ط« ط¹ظ† ط²ط¨ظˆظ†...","أ¢â€“آ¶":"â–¶","أ¢â‚¬â€‌":"â€”"};function br(e){let t=e;for(const[n,r]of Object.entries(Lf))t=t.split(n).join(r);return t}function Rf(){const{user:e}=ps(),[t,n]=u.useState([]),[r,l]=u.useState(""),[a,i]=u.useState(null),[o,c]=u.useState([]),[d,x]=u.useState(null),[g,h]=u.useState(""),[C,D]=u.useState([]),[k,P]=u.useState([]),[p,m]=u.useState([]),[y,f]=u.useState(""),[S,b]=u.useState(""),[L,A]=u.useState([]),[z,_]=u.useState({}),[R,Y]=u.useState(""),[K,ie]=u.useState(""),[J,se]=u.useState(!1),[j,V]=u.useState(null),[U,W]=u.useState(""),ae=u.useRef(null),me=u.useRef(null),ze=u.useRef(null),pe=u.useRef(null);u.useEffect(()=>{const v=ae.current;if(!v)return;const w=document.createTreeWalker(v,NodeFilter.SHOW_TEXT);let B=w.nextNode();for(;B;){const ee=B,oe=ee.nodeValue??"",ve=br(oe);ve!==oe&&(ee.nodeValue=ve),B=w.nextNode()}v.querySelectorAll("[title]").forEach(ee=>{const oe=ee.getAttribute("title");if(!oe)return;const ve=br(oe);ve!==oe&&ee.setAttribute("title",ve)}),v.querySelectorAll("input[placeholder]").forEach(ee=>{const oe=ee.getAttribute("placeholder");if(!oe)return;const ve=br(oe);ve!==oe&&ee.setAttribute("placeholder",ve)})},[a,o,t,J,K,R]);const ge=u.useCallback(async v=>{if(!v)return;const[w,B,ee]=await Promise.all([E.get(`/invoice-sale/${v}`),E.get(`/invoice-sale/${v}/items`),E.get(`/invoice-sale/${v}/totals`)]);i(w),c(B.items??[]),x(ee)},[]);u.useEffect(()=>{let v=!1;return(async()=>{try{const[w,B,ee,oe]=await Promise.all([E.get("/invoice-sale",{page:1,pageSize:100}),E.get("/containers",{page:1,pageSize:200}),E.get("/parties",{type:"CUSTOMER",page:1,pageSize:300}),E.get("/stores")]);if(v)return;const ve=w.items??[];n(ve),l(Nt=>{var Xt;return Nt&&ve.some(gn=>gn.id===Nt)?Nt:((Xt=ve[0])==null?void 0:Xt.id)??""}),D(B.items??[]),P(ee.items??[]),m(oe.items??[])}catch(w){v||h(w.message)}})(),()=>{v=!0}},[]),u.useEffect(()=>{const v=w=>{var ee;const B=(ee=w.detail)==null?void 0:ee.scope;B&&(async()=>{try{if(B==="customers"||B==="all"){const oe=await E.get("/parties",{type:"CUSTOMER",page:1,pageSize:300});P(oe.items??[])}if(B==="stores"||B==="all"){const oe=await E.get("/stores");m(oe.items??[])}if(B==="all"){const oe=await E.get("/containers",{page:1,pageSize:200});D(oe.items??[])}}catch(oe){h(oe.message)}})()};return window.addEventListener($n,v),()=>window.removeEventListener($n,v)},[]),u.useEffect(()=>{var B;const v=(B=sessionStorage.getItem("saleVouchersJumpContainerNo"))==null?void 0:B.trim();if(!v||!t.length)return;const w=t.find(ee=>{var oe;return String(((oe=ee.container)==null?void 0:oe.containerNo)??"").trim()===v});sessionStorage.removeItem("saleVouchersJumpContainerNo"),w&&l(w.id)},[t]),u.useEffect(()=>{if(!r){i(null),c([]),x(null);return}let v=!1;return(async()=>{try{await ge(r),v||h("")}catch(w){v||h(w.message)}})(),()=>{v=!0}},[r,ge]),u.useEffect(()=>{ie(""),se(!1)},[r]),u.useEffect(()=>{f((a==null?void 0:a.customerId)??""),b((a==null?void 0:a.storeId)??"")},[a==null?void 0:a.id,a==null?void 0:a.customerId,a==null?void 0:a.storeId,a==null?void 0:a.updatedAt]),u.useEffect(()=>{if(!r){A([]),_({}),Y("");return}let v=!1;return(async()=>{var w;try{const B=await E.get(`/invoice-sale/${r}/stock`);if(v)return;const ee=B.items??[];A(ee),Y(((w=B.warehouse)==null?void 0:w.name)??"");const oe={};for(const ve of ee)oe[ve.itemId]=Number(ve.qtyOnHand??0);_(oe)}catch{if(v)return;A([]),_({}),Y("")}})(),()=>{v=!0}},[r,o]);const xe=he((a==null?void 0:a.exchangeRate)??"6.8"),Me=a!=null&&a.voucherDate?Et(a.voucherDate):"",ye=(a==null?void 0:a.voucherNo)??"",Ce=br(he((a==null?void 0:a.currency)??"ط¯ظˆظ„ط§ط±"))||"ط¯ظˆظ„ط§ط±",F=d==null?void 0:d.aggregates,re="is-header-form",te=async()=>{if(r)try{await E.post(`/invoice-sale/${r}/workflow/submit`,{}),await ge(r)}catch(v){window.alert(v.message)}},Be=async()=>{if(r)try{await E.post(`/invoice-sale/${r}/workflow/approve`,{}),await ge(r)}catch(v){window.alert(v.message)}},Se=async()=>{if(!r)return;const v=window.prompt("ط³ط¨ط¨ ط§ظ„ط±ظپط¶ (ط§ط®طھظٹط§ط±ظٹ)")??"";try{await E.post(`/invoice-sale/${r}/workflow/reject`,{comment:v||null}),await ge(r)}catch(w){window.alert(w.message)}},Re=async v=>{if(v.preventDefault(),!r)return;const w=document.getElementById(re);if(!w)return;const B=new FormData(w);try{await E.patch(`/invoice-sale/${r}`,{voucherNo:String(B.get("voucherNo")||"").trim()||void 0,voucherDate:Ct(String(B.get("voucherDate")||""))??null,exchangeRate:B.get("exchangeRate")||void 0,officeCommission:B.get("officeCommission")||void 0,cbmTransportPrice:B.get("cbmTransportPrice")||void 0,currency:B.get("currency")||void 0,containerId:B.get("containerId")||void 0,customerId:y||void 0,storeId:S||null,notes:B.get("notes")||null}),await ge(r);const ee=await E.get("/invoice-sale",{page:1,pageSize:100});n(ee.items??[]),se(!1)}catch(ee){h(ee.message)}},T=async()=>{var ee,oe;const v=(ee=C[0])==null?void 0:ee.id,w=(oe=k[0])==null?void 0:oe.id;if(!v||!w){window.alert("ظٹط¬ط¨ ط§ط®طھظٹط§ط± ط­ط§ظˆظٹط© ظˆط²ط¨ظˆظ† ط¹ظ„ظ‰ ط§ظ„ط£ظ‚ظ„.");return}const B=window.prompt("ط±ظ‚ظ… ظپط§طھظˆط±ط© ط§ظ„ط¨ظٹط¹",`S-${Date.now()}`);if(!(!B||!B.trim()))try{const ve=await E.post("/invoice-sale",{voucherNo:B.trim(),containerId:v,customerId:w,currency:"ط¯ظˆظ„ط§ط±"}),Nt=await E.get("/invoice-sale",{page:1,pageSize:100});n(Nt.items??[]),l(ve.id)}catch(ve){h(ve.message)}},q=async()=>{var v;if(!(!r||!window.confirm("ط­ط°ظپ ظپط§طھظˆط±ط© ط§ظ„ط¨ظٹط¹طں")))try{await E.delete(`/invoice-sale/${r}`);const B=(await E.get("/invoice-sale",{page:1,pageSize:100})).items??[];n(B),l(((v=B[0])==null?void 0:v.id)??"")}catch(w){h(w.message)}},G=async()=>{if(r)try{await E.post(`/invoice-sale/${r}/items`,{detail:"ط³ط·ط± ط¬ط¯ظٹط¯"}),await ge(r)}catch(v){h(v.message)}},Ee=async()=>{if(!(!r||!K||!window.confirm("ط­ط°ظپ ط§ظ„ط³ط·ط±طں")))try{await E.delete(`/invoice-sale/${r}/items/${K}`),ie(""),await ge(r)}catch(v){h(v.message)}},Ne=async()=>{if(!r||!K)return;const v=o.find(ve=>ve.id===K);if(!v)return;const w=window.prompt("ط§ظ„طھظپط§طµظٹظ„",v.detail??"");if(w==null)return;const B=window.prompt("ط±ظ‚ظ… ط§ظ„ظ…ط§ط¯ط©",v.itemNo??"");if(B==null)return;const ee=window.prompt("ط§ظ„ظƒظ…ظٹط©",he(v.listQty??""));if(ee==null)return;const oe=window.prompt("ط¥ط¬ظ…ط§ظ„ظٹ ط§ظ„ط³ط¹ط±",he(v.totalPrice??""));if(oe!=null)try{await E.patch(`/invoice-sale/${r}/items/${K}`,{detail:w,itemNo:B,listQty:Number(ee)||0,totalPrice:Number(oe)||0}),await ge(r)}catch(ve){h(ve.message)}},Pe=new Set(["usdConvertRate","usdSumCol","usdPriceCol","cbmSumCol","weight","cbm1","cbm2","listQty","pricePerThousand","totalPrice","pcsInCarton","linePrice","detail","itemNo"]),O=new Set(["usdConvertRate","usdSumCol","usdPriceCol","cbmSumCol","weight","cbm1","cbm2","listQty","pricePerThousand","totalPrice","pcsInCarton","linePrice"]),ne=(v,w,B)=>{Pe.has(w)&&(ie(v),V({lineId:v,field:w}),W(he(B)))},Z=async()=>{if(!j||!r)return;const{lineId:v,field:w}=j,B={};O.has(w)?B[w]=Df(U):B[w]=U.trim()||null;try{await E.patch(`/invoice-sale/${r}/items/${v}`,B),await ge(r)}catch(ee){h(ee.message)}finally{V(null),W("")}},_e=()=>{V(null),W("")},Dt=()=>{var w;const v=(w=t[0])==null?void 0:w.id;v?l(v):window.alert("ظ„ط§ طھظˆط¬ط¯ ظپظˆط§طھظٹط± ط¨ظٹط¹.")},I=()=>{if(!t.length){window.alert("ظ„ط§ طھظˆط¬ط¯ ظپظˆط§طھظٹط±.");return}const v=t.slice(0,20).map((w,B)=>{var ee;return`${B+1}. ${w.voucherNo} â€” ${((ee=w.container)==null?void 0:ee.containerNo)??"?"}`});window.alert(`ط£ط­ط¯ط« ظپظˆط§طھظٹط± ط§ظ„ط¨ظٹط¹:
+function he(e) {
+  return e == null || e === "" ? "" : String(e);
+}
+function Df(e) {
+  const t = String(e ?? "").trim();
+  if (!t) return null;
+  const n = Number(t);
+  return Number.isFinite(n) ? n : null;
+}
+const Lf = {
+  "ط¸â€ڑط¸ظ¾ط¸â€‍": "ط¥ط؛ظ„ط§ظ‚",
+  "ط·ع¾ط·آ¹ط·آ¯ط¸ظ¹ط¸â€‍": "طھط¹ط¯ظٹظ„",
+  "ط·آ¹ط¸â€¦ط¸ث†ط¸â€‍ط·آ© ط·آ§ط¸â€‍ط¸â€¦ط¸ئ’ط·ع¾ط·آ¨":
+    "ط¹ظ…ظˆظ„ط© ط§ظ„ظ…ظƒطھط¨",
+  "ط·آ³ط·آ¹ط·آ± ط¸â€ ط¸â€ڑط¸â€‍ ط·آ§ط¸â€‍ط¸â€¦ط·ع¾ط·آ± ط·آ§ط¸â€‍ط¸â€¦ط¸ئ’ط·آ¹ط·آ¨":
+    "ط³ط¹ط± ظ†ظ‚ظ„ ط§ظ„ظ…طھط± ط§ظ„ظ…ظƒط¹ط¨",
+  "ط·آ³ط·آ¹ط·آ± ط·آ§ط¸â€‍ط·آµط·آ±ط¸ظ¾": "ط³ط¹ط± ط§ظ„طµط±ظپ",
+  "ط¸â€¦ط·آ¬ط¸â€¦ط¸ث†ط·آ¹": "ط§ظ„ظ…ط¬ظ…ظˆط¹",
+  "ط·آ±ط¸â€ڑط¸â€¦ ط·آ§ط¸â€‍ط·آ­ط·آ§ط¸ث†ط¸ظ¹ط·آ©": "ط±ظ‚ظ… ط§ظ„ط­ط§ظˆظٹط©",
+  "ط·آ¬ط·آ¯ط¸ظ¹ط·آ¯": "ط¬ط¯ظٹط¯",
+  "ط·آ­ط·آ°ط¸ظ¾": "ط­ط°ظپ",
+  "ط·آ§ط¸â€‍ط·آ²ط·آ¨ط¸ث†ط¸â€ ": "ط§ظ„ط²ط¨ظˆظ†",
+  "ط·ع¾ط·آ§ط·آ±ط¸ظ¹ط·آ® ط·آ§ط¸â€‍ط·آ¹ط·آ§ط¸â€¦ط·آ©":
+    "طھط§ط±ظٹط® ط§ظ„ظپط§طھظˆط±ط©",
+  "ط·ع¾ ط·آ§ط¸â€‍ط¸â€ڑط·آ§ط·آ¦ط¸â€¦ط·آ©": "ط§ظ„ظ‚ط§ط¦ظ…ط©",
+  "ط·آ¥ط·آ±ط·آ³ط·آ§ط¸â€‍ ط¸â€‍ط¸â€‍ط¸â€¦ط¸ث†ط·آ§ط¸ظ¾ط¸â€ڑط·آ©":
+    "ط¥ط±ط³ط§ظ„ ظ„ظ„ظ…ظˆط§ظپظ‚ط©",
+  "ط·آ§ط·آ¹ط·ع¾ط¸â€¦ط·آ§ط·آ¯": "ط§ط¹طھظ…ط§ط¯",
+  "ط·آ±ط¸ظ¾ط·آ¶": "ط±ظپط¶",
+  "ط·آ§ط¸â€‍ط·آ¹ط¸â€¦ط¸â€‍ط·آ©": "ط§ظ„ط¹ظ…ظ„ط©",
+  "ط¸â€¦ط¸â€‍ط·آ§ط·آ­ط·آ¸ط·آ§ط·ع¾": "ظ…ظ„ط§ط­ط¸ط§طھ",
+  "ط·آ­ط¸ظ¾ط·آ¸ ط·آ§ط¸â€‍ط·آ³ط¸â€ ط·آ¯": "ط­ظپط¸ ط§ظ„ظپط§طھظˆط±ط©",
+  "ط·آ­ط·آ°ط¸ظ¾ ط·آ³ط·آ·ط·آ±": "ط­ط°ظپ ط³ط·ط±",
+  "ط·ع¾ط·آ¹ط·آ¯ط¸ظ¹ط¸â€‍ ط·آ³ط·آ·ط·آ±": "طھط¹ط¯ظٹظ„ ط³ط·ط±",
+  "ط·آ³ط·آ¹ط·آ± ط·ع¾ط·آ­ط¸ث†ط¸ظ¹ط¸â€‍": "ط³ط¹ط± طھط­ظˆظٹظ„",
+  "ط·آ¯ط¸ث†ط¸â€‍ط·آ§ط·آ±": "ط¯ظˆظ„ط§ط±",
+  "ط·آ¯ط¸ظ¹ط¸â€ ط·آ§ط·آ±": "ط¯ظٹظ†ط§ط±",
+  "ط·آ§ط¸â€‍ط·آ¯ط¸ث†ط¸â€‍ط·آ§ط·آ±": "ط¯ظˆظ„ط§ط±",
+  "ط¸â€¦ط·آ¬ط¸â€¦ط¸ث†ط·آ¹ ط·آ³ط·آ¹ط·آ±": "ظ…ط¬ظ…ظˆط¹ ط³ط¹ط±",
+  "ط¸â€¦ط·آ¬ط¸â€¦ط¸ث†ط·آ¹ ط·آ§ط¸â€‍ط¸â€¦ط·ع¾ط·آ±": "ظ…ط¬ظ…ظˆط¹ ط§ظ„ظ…طھط±",
+  "ط·آ§ط¸â€‍ط¸â€¦ط¸ئ’ط·آ¹ط·آ¨": "ط§ظ„ظ…ظƒط¹ط¨",
+  "ط¸ث†ط·آ²ط¸â€ ": "ظˆط²ظ†",
+  "ط·آ¹ط·آ¯ط·آ¯": "ط¹ط¯ط¯",
+  "ط·آ§ط¸â€‍ط¸â€ڑط·آ§ط·آ¦ط¸â€¦ط·آ©": "ط§ظ„ظ‚ط§ط¦ظ…ط©",
+  "ط·آ³ط·آ¹ط·آ± ط¸ئ’ط¸â€‍": "ط³ط¹ط± ظƒظ„",
+  "ط·آ§ط¸â€‍ط¸ظ¾": "ط£ظ„ظپ",
+  "ط¸â€ڑط·آ·ط·آ¹ط·آ© ط·آ¯ط·آ§ط·آ®ط¸â€‍": "ظ‚ط·ط¹ط© ط¯ط§ط®ظ„",
+  "ط·آ§ط¸â€‍ط¸ئ’ط·آ§ط·آ±ط·ع¾ط¸ث†ط¸â€ ": "ط§ظ„ظƒط±طھظˆظ†",
+  "ط·آ§ط¸â€‍ط·ع¾ط¸ظ¾ط·آ§ط·آµط¸ظ¹ط¸â€‍": "ط§ظ„طھظپط§طµظٹظ„",
+  "ط·آ±ط¸â€ڑط¸â€¦": "ط§ظ„ط±ظ‚ظ…",
+  "ط¸â€‍ط·آ§ ط·آ£ط·آ³ط·آ·ط·آ±": "ظ„ط§ طھظˆط¬ط¯ ط£ط³ط·ط±",
+  "ط·آ§ط¸â€‍ط¸â€¦ط·آ­ط·آ§ط·آ³ط·آ¨ط·آ©": "ط§ظ„ظ…ط­ط§ط³ط¨ط©",
+  "ط·آ§ط¸â€‍ط¸â€¦ط·آ­ط·آ§ط·آ³ط·آ¨ط·آ© ط·آ¯ط·آ§ط·آ¦ط¸â€ /ط¸â€¦ط·آ¯ط¸ظ¹ط¸â€ ":
+    "ط§ظ„ظ…ط­ط§ط³ط¨ط© ط¯ط§ط¦ظ†/ظ…ط¯ظٹظ†",
+  "ط·آ§ط¸â€‍ط¸â€¦ط·آ¬ط¸â€¦ط¸ث†ط·آ¹": "ط§ظ„ظ…ط¬ظ…ظˆط¹",
+  "ط·آ§ط¸â€‍ط¸â€¦ط·آ³ط·آ¯ط·آ¯": "ط§ظ„ظ…ط³ط¯ط¯",
+  "ط·آ§ط¸â€‍ط¸â€¦ط·آ¬ط¸â€¦ط¸ث†ط·آ¹ ط·آ§ط¸â€‍ط·آ¨ط·آ§ط¸â€ڑط¸ظ¹":
+    "ط§ظ„ظ…طھط¨ظ‚ظٹ",
+  "ط·آ£ط·آ±ط·آ¨ط·آ§ط·آ­": "ط§ظ„ط£ط±ط¨ط§ط­",
+  "ط·آ¨ط·آ¶ط·آ§ط·آ¹ط·آ© ط¸â€‍ط¸â€،ط·آ°ط·آ§ ط·آ§ط¸â€‍ط¸â€¦ط·آ³ط·ع¾ط·آ«ط¸â€¦ط·آ±":
+    "ط¨ط¶ط§ط¹ط© ظ„ظ‡ط°ط§ ط§ظ„ظ…ط³طھط«ظ…ط±",
+  "ط·آ·ط·آ¨ط·آ§ط·آ¹ط·آ©": "ط·ط¨ط§ط¹ط©",
+  "ط·آ¹ط·آ±ط·آ¨ط¸ظ¹": "ط¹ط±ط¨ظٹ",
+  "ط·آ§ط·آ®ط·ع¾ط·آ± ط·آ§ط¸â€‍ط·آ²ط·آ¨ط¸ث†ط¸â€ ": "ط§ط®طھط± ط§ظ„ط²ط¨ظˆظ†",
+  "ط·آ§ط·آ¨ط·آ­ط·آ« ط·آ¹ط¸â€  ط·آ²ط·آ¨ط¸ث†ط¸â€ ...":
+    "ط§ط¨ط­ط« ط¹ظ† ط²ط¨ظˆظ†...",
+  "أ¢â€“آ¶": "â–¶",
+  "أ¢â‚¬â€‌": "â€”",
+};
+function br(e) {
+  let t = e;
+  for (const [n, r] of Object.entries(Lf)) t = t.split(n).join(r);
+  return t;
+}
+function Rf() {
+  const { user: e } = ps(),
+    [t, n] = u.useState([]),
+    [r, l] = u.useState(""),
+    [a, i] = u.useState(null),
+    [o, c] = u.useState([]),
+    [d, x] = u.useState(null),
+    [g, h] = u.useState(""),
+    [C, D] = u.useState([]),
+    [k, P] = u.useState([]),
+    [p, m] = u.useState([]),
+    [y, f] = u.useState(""),
+    [S, b] = u.useState(""),
+    [L, A] = u.useState([]),
+    [z, _] = u.useState({}),
+    [R, Y] = u.useState(""),
+    [K, ie] = u.useState(""),
+    [J, se] = u.useState(!1),
+    [j, V] = u.useState(null),
+    [U, W] = u.useState(""),
+    ae = u.useRef(null),
+    me = u.useRef(null),
+    ze = u.useRef(null),
+    pe = u.useRef(null);
+  u.useEffect(() => {
+    const v = ae.current;
+    if (!v) return;
+    const w = document.createTreeWalker(v, NodeFilter.SHOW_TEXT);
+    let B = w.nextNode();
+    for (; B; ) {
+      const ee = B,
+        oe = ee.nodeValue ?? "",
+        ve = br(oe);
+      (ve !== oe && (ee.nodeValue = ve), (B = w.nextNode()));
+    }
+    (v.querySelectorAll("[title]").forEach((ee) => {
+      const oe = ee.getAttribute("title");
+      if (!oe) return;
+      const ve = br(oe);
+      ve !== oe && ee.setAttribute("title", ve);
+    }),
+      v.querySelectorAll("input[placeholder]").forEach((ee) => {
+        const oe = ee.getAttribute("placeholder");
+        if (!oe) return;
+        const ve = br(oe);
+        ve !== oe && ee.setAttribute("placeholder", ve);
+      }));
+  }, [a, o, t, J, K, R]);
+  const ge = u.useCallback(async (v) => {
+    if (!v) return;
+    const [w, B, ee] = await Promise.all([
+      E.get(`/invoice-sale/${v}`),
+      E.get(`/invoice-sale/${v}/items`),
+      E.get(`/invoice-sale/${v}/totals`),
+    ]);
+    (i(w), c(B.items ?? []), x(ee));
+  }, []);
+  (u.useEffect(() => {
+    let v = !1;
+    return (
+      (async () => {
+        try {
+          const [w, B, ee, oe] = await Promise.all([
+            E.get("/invoice-sale", { page: 1, pageSize: 100 }),
+            E.get("/containers", { page: 1, pageSize: 200 }),
+            E.get("/parties", { type: "CUSTOMER", page: 1, pageSize: 300 }),
+            E.get("/stores"),
+          ]);
+          if (v) return;
+          const ve = w.items ?? [];
+          (n(ve),
+            l((Nt) => {
+              var Xt;
+              return Nt && ve.some((gn) => gn.id === Nt)
+                ? Nt
+                : (((Xt = ve[0]) == null ? void 0 : Xt.id) ?? "");
+            }),
+            D(B.items ?? []),
+            P(ee.items ?? []),
+            m(oe.items ?? []));
+        } catch (w) {
+          v || h(w.message);
+        }
+      })(),
+      () => {
+        v = !0;
+      }
+    );
+  }, []),
+    u.useEffect(() => {
+      const v = (w) => {
+        var ee;
+        const B = (ee = w.detail) == null ? void 0 : ee.scope;
+        B &&
+          (async () => {
+            try {
+              if (B === "customers" || B === "all") {
+                const oe = await E.get("/parties", {
+                  type: "CUSTOMER",
+                  page: 1,
+                  pageSize: 300,
+                });
+                P(oe.items ?? []);
+              }
+              if (B === "stores" || B === "all") {
+                const oe = await E.get("/stores");
+                m(oe.items ?? []);
+              }
+              if (B === "all") {
+                const oe = await E.get("/containers", {
+                  page: 1,
+                  pageSize: 200,
+                });
+                D(oe.items ?? []);
+              }
+            } catch (oe) {
+              h(oe.message);
+            }
+          })();
+      };
+      return (
+        window.addEventListener($n, v),
+        () => window.removeEventListener($n, v)
+      );
+    }, []),
+    u.useEffect(() => {
+      var B;
+      const v =
+        (B = sessionStorage.getItem("saleVouchersJumpContainerNo")) == null
+          ? void 0
+          : B.trim();
+      if (!v || !t.length) return;
+      const w = t.find((ee) => {
+        var oe;
+        return (
+          String(
+            ((oe = ee.container) == null ? void 0 : oe.containerNo) ?? "",
+          ).trim() === v
+        );
+      });
+      (sessionStorage.removeItem("saleVouchersJumpContainerNo"), w && l(w.id));
+    }, [t]),
+    u.useEffect(() => {
+      if (!r) {
+        (i(null), c([]), x(null));
+        return;
+      }
+      let v = !1;
+      return (
+        (async () => {
+          try {
+            (await ge(r), v || h(""));
+          } catch (w) {
+            v || h(w.message);
+          }
+        })(),
+        () => {
+          v = !0;
+        }
+      );
+    }, [r, ge]),
+    u.useEffect(() => {
+      (ie(""), se(!1));
+    }, [r]),
+    u.useEffect(() => {
+      (f((a == null ? void 0 : a.customerId) ?? ""),
+        b((a == null ? void 0 : a.storeId) ?? ""));
+    }, [
+      a == null ? void 0 : a.id,
+      a == null ? void 0 : a.customerId,
+      a == null ? void 0 : a.storeId,
+      a == null ? void 0 : a.updatedAt,
+    ]),
+    u.useEffect(() => {
+      if (!r) {
+        (A([]), _({}), Y(""));
+        return;
+      }
+      let v = !1;
+      return (
+        (async () => {
+          var w;
+          try {
+            const B = await E.get(`/invoice-sale/${r}/stock`);
+            if (v) return;
+            const ee = B.items ?? [];
+            (A(ee), Y(((w = B.warehouse) == null ? void 0 : w.name) ?? ""));
+            const oe = {};
+            for (const ve of ee) oe[ve.itemId] = Number(ve.qtyOnHand ?? 0);
+            _(oe);
+          } catch {
+            if (v) return;
+            (A([]), _({}), Y(""));
+          }
+        })(),
+        () => {
+          v = !0;
+        }
+      );
+    }, [r, o]));
+  const xe = he((a == null ? void 0 : a.exchangeRate) ?? "6.8"),
+    Me = a != null && a.voucherDate ? Et(a.voucherDate) : "",
+    ye = (a == null ? void 0 : a.voucherNo) ?? "",
+    Ce =
+      br(he((a == null ? void 0 : a.currency) ?? "ط¯ظˆظ„ط§ط±")) || "ط¯ظˆظ„ط§ط±",
+    F = d == null ? void 0 : d.aggregates,
+    re = "is-header-form",
+    te = async () => {
+      if (r)
+        try {
+          (await E.post(`/invoice-sale/${r}/workflow/submit`, {}), await ge(r));
+        } catch (v) {
+          window.alert(v.message);
+        }
+    },
+    Be = async () => {
+      if (r)
+        try {
+          (await E.post(`/invoice-sale/${r}/workflow/approve`, {}),
+            await ge(r));
+        } catch (v) {
+          window.alert(v.message);
+        }
+    },
+    Se = async () => {
+      if (!r) return;
+      const v = window.prompt("ط³ط¨ط¨ ط§ظ„ط±ظپط¶ (ط§ط®طھظٹط§ط±ظٹ)") ?? "";
+      try {
+        (await E.post(`/invoice-sale/${r}/workflow/reject`, {
+          comment: v || null,
+        }),
+          await ge(r));
+      } catch (w) {
+        window.alert(w.message);
+      }
+    },
+    Re = async (v) => {
+      if ((v.preventDefault(), !r)) return;
+      const w = document.getElementById(re);
+      if (!w) return;
+      const B = new FormData(w);
+      try {
+        (await E.patch(`/invoice-sale/${r}`, {
+          voucherNo: String(B.get("voucherNo") || "").trim() || void 0,
+          voucherDate: Ct(String(B.get("voucherDate") || "")) ?? null,
+          exchangeRate: B.get("exchangeRate") || void 0,
+          officeCommission: B.get("officeCommission") || void 0,
+          cbmTransportPrice: B.get("cbmTransportPrice") || void 0,
+          currency: B.get("currency") || void 0,
+          containerId: B.get("containerId") || void 0,
+          customerId: y || void 0,
+          storeId: S || null,
+          notes: B.get("notes") || null,
+        }),
+          await ge(r));
+        const ee = await E.get("/invoice-sale", { page: 1, pageSize: 100 });
+        (n(ee.items ?? []), se(!1));
+      } catch (ee) {
+        h(ee.message);
+      }
+    },
+    T = async () => {
+      var ee, oe;
+      const v = (ee = C[0]) == null ? void 0 : ee.id,
+        w = (oe = k[0]) == null ? void 0 : oe.id;
+      if (!v || !w) {
+        window.alert(
+          "ظٹط¬ط¨ ط§ط®طھظٹط§ط± ط­ط§ظˆظٹط© ظˆط²ط¨ظˆظ† ط¹ظ„ظ‰ ط§ظ„ط£ظ‚ظ„.",
+        );
+        return;
+      }
+      const B = window.prompt(
+        "ط±ظ‚ظ… ظپط§طھظˆط±ط© ط§ظ„ط¨ظٹط¹",
+        `S-${Date.now()}`,
+      );
+      if (!(!B || !B.trim()))
+        try {
+          const ve = await E.post("/invoice-sale", {
+              voucherNo: B.trim(),
+              containerId: v,
+              customerId: w,
+              currency: "ط¯ظˆظ„ط§ط±",
+            }),
+            Nt = await E.get("/invoice-sale", { page: 1, pageSize: 100 });
+          (n(Nt.items ?? []), l(ve.id));
+        } catch (ve) {
+          h(ve.message);
+        }
+    },
+    q = async () => {
+      var v;
+      if (!(!r || !window.confirm("ط­ط°ظپ ظپط§طھظˆط±ط© ط§ظ„ط¨ظٹط¹طں")))
+        try {
+          await E.delete(`/invoice-sale/${r}`);
+          const B =
+            (await E.get("/invoice-sale", { page: 1, pageSize: 100 })).items ??
+            [];
+          (n(B), l(((v = B[0]) == null ? void 0 : v.id) ?? ""));
+        } catch (w) {
+          h(w.message);
+        }
+    },
+    G = async () => {
+      if (r)
+        try {
+          (await E.post(`/invoice-sale/${r}/items`, {
+            detail: "ط³ط·ط± ط¬ط¯ظٹط¯",
+          }),
+            await ge(r));
+        } catch (v) {
+          h(v.message);
+        }
+    },
+    Ee = async () => {
+      if (!(!r || !K || !window.confirm("ط­ط°ظپ ط§ظ„ط³ط·ط±طں")))
+        try {
+          (await E.delete(`/invoice-sale/${r}/items/${K}`),
+            ie(""),
+            await ge(r));
+        } catch (v) {
+          h(v.message);
+        }
+    },
+    Ne = async () => {
+      if (!r || !K) return;
+      const v = o.find((ve) => ve.id === K);
+      if (!v) return;
+      const w = window.prompt("ط§ظ„طھظپط§طµظٹظ„", v.detail ?? "");
+      if (w == null) return;
+      const B = window.prompt("ط±ظ‚ظ… ط§ظ„ظ…ط§ط¯ط©", v.itemNo ?? "");
+      if (B == null) return;
+      const ee = window.prompt("ط§ظ„ظƒظ…ظٹط©", he(v.listQty ?? ""));
+      if (ee == null) return;
+      const oe = window.prompt(
+        "ط¥ط¬ظ…ط§ظ„ظٹ ط§ظ„ط³ط¹ط±",
+        he(v.totalPrice ?? ""),
+      );
+      if (oe != null)
+        try {
+          (await E.patch(`/invoice-sale/${r}/items/${K}`, {
+            detail: w,
+            itemNo: B,
+            listQty: Number(ee) || 0,
+            totalPrice: Number(oe) || 0,
+          }),
+            await ge(r));
+        } catch (ve) {
+          h(ve.message);
+        }
+    },
+    Pe = new Set([
+      "usdConvertRate",
+      "usdSumCol",
+      "usdPriceCol",
+      "cbmSumCol",
+      "weight",
+      "cbm1",
+      "cbm2",
+      "listQty",
+      "pricePerThousand",
+      "totalPrice",
+      "pcsInCarton",
+      "linePrice",
+      "detail",
+      "itemNo",
+    ]),
+    O = new Set([
+      "usdConvertRate",
+      "usdSumCol",
+      "usdPriceCol",
+      "cbmSumCol",
+      "weight",
+      "cbm1",
+      "cbm2",
+      "listQty",
+      "pricePerThousand",
+      "totalPrice",
+      "pcsInCarton",
+      "linePrice",
+    ]),
+    ne = (v, w, B) => {
+      Pe.has(w) && (ie(v), V({ lineId: v, field: w }), W(he(B)));
+    },
+    Z = async () => {
+      if (!j || !r) return;
+      const { lineId: v, field: w } = j,
+        B = {};
+      O.has(w) ? (B[w] = Df(U)) : (B[w] = U.trim() || null);
+      try {
+        (await E.patch(`/invoice-sale/${r}/items/${v}`, B), await ge(r));
+      } catch (ee) {
+        h(ee.message);
+      } finally {
+        (V(null), W(""));
+      }
+    },
+    _e = () => {
+      (V(null), W(""));
+    },
+    Dt = () => {
+      var w;
+      const v = (w = t[0]) == null ? void 0 : w.id;
+      v ? l(v) : window.alert("ظ„ط§ طھظˆط¬ط¯ ظپظˆط§طھظٹط± ط¨ظٹط¹.");
+    },
+    I = () => {
+      if (!t.length) {
+        window.alert("ظ„ط§ طھظˆط¬ط¯ ظپظˆط§طھظٹط±.");
+        return;
+      }
+      const v = t.slice(0, 20).map((w, B) => {
+        var ee;
+        return `${B + 1}. ${w.voucherNo} â€” ${((ee = w.container) == null ? void 0 : ee.containerNo) ?? "?"}`;
+      });
+      window.alert(`ط£ط­ط¯ط« ظپظˆط§طھظٹط± ط§ظ„ط¨ظٹط¹:
 
 ${v.join(`
-`)}`)},H=()=>{var v;return(v=me.current)==null?void 0:v.scrollIntoView({behavior:"smooth",block:"start"})},le=()=>{var v;return(v=ze.current)==null?void 0:v.scrollIntoView({behavior:"smooth",block:"start"})},N=()=>{var v;return(v=pe.current)==null?void 0:v.scrollIntoView({behavior:"smooth",block:"start"})},$=()=>{var w,B;const v=(B=(w=a==null?void 0:a.container)==null?void 0:w.containerNo)==null?void 0:B.trim();v&&sessionStorage.setItem("reportsJumpContainerNo",v),kn("list")},X=o.filter(v=>{if(!v.itemId)return!1;const w=Number(v.listQty??0);if(w<=0)return!1;const B=Number(z[v.itemId]??0);return w>B});return s.jsxs("div",{className:"is-page",dir:"ltr",ref:ae,children:[g?s.jsx("div",{className:"alert-error",style:{margin:6},children:g}):null,s.jsx("div",{className:"is-titleline",children:"Sale Vouchers"}),s.jsxs("div",{className:"is-top-wrap",ref:me,children:[s.jsxs("div",{className:"is-top-row",children:[s.jsx("button",{type:"button",className:"is-btn-edit",onClick:()=>se(v=>!v),children:J?"ط¸â€ڑط¸ظ¾ط¸â€‍":"ط·ع¾ط·آ¹ط·آ¯ط¸ظ¹ط¸â€‍"}),s.jsx("span",{className:"is-lbl",children:"%0"}),s.jsx("span",{className:"is-lbl",children:"ط·آ¹ط¸â€¦ط¸ث†ط¸â€‍ط·آ© ط·آ§ط¸â€‍ط¸â€¦ط¸ئ’ط·ع¾ط·آ¨"}),s.jsx("input",{className:"is-small-input",name:"officeCommission",form:re,readOnly:!J,defaultValue:he((a==null?void 0:a.officeCommission)??"0")},`oc-${r}-${a==null?void 0:a.updatedAt}`),s.jsx("span",{className:"is-lbl",children:"ط·آ³ط·آ¹ط·آ± ط¸â€ ط¸â€ڑط¸â€‍ ط·آ§ط¸â€‍ط¸â€¦ط·ع¾ط·آ± ط·آ§ط¸â€‍ط¸â€¦ط¸ئ’ط·آ¹ط·آ¨"}),s.jsx("input",{className:"is-small-input",name:"cbmTransportPrice",form:re,readOnly:!J,defaultValue:he((a==null?void 0:a.cbmTransportPrice)??"")},`cbm-${r}-${a==null?void 0:a.updatedAt}`),s.jsx("div",{className:"is-spacer"}),s.jsx("input",{className:"is-rate-input",name:"exchangeRate",form:re,readOnly:!J,defaultValue:xe},`er-${r}-${a==null?void 0:a.updatedAt}`),s.jsx("span",{className:"is-rate-lbl",children:"ط·آ³ط·آ¹ط·آ± ط·آ§ط¸â€‍ط·آµط·آ±ط¸ظ¾"})]}),s.jsxs("form",{id:re,onSubmit:Re,children:[s.jsxs("div",{className:"is-mid-row",children:[s.jsxs("div",{className:"is-left-cluster",children:[s.jsxs("div",{className:"is-balance-line",children:[s.jsx("span",{className:"is-mini-title",children:"ط¸â€¦ط·آ¬ط¸â€¦ط¸ث†ط·آ¹"}),s.jsx("input",{className:"is-balance-input",value:he((d==null?void 0:d.total)??""),readOnly:!0})]}),s.jsxs("div",{className:"is-container-line",children:[s.jsx("select",{className:"is-container-input",name:"containerId",disabled:!J,defaultValue:(a==null?void 0:a.containerId)??"",children:C.map(v=>s.jsx("option",{value:v.id,children:v.containerNo},v.id))},`ct-${r}-${a==null?void 0:a.updatedAt}`),s.jsx("span",{className:"is-lbl",children:"ط·آ±ط¸â€ڑط¸â€¦ ط·آ§ط¸â€‍ط·آ­ط·آ§ط¸ث†ط¸ظ¹ط·آ©"})]}),s.jsx("button",{type:"button",className:"is-blue-pill",onClick:()=>window.alert(`ط¹ظ…ظ„ط© ط§ظ„ط³ظ†ط¯: ${(a==null?void 0:a.currency)??"â€”"}
-ط³ط¹ط± ط§ظ„طµط±ظپ ط§ظ„ط­ط§ظ„ظٹ ظپظٹ ط§ظ„ظ†ظ…ظˆط°ط¬: ${xe}`),title:"ط¹ط±ط¶ ط§ظ„ط¹ظ…ظ„ط© ظˆط³ط¹ط± ط§ظ„طµط±ظپ",children:(a==null?void 0:a.currency)??"ط§ظ„ط¹ظ…ظ„ط©"})]}),s.jsxs("div",{className:"is-mini-actions",children:[s.jsx("button",{type:"button",className:"is-mini-act",onClick:T,children:"ط·آ¬ط·آ¯ط¸ظ¹ط·آ¯"}),s.jsx("button",{type:"button",className:"is-mini-act red",onClick:q,children:"ط·آ­ط·آ°ط¸ظ¾"})]}),s.jsx(Zs,{name:"customerId",dir:"rtl",className:"is-search-select",inputClassName:"is-supplier-box",disabled:!J,value:y,onChange:f,options:k,getOptionValue:v=>v.id,getOptionLabel:v=>v.name,placeholder:"ط·آ§ط·آ®ط·ع¾ط·آ± ط·آ§ط¸â€‍ط·آ²ط·آ¨ط¸ث†ط¸â€ ",searchPlaceholder:"ط·آ§ط·آ¨ط·آ­ط·آ« ط·آ¹ط¸â€  ط·آ²ط·آ¨ط¸ث†ط¸â€ ...",clearLabel:"أ¢â‚¬â€‌ ط·آ§ط·آ®ط·ع¾ط·آ± ط·آ§ط¸â€‍ط·آ²ط·آ¨ط¸ث†ط¸â€  أ¢â‚¬â€‌",allowClear:!1}),s.jsx("span",{className:"is-lbl",children:"ط·آ§ط¸â€‍ط·آ²ط·آ¨ط¸ث†ط¸â€ "}),s.jsx("div",{className:"is-spacer"}),s.jsx("input",{className:"is-date-input",name:"voucherDate",readOnly:!J,placeholder:"dd/mm/yyyy",defaultValue:Me},`vd-${r}-${a==null?void 0:a.updatedAt}`),s.jsx("span",{className:"is-lbl",children:"ط·ع¾ط·آ§ط·آ±ط¸ظ¹ط·آ® ط·آ§ط¸â€‍ط·آ¹ط·آ§ط¸â€¦ط·آ©"}),s.jsxs("div",{className:"is-voucher-stack",children:[s.jsx("input",{className:"is-voucher-input",name:"voucherNo",readOnly:!J,defaultValue:ye},`vn-${r}-${a==null?void 0:a.updatedAt}`),s.jsx("select",{className:"is-voucher-list",size:Math.min(5,Math.max(3,t.length||3)),value:r,onChange:v=>l(v.target.value),children:t.length===0?s.jsx("option",{value:"",children:"أ¢â‚¬â€‌"}):t.map(v=>s.jsxs("option",{value:v.id,children:[v.voucherNo," (",v.currency,")"]},v.id))})]}),s.jsx("span",{className:"is-lbl",children:"ط·ع¾ ط·آ§ط¸â€‍ط¸â€ڑط·آ§ط·آ¦ط¸â€¦ط·آ©"}),s.jsxs("div",{className:"erp-workflow-row",style:{gridColumn:"1 / -1"},children:[s.jsx(Id,{status:a==null?void 0:a.documentStatus}),(a==null?void 0:a.documentStatus)==="DRAFT"&&((e==null?void 0:e.role)==="DATA_ENTRY"||(e==null?void 0:e.role)==="ACCOUNTANT"||(e==null?void 0:e.role)==="ADMIN")?s.jsx("button",{type:"button",onClick:te,children:"ط·آ¥ط·آ±ط·آ³ط·آ§ط¸â€‍ ط¸â€‍ط¸â€‍ط¸â€¦ط¸ث†ط·آ§ط¸ظ¾ط¸â€ڑط·آ©"}):null,(a==null?void 0:a.documentStatus)==="SUBMITTED"&&((e==null?void 0:e.role)==="ACCOUNTANT"||(e==null?void 0:e.role)==="ADMIN")?s.jsxs(s.Fragment,{children:[s.jsx("button",{type:"button",onClick:Be,children:"ط·آ§ط·آ¹ط·ع¾ط¸â€¦ط·آ§ط·آ¯"}),s.jsx("button",{type:"button",onClick:Se,children:"ط·آ±ط¸ظ¾ط·آ¶"})]}):null]}),s.jsxs("select",{className:"is-currency-select",name:"currency",disabled:!J,defaultValue:Ce,children:[s.jsx("option",{value:"ط¯ظˆظ„ط§ط±",children:"ط¯ظˆظ„ط§ط±"}),s.jsx("option",{value:"ط¯ظٹظ†ط§ط±",children:"ط¯ظٹظ†ط§ط±"})]},`cur-${r}-${a==null?void 0:a.updatedAt}`),s.jsx("span",{className:"is-lbl",children:"ط·آ§ط¸â€‍ط·آ¹ط¸â€¦ط¸â€‍ط·آ©"})]}),s.jsxs("div",{className:"is-top-row third",children:[s.jsx("div",{className:"is-spacer"}),s.jsx(Zs,{name:"storeId",className:"is-search-select",inputClassName:"is-store-select",disabled:!J,value:S,onChange:b,options:p,getOptionValue:v=>v.id,getOptionLabel:v=>v.name,placeholder:"â€”",searchPlaceholder:"ط§ط¨ط­ط« ط¹ظ† ظ…ط³طھظˆط¯ط¹...",clearLabel:"â€” ط¨ط¯ظˆظ† ظ…ط³طھظˆط¯ط¹ â€”"}),s.jsx("span",{className:"is-lbl",children:"Store Target"}),s.jsx("input",{className:"is-notes-input",name:"notes",readOnly:!J,defaultValue:(a==null?void 0:a.notes)??""},`nt-${r}-${a==null?void 0:a.updatedAt}`),s.jsx("span",{className:"is-lbl",children:"ط¸â€¦ط¸â€‍ط·آ§ط·آ­ط·آ¸ط·آ§ط·ع¾"})]}),s.jsxs("div",{className:"is-top-row",style:{marginTop:8},children:[s.jsx("button",{type:"submit",className:"is-btn",children:"ط·آ­ط¸ظ¾ط·آ¸ ط·آ§ط¸â€‍ط·آ³ط¸â€ ط·آ¯"}),s.jsx("button",{type:"button",className:"is-item-btn green",onClick:G,children:"+ ط·آ³ط·آ·ط·آ±"}),s.jsx("button",{type:"button",className:"is-item-btn red",onClick:Ee,disabled:!K,children:"ط·آ­ط·آ°ط¸ظ¾ ط·آ³ط·آ·ط·آ±"}),s.jsx("button",{type:"button",className:"is-item-btn green",onClick:Ne,disabled:!K,children:"ط·ع¾ط·آ¹ط·آ¯ط¸ظ¹ط¸â€‍ ط·آ³ط·آ·ط·آ±"})]})]})]}),s.jsx("div",{className:"is-table-wrap",ref:ze,children:s.jsxs("table",{className:"is-table",children:[s.jsx("thead",{children:s.jsxs("tr",{children:[s.jsx("th",{}),s.jsxs("th",{children:["ط·آ³ط·آ¹ط·آ± ط·ع¾ط·آ­ط¸ث†ط¸ظ¹ط¸â€‍",s.jsx("br",{}),"ط·آ§ط¸â€‍ط·آ¯ط¸ث†ط¸â€‍ط·آ§ط·آ±"]}),s.jsxs("th",{children:["ط¸â€¦ط·آ¬ط¸â€¦ط¸ث†ط·آ¹ ط·آ³ط·آ¹ط·آ±",s.jsx("br",{}),"ط·آ§ط¸â€‍ط·آ¯ط¸ث†ط¸â€‍ط·آ§ط·آ±"]}),s.jsxs("th",{children:["ط·آ³ط·آ¹ط·آ±",s.jsx("br",{}),"ط·آ§ط¸â€‍ط·آ¯ط¸ث†ط¸â€‍ط·آ§ط·آ±"]}),s.jsxs("th",{children:["ط¸â€¦ط·آ¬ط¸â€¦ط¸ث†ط·آ¹ ط·آ§ط¸â€‍ط¸â€¦ط·ع¾ط·آ±",s.jsx("br",{}),"ط·آ§ط¸â€‍ط¸â€¦ط¸ئ’ط·آ¹ط·آ¨"]}),s.jsx("th",{children:"ط¸ث†ط·آ²ط¸â€ "}),s.jsx("th",{children:"cbm"}),s.jsx("th",{children:"cbm"}),s.jsxs("th",{children:["ط·آ¹ط·آ¯ط·آ¯",s.jsx("br",{}),"ط·آ§ط¸â€‍ط¸â€ڑط·آ§ط·آ¦ط¸â€¦ط·آ©"]}),s.jsxs("th",{children:["ط·آ³ط·آ¹ط·آ± ط¸ئ’ط¸â€‍",s.jsx("br",{}),"ط·آ§ط¸â€‍ط¸ظ¾"]}),s.jsx("th",{children:"ط¸â€¦ط·آ¬ط¸â€¦ط¸ث†ط·آ¹ ط·آ³ط·آ¹ط·آ±"}),s.jsxs("th",{children:["ط¸â€ڑط·آ·ط·آ¹ط·آ© ط·آ¯ط·آ§ط·آ®ط¸â€‍",s.jsx("br",{}),"ط·آ§ط¸â€‍ط¸ئ’ط·آ§ط·آ±ط·ع¾ط¸ث†ط¸â€ "]}),s.jsx("th",{children:"ط·آ³ط·آ¹ط·آ±"}),s.jsx("th",{children:"ط·آ§ط¸â€‍ط·ع¾ط¸ظ¾ط·آ§ط·آµط¸ظ¹ط¸â€‍"}),s.jsx("th",{children:"ط·آ±ط¸â€ڑط¸â€¦"}),s.jsx("th",{children:"Available"}),s.jsx("th",{children:"ط·ع¾"})]})}),s.jsx("tbody",{children:o.length===0?s.jsx("tr",{children:s.jsx("td",{colSpan:17,style:{textAlign:"center",padding:12},children:"ط¸â€‍ط·آ§ ط·آ£ط·آ³ط·آ·ط·آ±"})}):o.map(v=>s.jsxs("tr",{style:{cursor:"pointer",background:K===v.id?"#e8f4ff":void 0},onClick:()=>ie(v.id),children:[s.jsx("td",{className:"is-arrow",children:"أ¢â€“آ¶"}),s.jsx("td",{onDoubleClick:()=>ne(v.id,"usdConvertRate",v.usdConvertRate),children:(j==null?void 0:j.lineId)===v.id&&(j==null?void 0:j.field)==="usdConvertRate"?s.jsx("input",{autoFocus:!0,className:"is-mini-input",value:U,onChange:w=>W(w.target.value),onBlur:Z,onKeyDown:w=>{w.key==="Enter"&&Z(),w.key==="Escape"&&_e()}}):he(v.usdConvertRate)}),s.jsx("td",{onDoubleClick:()=>ne(v.id,"usdSumCol",v.usdSumCol),children:(j==null?void 0:j.lineId)===v.id&&(j==null?void 0:j.field)==="usdSumCol"?s.jsx("input",{autoFocus:!0,className:"is-mini-input",value:U,onChange:w=>W(w.target.value),onBlur:Z,onKeyDown:w=>{w.key==="Enter"&&Z(),w.key==="Escape"&&_e()}}):he(v.usdSumCol)}),s.jsx("td",{onDoubleClick:()=>ne(v.id,"usdPriceCol",v.usdPriceCol),children:(j==null?void 0:j.lineId)===v.id&&(j==null?void 0:j.field)==="usdPriceCol"?s.jsx("input",{autoFocus:!0,className:"is-mini-input",value:U,onChange:w=>W(w.target.value),onBlur:Z,onKeyDown:w=>{w.key==="Enter"&&Z(),w.key==="Escape"&&_e()}}):he(v.usdPriceCol)}),s.jsx("td",{onDoubleClick:()=>ne(v.id,"cbmSumCol",v.cbmSumCol),children:(j==null?void 0:j.lineId)===v.id&&(j==null?void 0:j.field)==="cbmSumCol"?s.jsx("input",{autoFocus:!0,className:"is-mini-input",value:U,onChange:w=>W(w.target.value),onBlur:Z,onKeyDown:w=>{w.key==="Enter"&&Z(),w.key==="Escape"&&_e()}}):he(v.cbmSumCol)}),s.jsx("td",{onDoubleClick:()=>ne(v.id,"weight",v.weight),children:(j==null?void 0:j.lineId)===v.id&&(j==null?void 0:j.field)==="weight"?s.jsx("input",{autoFocus:!0,className:"is-mini-input",value:U,onChange:w=>W(w.target.value),onBlur:Z,onKeyDown:w=>{w.key==="Enter"&&Z(),w.key==="Escape"&&_e()}}):he(v.weight)}),s.jsx("td",{onDoubleClick:()=>ne(v.id,"cbm1",v.cbm1),children:(j==null?void 0:j.lineId)===v.id&&(j==null?void 0:j.field)==="cbm1"?s.jsx("input",{autoFocus:!0,className:"is-mini-input",value:U,onChange:w=>W(w.target.value),onBlur:Z,onKeyDown:w=>{w.key==="Enter"&&Z(),w.key==="Escape"&&_e()}}):he(v.cbm1)}),s.jsx("td",{onDoubleClick:()=>ne(v.id,"cbm2",v.cbm2),children:(j==null?void 0:j.lineId)===v.id&&(j==null?void 0:j.field)==="cbm2"?s.jsx("input",{autoFocus:!0,className:"is-mini-input",value:U,onChange:w=>W(w.target.value),onBlur:Z,onKeyDown:w=>{w.key==="Enter"&&Z(),w.key==="Escape"&&_e()}}):he(v.cbm2)}),s.jsx("td",{onDoubleClick:()=>ne(v.id,"listQty",v.listQty),children:(j==null?void 0:j.lineId)===v.id&&(j==null?void 0:j.field)==="listQty"?s.jsx("input",{autoFocus:!0,className:"is-mini-input",value:U,onChange:w=>W(w.target.value),onBlur:Z,onKeyDown:w=>{w.key==="Enter"&&Z(),w.key==="Escape"&&_e()}}):he(v.listQty)}),s.jsx("td",{onDoubleClick:()=>ne(v.id,"pricePerThousand",v.pricePerThousand),children:(j==null?void 0:j.lineId)===v.id&&(j==null?void 0:j.field)==="pricePerThousand"?s.jsx("input",{autoFocus:!0,className:"is-mini-input",value:U,onChange:w=>W(w.target.value),onBlur:Z,onKeyDown:w=>{w.key==="Enter"&&Z(),w.key==="Escape"&&_e()}}):he(v.pricePerThousand)}),s.jsx("td",{onDoubleClick:()=>ne(v.id,"totalPrice",v.totalPrice),children:(j==null?void 0:j.lineId)===v.id&&(j==null?void 0:j.field)==="totalPrice"?s.jsx("input",{autoFocus:!0,className:"is-mini-input",value:U,onChange:w=>W(w.target.value),onBlur:Z,onKeyDown:w=>{w.key==="Enter"&&Z(),w.key==="Escape"&&_e()}}):he(v.totalPrice)}),s.jsx("td",{onDoubleClick:()=>ne(v.id,"pcsInCarton",v.pcsInCarton),children:(j==null?void 0:j.lineId)===v.id&&(j==null?void 0:j.field)==="pcsInCarton"?s.jsx("input",{autoFocus:!0,className:"is-mini-input",value:U,onChange:w=>W(w.target.value),onBlur:Z,onKeyDown:w=>{w.key==="Enter"&&Z(),w.key==="Escape"&&_e()}}):he(v.pcsInCarton)}),s.jsx("td",{onDoubleClick:()=>ne(v.id,"linePrice",v.linePrice),children:(j==null?void 0:j.lineId)===v.id&&(j==null?void 0:j.field)==="linePrice"?s.jsx("input",{autoFocus:!0,className:"is-mini-input",value:U,onChange:w=>W(w.target.value),onBlur:Z,onKeyDown:w=>{w.key==="Enter"&&Z(),w.key==="Escape"&&_e()}}):he(v.linePrice)}),s.jsx("td",{className:"is-item-name",onDoubleClick:()=>ne(v.id,"detail",v.detail),children:(j==null?void 0:j.lineId)===v.id&&(j==null?void 0:j.field)==="detail"?s.jsx("input",{autoFocus:!0,className:"is-mini-input",value:U,onChange:w=>W(w.target.value),onBlur:Z,onKeyDown:w=>{w.key==="Enter"&&Z(),w.key==="Escape"&&_e()}}):v.detail??""}),s.jsx("td",{onDoubleClick:()=>ne(v.id,"itemNo",v.itemNo),children:(j==null?void 0:j.lineId)===v.id&&(j==null?void 0:j.field)==="itemNo"?s.jsx("input",{autoFocus:!0,className:"is-mini-input",value:U,onChange:w=>W(w.target.value),onBlur:Z,onKeyDown:w=>{w.key==="Enter"&&Z(),w.key==="Escape"&&_e()}}):v.itemNo??""}),s.jsx("td",{style:{color:v.itemId&&Number(v.listQty??0)>Number(z[v.itemId]??0)?"crimson":void 0,fontWeight:v.itemId&&Number(v.listQty??0)>Number(z[v.itemId]??0)?700:void 0},children:v.itemId?he(z[v.itemId]??0):"â€”"}),s.jsx("td",{children:he(v.seq)})]},v.id))})]})}),R?s.jsxs("div",{style:{marginTop:6,fontSize:12,color:"#334155"},children:["Warehouse: ",s.jsx("strong",{children:R})," (",L.length," items)"]}):null,X.length>0?s.jsxs("div",{className:"alert-error",style:{marginTop:6},children:["ظٹظˆط¬ط¯ ",X.length," ط³ط·ط± ط¨ظٹط¹ ط¨ظƒظ…ظٹط© ط£ظƒط¨ط± ظ…ظ† ط§ظ„ظ…طھط§ط­ ظپظٹ ط§ظ„ظ…ط³طھظˆط¯ط¹ ط§ظ„ظ…ط­ط¯ط¯."]}):null,s.jsxs("div",{className:"is-sum-row",children:[s.jsxs("div",{className:"is-sum-grid",children:[s.jsxs("div",{className:"is-sum-item",children:[s.jsx("div",{className:"is-sum-item-box",children:he((F==null?void 0:F.totalPrice)??"")}),s.jsx("div",{className:"is-sum-item-label",children:"Total Price"})]}),s.jsxs("div",{className:"is-sum-item",children:[s.jsx("div",{className:"is-sum-item-box",children:he((F==null?void 0:F.cbmSum)??"")}),s.jsx("div",{className:"is-sum-item-label",children:"CBM Sum"})]}),s.jsxs("div",{className:"is-sum-item",children:[s.jsx("div",{className:"is-sum-item-box",children:he((F==null?void 0:F.listQty)??"")}),s.jsx("div",{className:"is-sum-item-label",children:"List Qty"})]}),s.jsxs("div",{className:"is-sum-item",children:[s.jsx("div",{className:"is-sum-item-box",children:he("")}),s.jsx("div",{className:"is-sum-item-label",children:"-"})]}),s.jsxs("div",{className:"is-sum-item",children:[s.jsx("div",{className:"is-sum-item-box",children:he((d==null?void 0:d.total)??"")}),s.jsx("div",{className:"is-sum-item-label",children:"Total"})]})]}),s.jsxs("div",{className:"is-accounting-row",children:[s.jsx("span",{className:"is-sum-label",children:"ط·آ§ط¸â€‍ط¸â€¦ط·آ­ط·آ§ط·آ³ط·آ¨ط·آ©"}),s.jsx("input",{className:"is-sum-input yellow",value:he((a==null?void 0:a.accountingDebit)??"0"),readOnly:!0}),s.jsx("span",{className:"is-sum-label",children:"ط·آ§ط¸â€‍ط¸â€¦ط·آ­ط·آ§ط·آ³ط·آ¨ط·آ© ط·آ¯ط·آ§ط·آ¦ط¸â€ /ط¸â€¦ط·آ¯ط¸ظ¹ط¸â€ "})]})]}),s.jsxs("div",{className:"is-sum-bottom",ref:pe,children:[s.jsxs("div",{className:"is-total-box",children:[s.jsxs("div",{className:"is-total-line",children:[s.jsx("input",{value:he((d==null?void 0:d.total)??""),readOnly:!0}),s.jsx("span",{children:"ط·آ§ط¸â€‍ط¸â€¦ط·آ¬ط¸â€¦ط¸ث†ط·آ¹"})]}),s.jsxs("div",{className:"is-total-line",children:[s.jsx("input",{value:he((d==null?void 0:d.paid)??""),readOnly:!0}),s.jsx("span",{children:"ط·آ§ط¸â€‍ط¸â€¦ط·آ³ط·آ¯ط·آ¯"})]}),s.jsxs("div",{className:"is-total-line",children:[s.jsx("input",{value:he((d==null?void 0:d.remaining)??""),readOnly:!0}),s.jsx("span",{children:"ط·آ§ط¸â€‍ط¸â€¦ط·آ¬ط¸â€¦ط¸ث†ط·آ¹ ط·آ§ط¸â€‍ط·آ¨ط·آ§ط¸â€ڑط¸ظ¹"})]}),s.jsxs("div",{className:"is-total-line",children:[s.jsx("input",{value:he((d==null?void 0:d.profit)??""),readOnly:!0}),s.jsx("span",{children:"ط·آ£ط·آ±ط·آ¨ط·آ§ط·آ­"})]})]}),s.jsx("div",{className:"is-yellow-note",children:"ط·آ¨ط·آ¶ط·آ§ط·آ¹ط·آ© ط¸â€‍ط¸â€،ط·آ°ط·آ§ ط·آ§ط¸â€‍ط¸â€¦ط·آ³ط·ع¾ط·آ«ط¸â€¦ط·آ±"})]}),s.jsx(Dd,{mode:"sale",voucherId:r,line:o.find(v=>v.id===K),onSaved:()=>ge(r)}),s.jsx(Ef,{voucherId:r,glJournalEntryId:a==null?void 0:a.glJournalEntryId,documentStatus:a==null?void 0:a.documentStatus,onPosted:()=>ge(r)}),s.jsxs("div",{className:"is-bottom-actions",children:[s.jsx("button",{type:"button",className:"is-btn",onClick:T,children:"NEW"}),s.jsx("button",{type:"button",className:"is-btn red",onClick:q,children:"Delete"}),s.jsx("button",{type:"button",className:"is-btn",onClick:()=>{var v;return(v=document.getElementById(re))==null?void 0:v.requestSubmit()},children:"Save"}),s.jsxs("button",{type:"button",className:"is-btn yellow",onClick:()=>Vt(ae.current,{dir:"rtl",lang:"ar"}),children:["ط·آ·ط·آ¨ط·آ§ط·آ¹ط·آ©",s.jsx("br",{}),"ط·آ¹ط·آ±ط·آ¨ط¸ظ¹"]}),s.jsxs("button",{type:"button",className:"is-btn yellow",onClick:()=>Vt(ae.current,{dir:"ltr",lang:"en"}),children:["Print",s.jsx("br",{}),"EN"]}),s.jsxs("button",{type:"button",className:"is-btn yellow",onClick:$,children:["Open Container",s.jsx("br",{}),"in List"]}),s.jsxs("button",{type:"button",className:"is-btn yellow",onClick:()=>{const v=window.confirm(`ظ…ظˆط§ظپظ‚ = ظ†ط³ط®ط© Pride
-ط¥ظ„ط؛ط§ط، = ظ†ط³ط®ط© Faqr`);Ja(ae.current,v?"Pride copy":"Faqr copy")},children:["Pride",s.jsx("br",{}),"Faqr"]}),s.jsx("button",{type:"button",className:"is-btn",onClick:Dt,children:"Last Voucher"}),s.jsxs("button",{type:"button",className:"is-btn",onClick:I,children:["Last Edited",s.jsx("br",{}),"Vouchers"]}),s.jsxs("button",{type:"button",className:"is-btn",onClick:()=>r&&ge(r),children:["Reload Last",s.jsx("br",{}),"Voucher"]}),s.jsx("button",{type:"button",className:"is-btn green",onClick:()=>{se(!1),h(""),ie("")},children:"X"}),s.jsx("button",{type:"button",className:"is-btn blue",onClick:N,children:"third"}),s.jsx("button",{type:"button",className:"is-btn blue",onClick:le,children:"second"}),s.jsx("button",{type:"button",className:"is-btn blue",onClick:H,children:"main"})]})]})}
+`)}`);
+    },
+    H = () => {
+      var v;
+      return (v = me.current) == null
+        ? void 0
+        : v.scrollIntoView({ behavior: "smooth", block: "start" });
+    },
+    le = () => {
+      var v;
+      return (v = ze.current) == null
+        ? void 0
+        : v.scrollIntoView({ behavior: "smooth", block: "start" });
+    },
+    N = () => {
+      var v;
+      return (v = pe.current) == null
+        ? void 0
+        : v.scrollIntoView({ behavior: "smooth", block: "start" });
+    },
+    $ = () => {
+      var w, B;
+      const v =
+        (B =
+          (w = a == null ? void 0 : a.container) == null
+            ? void 0
+            : w.containerNo) == null
+          ? void 0
+          : B.trim();
+      (v && sessionStorage.setItem("reportsJumpContainerNo", v), kn("list"));
+    },
+    X = o.filter((v) => {
+      if (!v.itemId) return !1;
+      const w = Number(v.listQty ?? 0);
+      if (w <= 0) return !1;
+      const B = Number(z[v.itemId] ?? 0);
+      return w > B;
+    });
+  return s.jsxs("div", {
+    className: "is-page",
+    dir: "ltr",
+    ref: ae,
+    children: [
+      g
+        ? s.jsx("div", {
+            className: "alert-error",
+            style: { margin: 6 },
+            children: g,
+          })
+        : null,
+      s.jsx("div", { className: "is-titleline", children: "Sale Vouchers" }),
+      s.jsxs("div", {
+        className: "is-top-wrap",
+        ref: me,
+        children: [
+          s.jsxs("div", {
+            className: "is-top-row",
+            children: [
+              s.jsx("button", {
+                type: "button",
+                className: "is-btn-edit",
+                onClick: () => se((v) => !v),
+                children: J ? "ط¸â€ڑط¸ظ¾ط¸â€‍" : "ط·ع¾ط·آ¹ط·آ¯ط¸ظ¹ط¸â€‍",
+              }),
+              s.jsx("span", { className: "is-lbl", children: "%0" }),
+              s.jsx("span", {
+                className: "is-lbl",
+                children: "ط·آ¹ط¸â€¦ط¸ث†ط¸â€‍ط·آ© ط·آ§ط¸â€‍ط¸â€¦ط¸ئ’ط·ع¾ط·آ¨",
+              }),
+              s.jsx(
+                "input",
+                {
+                  className: "is-small-input",
+                  name: "officeCommission",
+                  form: re,
+                  readOnly: !J,
+                  defaultValue: he(
+                    (a == null ? void 0 : a.officeCommission) ?? "0",
+                  ),
+                },
+                `oc-${r}-${a == null ? void 0 : a.updatedAt}`,
+              ),
+              s.jsx("span", {
+                className: "is-lbl",
+                children:
+                  "ط·آ³ط·آ¹ط·آ± ط¸â€ ط¸â€ڑط¸â€‍ ط·آ§ط¸â€‍ط¸â€¦ط·ع¾ط·آ± ط·آ§ط¸â€‍ط¸â€¦ط¸ئ’ط·آ¹ط·آ¨",
+              }),
+              s.jsx(
+                "input",
+                {
+                  className: "is-small-input",
+                  name: "cbmTransportPrice",
+                  form: re,
+                  readOnly: !J,
+                  defaultValue: he(
+                    (a == null ? void 0 : a.cbmTransportPrice) ?? "",
+                  ),
+                },
+                `cbm-${r}-${a == null ? void 0 : a.updatedAt}`,
+              ),
+              s.jsx("div", { className: "is-spacer" }),
+              s.jsx(
+                "input",
+                {
+                  className: "is-rate-input",
+                  name: "exchangeRate",
+                  form: re,
+                  readOnly: !J,
+                  defaultValue: xe,
+                },
+                `er-${r}-${a == null ? void 0 : a.updatedAt}`,
+              ),
+              s.jsx("span", {
+                className: "is-rate-lbl",
+                children: "ط·آ³ط·آ¹ط·آ± ط·آ§ط¸â€‍ط·آµط·آ±ط¸ظ¾",
+              }),
+            ],
+          }),
+          s.jsxs("form", {
+            id: re,
+            onSubmit: Re,
+            children: [
+              s.jsxs("div", {
+                className: "is-mid-row",
+                children: [
+                  s.jsxs("div", {
+                    className: "is-left-cluster",
+                    children: [
+                      s.jsxs("div", {
+                        className: "is-balance-line",
+                        children: [
+                          s.jsx("span", {
+                            className: "is-mini-title",
+                            children: "ط¸â€¦ط·آ¬ط¸â€¦ط¸ث†ط·آ¹",
+                          }),
+                          s.jsx("input", {
+                            className: "is-balance-input",
+                            value: he((d == null ? void 0 : d.total) ?? ""),
+                            readOnly: !0,
+                          }),
+                        ],
+                      }),
+                      s.jsxs("div", {
+                        className: "is-container-line",
+                        children: [
+                          s.jsx(
+                            "select",
+                            {
+                              className: "is-container-input",
+                              name: "containerId",
+                              disabled: !J,
+                              defaultValue:
+                                (a == null ? void 0 : a.containerId) ?? "",
+                              children: C.map((v) =>
+                                s.jsx(
+                                  "option",
+                                  { value: v.id, children: v.containerNo },
+                                  v.id,
+                                ),
+                              ),
+                            },
+                            `ct-${r}-${a == null ? void 0 : a.updatedAt}`,
+                          ),
+                          s.jsx("span", {
+                            className: "is-lbl",
+                            children:
+                              "ط·آ±ط¸â€ڑط¸â€¦ ط·آ§ط¸â€‍ط·آ­ط·آ§ط¸ث†ط¸ظ¹ط·آ©",
+                          }),
+                        ],
+                      }),
+                      s.jsx("button", {
+                        type: "button",
+                        className: "is-blue-pill",
+                        onClick: () =>
+                          window.alert(`ط¹ظ…ظ„ط© ط§ظ„ط³ظ†ط¯: ${(a == null ? void 0 : a.currency) ?? "â€”"}
+ط³ط¹ط± ط§ظ„طµط±ظپ ط§ظ„ط­ط§ظ„ظٹ ظپظٹ ط§ظ„ظ†ظ…ظˆط°ط¬: ${xe}`),
+                        title: "ط¹ط±ط¶ ط§ظ„ط¹ظ…ظ„ط© ظˆط³ط¹ط± ط§ظ„طµط±ظپ",
+                        children:
+                          (a == null ? void 0 : a.currency) ?? "ط§ظ„ط¹ظ…ظ„ط©",
+                      }),
+                    ],
+                  }),
+                  s.jsxs("div", {
+                    className: "is-mini-actions",
+                    children: [
+                      s.jsx("button", {
+                        type: "button",
+                        className: "is-mini-act",
+                        onClick: T,
+                        children: "ط·آ¬ط·آ¯ط¸ظ¹ط·آ¯",
+                      }),
+                      s.jsx("button", {
+                        type: "button",
+                        className: "is-mini-act red",
+                        onClick: q,
+                        children: "ط·آ­ط·آ°ط¸ظ¾",
+                      }),
+                    ],
+                  }),
+                  s.jsx(Zs, {
+                    name: "customerId",
+                    dir: "rtl",
+                    className: "is-search-select",
+                    inputClassName: "is-supplier-box",
+                    disabled: !J,
+                    value: y,
+                    onChange: f,
+                    options: k,
+                    getOptionValue: (v) => v.id,
+                    getOptionLabel: (v) => v.name,
+                    placeholder: "ط·آ§ط·آ®ط·ع¾ط·آ± ط·آ§ط¸â€‍ط·آ²ط·آ¨ط¸ث†ط¸â€ ",
+                    searchPlaceholder:
+                      "ط·آ§ط·آ¨ط·آ­ط·آ« ط·آ¹ط¸â€  ط·آ²ط·آ¨ط¸ث†ط¸â€ ...",
+                    clearLabel:
+                      "أ¢â‚¬â€‌ ط·آ§ط·آ®ط·ع¾ط·آ± ط·آ§ط¸â€‍ط·آ²ط·آ¨ط¸ث†ط¸â€  أ¢â‚¬â€‌",
+                    allowClear: !1,
+                  }),
+                  s.jsx("span", {
+                    className: "is-lbl",
+                    children: "ط·آ§ط¸â€‍ط·آ²ط·آ¨ط¸ث†ط¸â€ ",
+                  }),
+                  s.jsx("div", { className: "is-spacer" }),
+                  s.jsx(
+                    "input",
+                    {
+                      className: "is-date-input",
+                      name: "voucherDate",
+                      readOnly: !J,
+                      placeholder: "dd/mm/yyyy",
+                      defaultValue: Me,
+                    },
+                    `vd-${r}-${a == null ? void 0 : a.updatedAt}`,
+                  ),
+                  s.jsx("span", {
+                    className: "is-lbl",
+                    children: "ط·ع¾ط·آ§ط·آ±ط¸ظ¹ط·آ® ط·آ§ط¸â€‍ط·آ¹ط·آ§ط¸â€¦ط·آ©",
+                  }),
+                  s.jsxs("div", {
+                    className: "is-voucher-stack",
+                    children: [
+                      s.jsx(
+                        "input",
+                        {
+                          className: "is-voucher-input",
+                          name: "voucherNo",
+                          readOnly: !J,
+                          defaultValue: ye,
+                        },
+                        `vn-${r}-${a == null ? void 0 : a.updatedAt}`,
+                      ),
+                      s.jsx("select", {
+                        className: "is-voucher-list",
+                        size: Math.min(5, Math.max(3, t.length || 3)),
+                        value: r,
+                        onChange: (v) => l(v.target.value),
+                        children:
+                          t.length === 0
+                            ? s.jsx("option", {
+                                value: "",
+                                children: "أ¢â‚¬â€‌",
+                              })
+                            : t.map((v) =>
+                                s.jsxs(
+                                  "option",
+                                  {
+                                    value: v.id,
+                                    children: [
+                                      v.voucherNo,
+                                      " (",
+                                      v.currency,
+                                      ")",
+                                    ],
+                                  },
+                                  v.id,
+                                ),
+                              ),
+                      }),
+                    ],
+                  }),
+                  s.jsx("span", {
+                    className: "is-lbl",
+                    children: "ط·ع¾ ط·آ§ط¸â€‍ط¸â€ڑط·آ§ط·آ¦ط¸â€¦ط·آ©",
+                  }),
+                  s.jsxs("div", {
+                    className: "erp-workflow-row",
+                    style: { gridColumn: "1 / -1" },
+                    children: [
+                      s.jsx(Id, {
+                        status: a == null ? void 0 : a.documentStatus,
+                      }),
+                      (a == null ? void 0 : a.documentStatus) === "DRAFT" &&
+                      ((e == null ? void 0 : e.role) === "DATA_ENTRY" ||
+                        (e == null ? void 0 : e.role) === "ACCOUNTANT" ||
+                        (e == null ? void 0 : e.role) === "ADMIN")
+                        ? s.jsx("button", {
+                            type: "button",
+                            onClick: te,
+                            children:
+                              "ط·آ¥ط·آ±ط·آ³ط·آ§ط¸â€‍ ط¸â€‍ط¸â€‍ط¸â€¦ط¸ث†ط·آ§ط¸ظ¾ط¸â€ڑط·آ©",
+                          })
+                        : null,
+                      (a == null ? void 0 : a.documentStatus) === "SUBMITTED" &&
+                      ((e == null ? void 0 : e.role) === "ACCOUNTANT" ||
+                        (e == null ? void 0 : e.role) === "ADMIN")
+                        ? s.jsxs(s.Fragment, {
+                            children: [
+                              s.jsx("button", {
+                                type: "button",
+                                onClick: Be,
+                                children: "ط·آ§ط·آ¹ط·ع¾ط¸â€¦ط·آ§ط·آ¯",
+                              }),
+                              s.jsx("button", {
+                                type: "button",
+                                onClick: Se,
+                                children: "ط·آ±ط¸ظ¾ط·آ¶",
+                              }),
+                            ],
+                          })
+                        : null,
+                    ],
+                  }),
+                  s.jsxs(
+                    "select",
+                    {
+                      className: "is-currency-select",
+                      name: "currency",
+                      disabled: !J,
+                      defaultValue: Ce,
+                      children: [
+                        s.jsx("option", {
+                          value: "ط¯ظˆظ„ط§ط±",
+                          children: "ط¯ظˆظ„ط§ط±",
+                        }),
+                        s.jsx("option", {
+                          value: "ط¯ظٹظ†ط§ط±",
+                          children: "ط¯ظٹظ†ط§ط±",
+                        }),
+                      ],
+                    },
+                    `cur-${r}-${a == null ? void 0 : a.updatedAt}`,
+                  ),
+                  s.jsx("span", {
+                    className: "is-lbl",
+                    children: "ط·آ§ط¸â€‍ط·آ¹ط¸â€¦ط¸â€‍ط·آ©",
+                  }),
+                ],
+              }),
+              s.jsxs("div", {
+                className: "is-top-row third",
+                children: [
+                  s.jsx("div", { className: "is-spacer" }),
+                  s.jsx(Zs, {
+                    name: "storeId",
+                    className: "is-search-select",
+                    inputClassName: "is-store-select",
+                    disabled: !J,
+                    value: S,
+                    onChange: b,
+                    options: p,
+                    getOptionValue: (v) => v.id,
+                    getOptionLabel: (v) => v.name,
+                    placeholder: "â€”",
+                    searchPlaceholder: "ط§ط¨ط­ط« ط¹ظ† ظ…ط³طھظˆط¯ط¹...",
+                    clearLabel: "â€” ط¨ط¯ظˆظ† ظ…ط³طھظˆط¯ط¹ â€”",
+                  }),
+                  s.jsx("span", {
+                    className: "is-lbl",
+                    children: "Store Target",
+                  }),
+                  s.jsx(
+                    "input",
+                    {
+                      className: "is-notes-input",
+                      name: "notes",
+                      readOnly: !J,
+                      defaultValue: (a == null ? void 0 : a.notes) ?? "",
+                    },
+                    `nt-${r}-${a == null ? void 0 : a.updatedAt}`,
+                  ),
+                  s.jsx("span", {
+                    className: "is-lbl",
+                    children: "ط¸â€¦ط¸â€‍ط·آ§ط·آ­ط·آ¸ط·آ§ط·ع¾",
+                  }),
+                ],
+              }),
+              s.jsxs("div", {
+                className: "is-top-row",
+                style: { marginTop: 8 },
+                children: [
+                  s.jsx("button", {
+                    type: "submit",
+                    className: "is-btn",
+                    children: "ط·آ­ط¸ظ¾ط·آ¸ ط·آ§ط¸â€‍ط·آ³ط¸â€ ط·آ¯",
+                  }),
+                  s.jsx("button", {
+                    type: "button",
+                    className: "is-item-btn green",
+                    onClick: G,
+                    children: "+ ط·آ³ط·آ·ط·آ±",
+                  }),
+                  s.jsx("button", {
+                    type: "button",
+                    className: "is-item-btn red",
+                    onClick: Ee,
+                    disabled: !K,
+                    children: "ط·آ­ط·آ°ط¸ظ¾ ط·آ³ط·آ·ط·آ±",
+                  }),
+                  s.jsx("button", {
+                    type: "button",
+                    className: "is-item-btn green",
+                    onClick: Ne,
+                    disabled: !K,
+                    children: "ط·ع¾ط·آ¹ط·آ¯ط¸ظ¹ط¸â€‍ ط·آ³ط·آ·ط·آ±",
+                  }),
+                ],
+              }),
+            ],
+          }),
+        ],
+      }),
+      s.jsx("div", {
+        className: "is-table-wrap",
+        ref: ze,
+        children: s.jsxs("table", {
+          className: "is-table",
+          children: [
+            s.jsx("thead", {
+              children: s.jsxs("tr", {
+                children: [
+                  s.jsx("th", {}),
+                  s.jsxs("th", {
+                    children: [
+                      "ط·آ³ط·آ¹ط·آ± ط·ع¾ط·آ­ط¸ث†ط¸ظ¹ط¸â€‍",
+                      s.jsx("br", {}),
+                      "ط·آ§ط¸â€‍ط·آ¯ط¸ث†ط¸â€‍ط·آ§ط·آ±",
+                    ],
+                  }),
+                  s.jsxs("th", {
+                    children: [
+                      "ط¸â€¦ط·آ¬ط¸â€¦ط¸ث†ط·آ¹ ط·آ³ط·آ¹ط·آ±",
+                      s.jsx("br", {}),
+                      "ط·آ§ط¸â€‍ط·آ¯ط¸ث†ط¸â€‍ط·آ§ط·آ±",
+                    ],
+                  }),
+                  s.jsxs("th", {
+                    children: [
+                      "ط·آ³ط·آ¹ط·آ±",
+                      s.jsx("br", {}),
+                      "ط·آ§ط¸â€‍ط·آ¯ط¸ث†ط¸â€‍ط·آ§ط·آ±",
+                    ],
+                  }),
+                  s.jsxs("th", {
+                    children: [
+                      "ط¸â€¦ط·آ¬ط¸â€¦ط¸ث†ط·آ¹ ط·آ§ط¸â€‍ط¸â€¦ط·ع¾ط·آ±",
+                      s.jsx("br", {}),
+                      "ط·آ§ط¸â€‍ط¸â€¦ط¸ئ’ط·آ¹ط·آ¨",
+                    ],
+                  }),
+                  s.jsx("th", { children: "ط¸ث†ط·آ²ط¸â€ " }),
+                  s.jsx("th", { children: "cbm" }),
+                  s.jsx("th", { children: "cbm" }),
+                  s.jsxs("th", {
+                    children: [
+                      "ط·آ¹ط·آ¯ط·آ¯",
+                      s.jsx("br", {}),
+                      "ط·آ§ط¸â€‍ط¸â€ڑط·آ§ط·آ¦ط¸â€¦ط·آ©",
+                    ],
+                  }),
+                  s.jsxs("th", {
+                    children: [
+                      "ط·آ³ط·آ¹ط·آ± ط¸ئ’ط¸â€‍",
+                      s.jsx("br", {}),
+                      "ط·آ§ط¸â€‍ط¸ظ¾",
+                    ],
+                  }),
+                  s.jsx("th", {
+                    children: "ط¸â€¦ط·آ¬ط¸â€¦ط¸ث†ط·آ¹ ط·آ³ط·آ¹ط·آ±",
+                  }),
+                  s.jsxs("th", {
+                    children: [
+                      "ط¸â€ڑط·آ·ط·آ¹ط·آ© ط·آ¯ط·آ§ط·آ®ط¸â€‍",
+                      s.jsx("br", {}),
+                      "ط·آ§ط¸â€‍ط¸ئ’ط·آ§ط·آ±ط·ع¾ط¸ث†ط¸â€ ",
+                    ],
+                  }),
+                  s.jsx("th", { children: "ط·آ³ط·آ¹ط·آ±" }),
+                  s.jsx("th", {
+                    children: "ط·آ§ط¸â€‍ط·ع¾ط¸ظ¾ط·آ§ط·آµط¸ظ¹ط¸â€‍",
+                  }),
+                  s.jsx("th", { children: "ط·آ±ط¸â€ڑط¸â€¦" }),
+                  s.jsx("th", { children: "Available" }),
+                  s.jsx("th", { children: "ط·ع¾" }),
+                ],
+              }),
+            }),
+            s.jsx("tbody", {
+              children:
+                o.length === 0
+                  ? s.jsx("tr", {
+                      children: s.jsx("td", {
+                        colSpan: 17,
+                        style: { textAlign: "center", padding: 12 },
+                        children: "ط¸â€‍ط·آ§ ط·آ£ط·آ³ط·آ·ط·آ±",
+                      }),
+                    })
+                  : o.map((v) =>
+                      s.jsxs(
+                        "tr",
+                        {
+                          style: {
+                            cursor: "pointer",
+                            background: K === v.id ? "#e8f4ff" : void 0,
+                          },
+                          onClick: () => ie(v.id),
+                          children: [
+                            s.jsx("td", {
+                              className: "is-arrow",
+                              children: "أ¢â€“آ¶",
+                            }),
+                            s.jsx("td", {
+                              onDoubleClick: () =>
+                                ne(v.id, "usdConvertRate", v.usdConvertRate),
+                              children:
+                                (j == null ? void 0 : j.lineId) === v.id &&
+                                (j == null ? void 0 : j.field) ===
+                                  "usdConvertRate"
+                                  ? s.jsx("input", {
+                                      autoFocus: !0,
+                                      className: "is-mini-input",
+                                      value: U,
+                                      onChange: (w) => W(w.target.value),
+                                      onBlur: Z,
+                                      onKeyDown: (w) => {
+                                        (w.key === "Enter" && Z(),
+                                          w.key === "Escape" && _e());
+                                      },
+                                    })
+                                  : he(v.usdConvertRate),
+                            }),
+                            s.jsx("td", {
+                              onDoubleClick: () =>
+                                ne(v.id, "usdSumCol", v.usdSumCol),
+                              children:
+                                (j == null ? void 0 : j.lineId) === v.id &&
+                                (j == null ? void 0 : j.field) === "usdSumCol"
+                                  ? s.jsx("input", {
+                                      autoFocus: !0,
+                                      className: "is-mini-input",
+                                      value: U,
+                                      onChange: (w) => W(w.target.value),
+                                      onBlur: Z,
+                                      onKeyDown: (w) => {
+                                        (w.key === "Enter" && Z(),
+                                          w.key === "Escape" && _e());
+                                      },
+                                    })
+                                  : he(v.usdSumCol),
+                            }),
+                            s.jsx("td", {
+                              onDoubleClick: () =>
+                                ne(v.id, "usdPriceCol", v.usdPriceCol),
+                              children:
+                                (j == null ? void 0 : j.lineId) === v.id &&
+                                (j == null ? void 0 : j.field) === "usdPriceCol"
+                                  ? s.jsx("input", {
+                                      autoFocus: !0,
+                                      className: "is-mini-input",
+                                      value: U,
+                                      onChange: (w) => W(w.target.value),
+                                      onBlur: Z,
+                                      onKeyDown: (w) => {
+                                        (w.key === "Enter" && Z(),
+                                          w.key === "Escape" && _e());
+                                      },
+                                    })
+                                  : he(v.usdPriceCol),
+                            }),
+                            s.jsx("td", {
+                              onDoubleClick: () =>
+                                ne(v.id, "cbmSumCol", v.cbmSumCol),
+                              children:
+                                (j == null ? void 0 : j.lineId) === v.id &&
+                                (j == null ? void 0 : j.field) === "cbmSumCol"
+                                  ? s.jsx("input", {
+                                      autoFocus: !0,
+                                      className: "is-mini-input",
+                                      value: U,
+                                      onChange: (w) => W(w.target.value),
+                                      onBlur: Z,
+                                      onKeyDown: (w) => {
+                                        (w.key === "Enter" && Z(),
+                                          w.key === "Escape" && _e());
+                                      },
+                                    })
+                                  : he(v.cbmSumCol),
+                            }),
+                            s.jsx("td", {
+                              onDoubleClick: () => ne(v.id, "weight", v.weight),
+                              children:
+                                (j == null ? void 0 : j.lineId) === v.id &&
+                                (j == null ? void 0 : j.field) === "weight"
+                                  ? s.jsx("input", {
+                                      autoFocus: !0,
+                                      className: "is-mini-input",
+                                      value: U,
+                                      onChange: (w) => W(w.target.value),
+                                      onBlur: Z,
+                                      onKeyDown: (w) => {
+                                        (w.key === "Enter" && Z(),
+                                          w.key === "Escape" && _e());
+                                      },
+                                    })
+                                  : he(v.weight),
+                            }),
+                            s.jsx("td", {
+                              onDoubleClick: () => ne(v.id, "cbm1", v.cbm1),
+                              children:
+                                (j == null ? void 0 : j.lineId) === v.id &&
+                                (j == null ? void 0 : j.field) === "cbm1"
+                                  ? s.jsx("input", {
+                                      autoFocus: !0,
+                                      className: "is-mini-input",
+                                      value: U,
+                                      onChange: (w) => W(w.target.value),
+                                      onBlur: Z,
+                                      onKeyDown: (w) => {
+                                        (w.key === "Enter" && Z(),
+                                          w.key === "Escape" && _e());
+                                      },
+                                    })
+                                  : he(v.cbm1),
+                            }),
+                            s.jsx("td", {
+                              onDoubleClick: () => ne(v.id, "cbm2", v.cbm2),
+                              children:
+                                (j == null ? void 0 : j.lineId) === v.id &&
+                                (j == null ? void 0 : j.field) === "cbm2"
+                                  ? s.jsx("input", {
+                                      autoFocus: !0,
+                                      className: "is-mini-input",
+                                      value: U,
+                                      onChange: (w) => W(w.target.value),
+                                      onBlur: Z,
+                                      onKeyDown: (w) => {
+                                        (w.key === "Enter" && Z(),
+                                          w.key === "Escape" && _e());
+                                      },
+                                    })
+                                  : he(v.cbm2),
+                            }),
+                            s.jsx("td", {
+                              onDoubleClick: () =>
+                                ne(v.id, "listQty", v.listQty),
+                              children:
+                                (j == null ? void 0 : j.lineId) === v.id &&
+                                (j == null ? void 0 : j.field) === "listQty"
+                                  ? s.jsx("input", {
+                                      autoFocus: !0,
+                                      className: "is-mini-input",
+                                      value: U,
+                                      onChange: (w) => W(w.target.value),
+                                      onBlur: Z,
+                                      onKeyDown: (w) => {
+                                        (w.key === "Enter" && Z(),
+                                          w.key === "Escape" && _e());
+                                      },
+                                    })
+                                  : he(v.listQty),
+                            }),
+                            s.jsx("td", {
+                              onDoubleClick: () =>
+                                ne(
+                                  v.id,
+                                  "pricePerThousand",
+                                  v.pricePerThousand,
+                                ),
+                              children:
+                                (j == null ? void 0 : j.lineId) === v.id &&
+                                (j == null ? void 0 : j.field) ===
+                                  "pricePerThousand"
+                                  ? s.jsx("input", {
+                                      autoFocus: !0,
+                                      className: "is-mini-input",
+                                      value: U,
+                                      onChange: (w) => W(w.target.value),
+                                      onBlur: Z,
+                                      onKeyDown: (w) => {
+                                        (w.key === "Enter" && Z(),
+                                          w.key === "Escape" && _e());
+                                      },
+                                    })
+                                  : he(v.pricePerThousand),
+                            }),
+                            s.jsx("td", {
+                              onDoubleClick: () =>
+                                ne(v.id, "totalPrice", v.totalPrice),
+                              children:
+                                (j == null ? void 0 : j.lineId) === v.id &&
+                                (j == null ? void 0 : j.field) === "totalPrice"
+                                  ? s.jsx("input", {
+                                      autoFocus: !0,
+                                      className: "is-mini-input",
+                                      value: U,
+                                      onChange: (w) => W(w.target.value),
+                                      onBlur: Z,
+                                      onKeyDown: (w) => {
+                                        (w.key === "Enter" && Z(),
+                                          w.key === "Escape" && _e());
+                                      },
+                                    })
+                                  : he(v.totalPrice),
+                            }),
+                            s.jsx("td", {
+                              onDoubleClick: () =>
+                                ne(v.id, "pcsInCarton", v.pcsInCarton),
+                              children:
+                                (j == null ? void 0 : j.lineId) === v.id &&
+                                (j == null ? void 0 : j.field) === "pcsInCarton"
+                                  ? s.jsx("input", {
+                                      autoFocus: !0,
+                                      className: "is-mini-input",
+                                      value: U,
+                                      onChange: (w) => W(w.target.value),
+                                      onBlur: Z,
+                                      onKeyDown: (w) => {
+                                        (w.key === "Enter" && Z(),
+                                          w.key === "Escape" && _e());
+                                      },
+                                    })
+                                  : he(v.pcsInCarton),
+                            }),
+                            s.jsx("td", {
+                              onDoubleClick: () =>
+                                ne(v.id, "linePrice", v.linePrice),
+                              children:
+                                (j == null ? void 0 : j.lineId) === v.id &&
+                                (j == null ? void 0 : j.field) === "linePrice"
+                                  ? s.jsx("input", {
+                                      autoFocus: !0,
+                                      className: "is-mini-input",
+                                      value: U,
+                                      onChange: (w) => W(w.target.value),
+                                      onBlur: Z,
+                                      onKeyDown: (w) => {
+                                        (w.key === "Enter" && Z(),
+                                          w.key === "Escape" && _e());
+                                      },
+                                    })
+                                  : he(v.linePrice),
+                            }),
+                            s.jsx("td", {
+                              className: "is-item-name",
+                              onDoubleClick: () => ne(v.id, "detail", v.detail),
+                              children:
+                                (j == null ? void 0 : j.lineId) === v.id &&
+                                (j == null ? void 0 : j.field) === "detail"
+                                  ? s.jsx("input", {
+                                      autoFocus: !0,
+                                      className: "is-mini-input",
+                                      value: U,
+                                      onChange: (w) => W(w.target.value),
+                                      onBlur: Z,
+                                      onKeyDown: (w) => {
+                                        (w.key === "Enter" && Z(),
+                                          w.key === "Escape" && _e());
+                                      },
+                                    })
+                                  : (v.detail ?? ""),
+                            }),
+                            s.jsx("td", {
+                              onDoubleClick: () => ne(v.id, "itemNo", v.itemNo),
+                              children:
+                                (j == null ? void 0 : j.lineId) === v.id &&
+                                (j == null ? void 0 : j.field) === "itemNo"
+                                  ? s.jsx("input", {
+                                      autoFocus: !0,
+                                      className: "is-mini-input",
+                                      value: U,
+                                      onChange: (w) => W(w.target.value),
+                                      onBlur: Z,
+                                      onKeyDown: (w) => {
+                                        (w.key === "Enter" && Z(),
+                                          w.key === "Escape" && _e());
+                                      },
+                                    })
+                                  : (v.itemNo ?? ""),
+                            }),
+                            s.jsx("td", {
+                              style: {
+                                color:
+                                  v.itemId &&
+                                  Number(v.listQty ?? 0) >
+                                    Number(z[v.itemId] ?? 0)
+                                    ? "crimson"
+                                    : void 0,
+                                fontWeight:
+                                  v.itemId &&
+                                  Number(v.listQty ?? 0) >
+                                    Number(z[v.itemId] ?? 0)
+                                    ? 700
+                                    : void 0,
+                              },
+                              children: v.itemId ? he(z[v.itemId] ?? 0) : "â€”",
+                            }),
+                            s.jsx("td", { children: he(v.seq) }),
+                          ],
+                        },
+                        v.id,
+                      ),
+                    ),
+            }),
+          ],
+        }),
+      }),
+      R
+        ? s.jsxs("div", {
+            style: { marginTop: 6, fontSize: 12, color: "#334155" },
+            children: [
+              "Warehouse: ",
+              s.jsx("strong", { children: R }),
+              " (",
+              L.length,
+              " items)",
+            ],
+          })
+        : null,
+      X.length > 0
+        ? s.jsxs("div", {
+            className: "alert-error",
+            style: { marginTop: 6 },
+            children: [
+              "ظٹظˆط¬ط¯ ",
+              X.length,
+              " ط³ط·ط± ط¨ظٹط¹ ط¨ظƒظ…ظٹط© ط£ظƒط¨ط± ظ…ظ† ط§ظ„ظ…طھط§ط­ ظپظٹ ط§ظ„ظ…ط³طھظˆط¯ط¹ ط§ظ„ظ…ط­ط¯ط¯.",
+            ],
+          })
+        : null,
+      s.jsxs("div", {
+        className: "is-sum-row",
+        children: [
+          s.jsxs("div", {
+            className: "is-sum-grid",
+            children: [
+              s.jsxs("div", {
+                className: "is-sum-item",
+                children: [
+                  s.jsx("div", {
+                    className: "is-sum-item-box",
+                    children: he((F == null ? void 0 : F.totalPrice) ?? ""),
+                  }),
+                  s.jsx("div", {
+                    className: "is-sum-item-label",
+                    children: "Total Price",
+                  }),
+                ],
+              }),
+              s.jsxs("div", {
+                className: "is-sum-item",
+                children: [
+                  s.jsx("div", {
+                    className: "is-sum-item-box",
+                    children: he((F == null ? void 0 : F.cbmSum) ?? ""),
+                  }),
+                  s.jsx("div", {
+                    className: "is-sum-item-label",
+                    children: "CBM Sum",
+                  }),
+                ],
+              }),
+              s.jsxs("div", {
+                className: "is-sum-item",
+                children: [
+                  s.jsx("div", {
+                    className: "is-sum-item-box",
+                    children: he((F == null ? void 0 : F.listQty) ?? ""),
+                  }),
+                  s.jsx("div", {
+                    className: "is-sum-item-label",
+                    children: "List Qty",
+                  }),
+                ],
+              }),
+              s.jsxs("div", {
+                className: "is-sum-item",
+                children: [
+                  s.jsx("div", {
+                    className: "is-sum-item-box",
+                    children: he(""),
+                  }),
+                  s.jsx("div", {
+                    className: "is-sum-item-label",
+                    children: "-",
+                  }),
+                ],
+              }),
+              s.jsxs("div", {
+                className: "is-sum-item",
+                children: [
+                  s.jsx("div", {
+                    className: "is-sum-item-box",
+                    children: he((d == null ? void 0 : d.total) ?? ""),
+                  }),
+                  s.jsx("div", {
+                    className: "is-sum-item-label",
+                    children: "Total",
+                  }),
+                ],
+              }),
+            ],
+          }),
+          s.jsxs("div", {
+            className: "is-accounting-row",
+            children: [
+              s.jsx("span", {
+                className: "is-sum-label",
+                children: "ط·آ§ط¸â€‍ط¸â€¦ط·آ­ط·آ§ط·آ³ط·آ¨ط·آ©",
+              }),
+              s.jsx("input", {
+                className: "is-sum-input yellow",
+                value: he((a == null ? void 0 : a.accountingDebit) ?? "0"),
+                readOnly: !0,
+              }),
+              s.jsx("span", {
+                className: "is-sum-label",
+                children:
+                  "ط·آ§ط¸â€‍ط¸â€¦ط·آ­ط·آ§ط·آ³ط·آ¨ط·آ© ط·آ¯ط·آ§ط·آ¦ط¸â€ /ط¸â€¦ط·آ¯ط¸ظ¹ط¸â€ ",
+              }),
+            ],
+          }),
+        ],
+      }),
+      s.jsxs("div", {
+        className: "is-sum-bottom",
+        ref: pe,
+        children: [
+          s.jsxs("div", {
+            className: "is-total-box",
+            children: [
+              s.jsxs("div", {
+                className: "is-total-line",
+                children: [
+                  s.jsx("input", {
+                    value: he((d == null ? void 0 : d.total) ?? ""),
+                    readOnly: !0,
+                  }),
+                  s.jsx("span", {
+                    children: "ط·آ§ط¸â€‍ط¸â€¦ط·آ¬ط¸â€¦ط¸ث†ط·آ¹",
+                  }),
+                ],
+              }),
+              s.jsxs("div", {
+                className: "is-total-line",
+                children: [
+                  s.jsx("input", {
+                    value: he((d == null ? void 0 : d.paid) ?? ""),
+                    readOnly: !0,
+                  }),
+                  s.jsx("span", { children: "ط·آ§ط¸â€‍ط¸â€¦ط·آ³ط·آ¯ط·آ¯" }),
+                ],
+              }),
+              s.jsxs("div", {
+                className: "is-total-line",
+                children: [
+                  s.jsx("input", {
+                    value: he((d == null ? void 0 : d.remaining) ?? ""),
+                    readOnly: !0,
+                  }),
+                  s.jsx("span", {
+                    children:
+                      "ط·آ§ط¸â€‍ط¸â€¦ط·آ¬ط¸â€¦ط¸ث†ط·آ¹ ط·آ§ط¸â€‍ط·آ¨ط·آ§ط¸â€ڑط¸ظ¹",
+                  }),
+                ],
+              }),
+              s.jsxs("div", {
+                className: "is-total-line",
+                children: [
+                  s.jsx("input", {
+                    value: he((d == null ? void 0 : d.profit) ?? ""),
+                    readOnly: !0,
+                  }),
+                  s.jsx("span", { children: "ط·آ£ط·آ±ط·آ¨ط·آ§ط·آ­" }),
+                ],
+              }),
+            ],
+          }),
+          s.jsx("div", {
+            className: "is-yellow-note",
+            children:
+              "ط·آ¨ط·آ¶ط·آ§ط·آ¹ط·آ© ط¸â€‍ط¸â€،ط·آ°ط·آ§ ط·آ§ط¸â€‍ط¸â€¦ط·آ³ط·ع¾ط·آ«ط¸â€¦ط·آ±",
+          }),
+        ],
+      }),
+      s.jsx(Dd, {
+        mode: "sale",
+        voucherId: r,
+        line: o.find((v) => v.id === K),
+        onSaved: () => ge(r),
+      }),
+      s.jsx(Ef, {
+        voucherId: r,
+        glJournalEntryId: a == null ? void 0 : a.glJournalEntryId,
+        documentStatus: a == null ? void 0 : a.documentStatus,
+        onPosted: () => ge(r),
+      }),
+      s.jsxs("div", {
+        className: "is-bottom-actions",
+        children: [
+          s.jsx("button", {
+            type: "button",
+            className: "is-btn",
+            onClick: T,
+            children: "NEW",
+          }),
+          s.jsx("button", {
+            type: "button",
+            className: "is-btn red",
+            onClick: q,
+            children: "Delete",
+          }),
+          s.jsx("button", {
+            type: "button",
+            className: "is-btn",
+            onClick: () => {
+              var v;
+              return (v = document.getElementById(re)) == null
+                ? void 0
+                : v.requestSubmit();
+            },
+            children: "Save",
+          }),
+          s.jsxs("button", {
+            type: "button",
+            className: "is-btn yellow",
+            onClick: () => Vt(ae.current, { dir: "rtl", lang: "ar" }),
+            children: [
+              "ط·آ·ط·آ¨ط·آ§ط·آ¹ط·آ©",
+              s.jsx("br", {}),
+              "ط·آ¹ط·آ±ط·آ¨ط¸ظ¹",
+            ],
+          }),
+          s.jsxs("button", {
+            type: "button",
+            className: "is-btn yellow",
+            onClick: () => Vt(ae.current, { dir: "ltr", lang: "en" }),
+            children: ["Print", s.jsx("br", {}), "EN"],
+          }),
+          s.jsxs("button", {
+            type: "button",
+            className: "is-btn yellow",
+            onClick: $,
+            children: ["Open Container", s.jsx("br", {}), "in List"],
+          }),
+          s.jsxs("button", {
+            type: "button",
+            className: "is-btn yellow",
+            onClick: () => {
+              const v = window.confirm(`ظ…ظˆط§ظپظ‚ = ظ†ط³ط®ط© Pride
+ط¥ظ„ط؛ط§ط، = ظ†ط³ط®ط© Faqr`);
+              Ja(ae.current, v ? "Pride copy" : "Faqr copy");
+            },
+            children: ["Pride", s.jsx("br", {}), "Faqr"],
+          }),
+          s.jsx("button", {
+            type: "button",
+            className: "is-btn",
+            onClick: Dt,
+            children: "Last Voucher",
+          }),
+          s.jsxs("button", {
+            type: "button",
+            className: "is-btn",
+            onClick: I,
+            children: ["Last Edited", s.jsx("br", {}), "Vouchers"],
+          }),
+          s.jsxs("button", {
+            type: "button",
+            className: "is-btn",
+            onClick: () => r && ge(r),
+            children: ["Reload Last", s.jsx("br", {}), "Voucher"],
+          }),
+          s.jsx("button", {
+            type: "button",
+            className: "is-btn green",
+            onClick: () => {
+              (se(!1), h(""), ie(""));
+            },
+            children: "X",
+          }),
+          s.jsx("button", {
+            type: "button",
+            className: "is-btn blue",
+            onClick: N,
+            children: "third",
+          }),
+          s.jsx("button", {
+            type: "button",
+            className: "is-btn blue",
+            onClick: le,
+            children: "second",
+          }),
+          s.jsx("button", {
+            type: "button",
+            className: "is-btn blue",
+            onClick: H,
+            children: "main",
+          }),
+        ],
+      }),
+    ],
+  });
+}
 
 export default Rf;

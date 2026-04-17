@@ -16,10 +16,87 @@ function purchaseLineQty(line: { piecesSum: Prisma.Decimal | null; boxesSum: Pri
   return dec(line.boxesSum);
 }
 
-function hasInventoryPurchaseLines(
-  lines: { itemId: string | null; piecesSum: Prisma.Decimal | null; boxesSum: Prisma.Decimal | null }[],
+function trimOrNull(value: string | null | undefined): string | null {
+  const s = String(value ?? "").trim();
+  return s || null;
+}
+
+type PurchaseInventoryLine = {
+  id: string;
+  seq: number;
+  itemId: string | null;
+  itemName: string | null;
+  itemNo: string | null;
+  piecesSum: Prisma.Decimal | null;
+  boxesSum: Prisma.Decimal | null;
+};
+
+async function ensureInventoryLineItemLinks(
+  tx: Prisma.TransactionClient,
+  linesWithQty: PurchaseInventoryLine[],
 ) {
-  return lines.some((line) => line.itemId && purchaseLineQty(line) > 0);
+  const cache = new Map<string, string>();
+
+  for (const line of linesWithQty) {
+    if (line.itemId) continue;
+
+    const itemNo = trimOrNull(line.itemNo);
+    const itemName = trimOrNull(line.itemName);
+    if (!itemNo && !itemName) {
+      throw new AppError(
+        409,
+        `Line #${line.seq}: add item link or enter item name/item number before adding purchase quantity to stock`,
+      );
+    }
+
+    const cacheKey = `${(itemNo ?? "").toLowerCase()}|${(itemName ?? "").toLowerCase()}`;
+    let itemId = cache.get(cacheKey);
+
+    if (!itemId) {
+      let item = itemNo
+        ? await tx.item.findFirst({
+            where: { itemNo: { equals: itemNo, mode: "insensitive" } },
+            orderBy: { createdAt: "asc" },
+            select: { id: true },
+          })
+        : null;
+
+      if (!item && itemName) {
+        item = await tx.item.findFirst({
+          where: itemNo
+            ? {
+                AND: [
+                  { name: { equals: itemName, mode: "insensitive" } },
+                  { itemNo: { equals: itemNo, mode: "insensitive" } },
+                ],
+              }
+            : { name: { equals: itemName, mode: "insensitive" } },
+          orderBy: { createdAt: "asc" },
+          select: { id: true },
+        });
+      }
+
+      if (!item) {
+        const defaultUom = dec(line.piecesSum) > 0 ? "PCS" : dec(line.boxesSum) > 0 ? "BOX" : null;
+        item = await tx.item.create({
+          data: {
+            name: itemName ?? itemNo ?? `Purchase Item ${line.seq}`,
+            itemNo,
+            defaultUom,
+          },
+          select: { id: true },
+        });
+      }
+
+      itemId = item.id;
+      cache.set(cacheKey, itemId);
+    }
+
+    await tx.purchaseVoucherLine.update({
+      where: { id: line.id },
+      data: { itemId },
+    });
+  }
 }
 
 async function syncPurchaseInventory(tx: Prisma.TransactionClient, voucherId: string) {
@@ -30,14 +107,26 @@ async function syncPurchaseInventory(tx: Prisma.TransactionClient, voucherId: st
       storeId: true,
       voucherDate: true,
       lines: {
-        select: { itemId: true, piecesSum: true, boxesSum: true },
+        select: {
+          id: true,
+          seq: true,
+          itemId: true,
+          itemName: true,
+          itemNo: true,
+          piecesSum: true,
+          boxesSum: true,
+        },
       },
     },
   });
   if (!voucher) throw new AppError(404, "Voucher not found");
-  if (hasInventoryPurchaseLines(voucher.lines) && !voucher.storeId) {
+
+  const linesWithQty = voucher.lines.filter((line) => purchaseLineQty(line) > 0);
+  if (linesWithQty.length > 0 && !voucher.storeId) {
     throw new AppError(409, "Select a store/warehouse before adding inventory purchase quantities");
   }
+
+  await ensureInventoryLineItemLinks(tx, linesWithQty);
   await inv.applyPurchaseVoucherInventory(tx, voucherId, voucher.voucherDate ?? new Date());
 }
 
