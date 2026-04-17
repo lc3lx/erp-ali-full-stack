@@ -26,64 +26,70 @@ function Df(e) {
   return Number.isFinite(n) ? n : null;
 }
 const Lf = {
-  "ط¸â€ڑط¸ظ¾ط¸â€‍": "ط¥ط؛ظ„ط§ظ‚",
-  "ط·ع¾ط·آ¹ط·آ¯ط¸ظ¹ط¸â€‍": "طھط¹ط¯ظٹظ„",
-  "ط·آ¹ط¸â€¦ط¸ث†ط¸â€‍ط·آ© ط·آ§ط¸â€‍ط¸â€¦ط¸ئ’ط·ع¾ط·آ¨":
-    "ط¹ظ…ظˆظ„ط© ط§ظ„ظ…ظƒطھط¨",
-  "ط·آ³ط·آ¹ط·آ± ط¸â€ ط¸â€ڑط¸â€‍ ط·آ§ط¸â€‍ط¸â€¦ط·ع¾ط·آ± ط·آ§ط¸â€‍ط¸â€¦ط¸ئ’ط·آ¹ط·آ¨":
-    "ط³ط¹ط± ظ†ظ‚ظ„ ط§ظ„ظ…طھط± ط§ظ„ظ…ظƒط¹ط¨",
-  "ط·آ³ط·آ¹ط·آ± ط·آ§ط¸â€‍ط·آµط·آ±ط¸ظ¾": "ط³ط¹ط± ط§ظ„طµط±ظپ",
-  "ط¸â€¦ط·آ¬ط¸â€¦ط¸ث†ط·آ¹": "ط§ظ„ظ…ط¬ظ…ظˆط¹",
-  "ط·آ±ط¸â€ڑط¸â€¦ ط·آ§ط¸â€‍ط·آ­ط·آ§ط¸ث†ط¸ظ¹ط·آ©": "ط±ظ‚ظ… ط§ظ„ط­ط§ظˆظٹط©",
-  "ط·آ¬ط·آ¯ط¸ظ¹ط·آ¯": "ط¬ط¯ظٹط¯",
-  "ط·آ­ط·آ°ط¸ظ¾": "ط­ط°ظپ",
-  "ط·آ§ط¸â€‍ط·آ²ط·آ¨ط¸ث†ط¸â€ ": "ط§ظ„ط²ط¨ظˆظ†",
-  "ط·ع¾ط·آ§ط·آ±ط¸ظ¹ط·آ® ط·آ§ط¸â€‍ط·آ¹ط·آ§ط¸â€¦ط·آ©":
-    "طھط§ط±ظٹط® ط§ظ„ظپط§طھظˆط±ط©",
-  "ط·ع¾ ط·آ§ط¸â€‍ط¸â€ڑط·آ§ط·آ¦ط¸â€¦ط·آ©": "ط§ظ„ظ‚ط§ط¦ظ…ط©",
-  "ط·آ¥ط·آ±ط·آ³ط·آ§ط¸â€‍ ط¸â€‍ط¸â€‍ط¸â€¦ط¸ث†ط·آ§ط¸ظ¾ط¸â€ڑط·آ©":
-    "ط¥ط±ط³ط§ظ„ ظ„ظ„ظ…ظˆط§ظپظ‚ط©",
-  "ط·آ§ط·آ¹ط·ع¾ط¸â€¦ط·آ§ط·آ¯": "ط§ط¹طھظ…ط§ط¯",
-  "ط·آ±ط¸ظ¾ط·آ¶": "ط±ظپط¶",
-  "ط·آ§ط¸â€‍ط·آ¹ط¸â€¦ط¸â€‍ط·آ©": "ط§ظ„ط¹ظ…ظ„ط©",
-  "ط¸â€¦ط¸â€‍ط·آ§ط·آ­ط·آ¸ط·آ§ط·ع¾": "ظ…ظ„ط§ط­ط¸ط§طھ",
-  "ط·آ­ط¸ظ¾ط·آ¸ ط·آ§ط¸â€‍ط·آ³ط¸â€ ط·آ¯": "ط­ظپط¸ ط§ظ„ظپط§طھظˆط±ط©",
-  "ط·آ­ط·آ°ط¸ظ¾ ط·آ³ط·آ·ط·آ±": "ط­ط°ظپ ط³ط·ط±",
-  "ط·ع¾ط·آ¹ط·آ¯ط¸ظ¹ط¸â€‍ ط·آ³ط·آ·ط·آ±": "طھط¹ط¯ظٹظ„ ط³ط·ط±",
-  "ط·آ³ط·آ¹ط·آ± ط·ع¾ط·آ­ط¸ث†ط¸ظ¹ط¸â€‍": "ط³ط¹ط± طھط­ظˆظٹظ„",
-  "ط·آ¯ط¸ث†ط¸â€‍ط·آ§ط·آ±": "ط¯ظˆظ„ط§ط±",
-  "ط·آ¯ط¸ظ¹ط¸â€ ط·آ§ط·آ±": "ط¯ظٹظ†ط§ط±",
-  "ط·آ§ط¸â€‍ط·آ¯ط¸ث†ط¸â€‍ط·آ§ط·آ±": "ط¯ظˆظ„ط§ط±",
-  "ط¸â€¦ط·آ¬ط¸â€¦ط¸ث†ط·آ¹ ط·آ³ط·آ¹ط·آ±": "ظ…ط¬ظ…ظˆط¹ ط³ط¹ط±",
-  "ط¸â€¦ط·آ¬ط¸â€¦ط¸ث†ط·آ¹ ط·آ§ط¸â€‍ط¸â€¦ط·ع¾ط·آ±": "ظ…ط¬ظ…ظˆط¹ ط§ظ„ظ…طھط±",
-  "ط·آ§ط¸â€‍ط¸â€¦ط¸ئ’ط·آ¹ط·آ¨": "ط§ظ„ظ…ظƒط¹ط¨",
-  "ط¸ث†ط·آ²ط¸â€ ": "ظˆط²ظ†",
-  "ط·آ¹ط·آ¯ط·آ¯": "ط¹ط¯ط¯",
-  "ط·آ§ط¸â€‍ط¸â€ڑط·آ§ط·آ¦ط¸â€¦ط·آ©": "ط§ظ„ظ‚ط§ط¦ظ…ط©",
-  "ط·آ³ط·آ¹ط·آ± ط¸ئ’ط¸â€‍": "ط³ط¹ط± ظƒظ„",
-  "ط·آ§ط¸â€‍ط¸ظ¾": "ط£ظ„ظپ",
-  "ط¸â€ڑط·آ·ط·آ¹ط·آ© ط·آ¯ط·آ§ط·آ®ط¸â€‍": "ظ‚ط·ط¹ط© ط¯ط§ط®ظ„",
-  "ط·آ§ط¸â€‍ط¸ئ’ط·آ§ط·آ±ط·ع¾ط¸ث†ط¸â€ ": "ط§ظ„ظƒط±طھظˆظ†",
-  "ط·آ§ط¸â€‍ط·ع¾ط¸ظ¾ط·آ§ط·آµط¸ظ¹ط¸â€‍": "ط§ظ„طھظپط§طµظٹظ„",
-  "ط·آ±ط¸â€ڑط¸â€¦": "ط§ظ„ط±ظ‚ظ…",
-  "ط¸â€‍ط·آ§ ط·آ£ط·آ³ط·آ·ط·آ±": "ظ„ط§ طھظˆط¬ط¯ ط£ط³ط·ط±",
-  "ط·آ§ط¸â€‍ط¸â€¦ط·آ­ط·آ§ط·آ³ط·آ¨ط·آ©": "ط§ظ„ظ…ط­ط§ط³ط¨ط©",
-  "ط·آ§ط¸â€‍ط¸â€¦ط·آ­ط·آ§ط·آ³ط·آ¨ط·آ© ط·آ¯ط·آ§ط·آ¦ط¸â€ /ط¸â€¦ط·آ¯ط¸ظ¹ط¸â€ ":
-    "ط§ظ„ظ…ط­ط§ط³ط¨ط© ط¯ط§ط¦ظ†/ظ…ط¯ظٹظ†",
-  "ط·آ§ط¸â€‍ط¸â€¦ط·آ¬ط¸â€¦ط¸ث†ط·آ¹": "ط§ظ„ظ…ط¬ظ…ظˆط¹",
-  "ط·آ§ط¸â€‍ط¸â€¦ط·آ³ط·آ¯ط·آ¯": "ط§ظ„ظ…ط³ط¯ط¯",
-  "ط·آ§ط¸â€‍ط¸â€¦ط·آ¬ط¸â€¦ط¸ث†ط·آ¹ ط·آ§ط¸â€‍ط·آ¨ط·آ§ط¸â€ڑط¸ظ¹":
-    "ط§ظ„ظ…طھط¨ظ‚ظٹ",
-  "ط·آ£ط·آ±ط·آ¨ط·آ§ط·آ­": "ط§ظ„ط£ط±ط¨ط§ط­",
-  "ط·آ¨ط·آ¶ط·آ§ط·آ¹ط·آ© ط¸â€‍ط¸â€،ط·آ°ط·آ§ ط·آ§ط¸â€‍ط¸â€¦ط·آ³ط·ع¾ط·آ«ط¸â€¦ط·آ±":
-    "ط¨ط¶ط§ط¹ط© ظ„ظ‡ط°ط§ ط§ظ„ظ…ط³طھط«ظ…ط±",
-  "ط·آ·ط·آ¨ط·آ§ط·آ¹ط·آ©": "ط·ط¨ط§ط¹ط©",
-  "ط·آ¹ط·آ±ط·آ¨ط¸ظ¹": "ط¹ط±ط¨ظٹ",
-  "ط·آ§ط·آ®ط·ع¾ط·آ± ط·آ§ط¸â€‍ط·آ²ط·آ¨ط¸ث†ط¸â€ ": "ط§ط®طھط± ط§ظ„ط²ط¨ظˆظ†",
-  "ط·آ§ط·آ¨ط·آ­ط·آ« ط·آ¹ط¸â€  ط·آ²ط·آ¨ط¸ث†ط¸â€ ...":
-    "ط§ط¨ط­ط« ط¹ظ† ط²ط¨ظˆظ†...",
-  "أ¢â€“آ¶": "â–¶",
-  "أ¢â‚¬â€‌": "â€”",
+  "إغلاق": "إغلاق",
+  "تعديل": "تعديل",
+  "عمولة المكتب":
+    "عمولة المكتب",
+  "سعر نقل المتر المكعب":
+    "سعر نقل المتر المكعب",
+  "سعر الصرف": "سعر الصرف",
+  "المجموع": "المجموع",
+  "رقم الحاوية": "رقم الحاوية",
+  "جديد": "جديد",
+  "حذف": "حذف",
+  "الزبون": "الزبون",
+  "تاريخ الفاتورة":
+    "تاريخ الفاتورة",
+  "ط·آ§ط¸â€‍ط¸â€ڑط·آ§ط·آ¦ط¸â€¦ط·آ©": "القائمة",
+  "إرسال للموافقة":
+    "إرسال للموافقة",
+  "اعتماد": "اعتماد",
+  "رفض": "رفض",
+  "العملة": "العملة",
+  "ملاحظات": "ملاحظات",
+  "حفظ الفاتورة": "حفظ الفاتورة",
+  "حذف ط·آ³ط·آ·ط·آ±": "حذف سطر",
+  "تعديل ط·آ³ط·آ·ط·آ±": "تعديل سطر",
+  "سعر تحويل": "سعر تحويل",
+  "دولار": "دولار",
+  "دينار": "دينار",
+  "ط·آ§ط¸â€‍دولار": "دولار",
+  "المجموع ط·آ³ط·آ¹ط·آ±": "مجموع سعر",
+  "المجموع ط·آ§ط¸â€‍ط¸â€¦ط·ع¾ط·آ±": "مجموع المتر",
+  "المكعب": "المكعب",
+  "وزن": "وزن",
+  "عدد": "عدد",
+  "القائمة": "القائمة",
+  "سعر كل": "سعر كل",
+  "ألف": "ألف",
+  "قطعة داخل": "قطعة داخل",
+  "الكرتون": "الكرتون",
+  "التفاصيل": "التفاصيل",
+  "الرقم": "الرقم",
+  "لا توجد أسطر": "لا توجد أسطر",
+  "المحاسبة": "المحاسبة",
+  "المحاسبة ط·آ¯ط·آ§ط·آ¦ط¸â€ /ط¸â€¦ط·آ¯ط¸ظ¹ط¸â€ ":
+    "المحاسبة دائن/مدين",
+  "ط·آ§ط¸â€‍المجموع": "المجموع",
+  "المسدد": "المسدد",
+  "ط·آ§ط¸â€‍المجموع ط·آ§ط¸â€‍ط·آ¨ط·آ§ط¸â€ڑط¸ظ¹":
+    "المتبقي",
+  "الأرباح": "الأرباح",
+  "بضاعة لهذا المستثمر":
+    "بضاعة لهذا المستثمر",
+  "طباعة": "طباعة",
+  "عربي": "عربي",
+  "ط·آ§ط·آ®ط·ع¾ط·آ± الزبون": "اختر الزبون",
+  "¸â€‍ط·آ§ ط·آ£ط·آ³ط·آ·ط·آ±": "لا توجد أسطر",
+  "ابحث عن زبون...":
+    "ابحث عن زبون...",
+  "أ¢â€“آ¶": "▶",
+  "أ¢â‚¬â€‌": "—",
+  "يوجد ": "يوجد ",
+  " سطر بيع بكمية أكبر من المتاح في المستودع المحدد.":
+    " سطر بيع بكمية أكبر من المتاح في المستودع المحدد.",
+  "ابحث عن مستودع...": "ابحث عن مستودع...",
+  "— بدون مستودع —": "— بدون مستودع —",
 };
 function br(e) {
   let t = e;
@@ -155,7 +161,7 @@ function Rf() {
           const [w, B, ee, oe] = await Promise.all([
             E.get("/invoice-sale", { page: 1, pageSize: 100 }),
             E.get("/containers", { page: 1, pageSize: 200 }),
-            E.get("/parties", { type: "CUSTOMER", page: 1, pageSize: 300 }),
+            E.get("/parties", { type: "SUPPLIER", page: 1, pageSize: 300 }),
             E.get("/stores"),
           ]);
           if (v) return;
@@ -293,8 +299,7 @@ function Rf() {
   const xe = he((a == null ? void 0 : a.exchangeRate) ?? "6.8"),
     Me = a != null && a.voucherDate ? Et(a.voucherDate) : "",
     ye = (a == null ? void 0 : a.voucherNo) ?? "",
-    Ce =
-      br(he((a == null ? void 0 : a.currency) ?? "ط¯ظˆظ„ط§ط±")) || "ط¯ظˆظ„ط§ط±",
+    Ce = br(he((a == null ? void 0 : a.currency) ?? "دولار")) || "دولار",
     F = d == null ? void 0 : d.aggregates,
     re = "is-header-form",
     te = async () => {
@@ -316,7 +321,7 @@ function Rf() {
     },
     Se = async () => {
       if (!r) return;
-      const v = window.prompt("ط³ط¨ط¨ ط§ظ„ط±ظپط¶ (ط§ط®طھظٹط§ط±ظٹ)") ?? "";
+      const v = window.prompt("سبب الرفض (اختياري)") ?? "";
       try {
         (await E.post(`/invoice-sale/${r}/workflow/reject`, {
           comment: v || null,
@@ -356,22 +361,17 @@ function Rf() {
       const v = (ee = C[0]) == null ? void 0 : ee.id,
         w = (oe = k[0]) == null ? void 0 : oe.id;
       if (!v || !w) {
-        window.alert(
-          "ظٹط¬ط¨ ط§ط®طھظٹط§ط± ط­ط§ظˆظٹط© ظˆط²ط¨ظˆظ† ط¹ظ„ظ‰ ط§ظ„ط£ظ‚ظ„.",
-        );
+        window.alert("يجب اختيار حاوية وزبون على الأقل.");
         return;
       }
-      const B = window.prompt(
-        "ط±ظ‚ظ… ظپط§طھظˆط±ط© ط§ظ„ط¨ظٹط¹",
-        `S-${Date.now()}`,
-      );
+      const B = window.prompt("رقم فاتورة البيع", `S-${Date.now()}`);
       if (!(!B || !B.trim()))
         try {
           const ve = await E.post("/invoice-sale", {
               voucherNo: B.trim(),
               containerId: v,
               customerId: w,
-              currency: "ط¯ظˆظ„ط§ط±",
+              currency: "دولار",
             }),
             Nt = await E.get("/invoice-sale", { page: 1, pageSize: 100 });
           (n(Nt.items ?? []), l(ve.id));
@@ -381,7 +381,7 @@ function Rf() {
     },
     q = async () => {
       var v;
-      if (!(!r || !window.confirm("ط­ط°ظپ ظپط§طھظˆط±ط© ط§ظ„ط¨ظٹط¹طں")))
+      if (!(!r || !window.confirm("حذف فاتورة البيع؟")))
         try {
           await E.delete(`/invoice-sale/${r}`);
           const B =
@@ -396,7 +396,7 @@ function Rf() {
       if (r)
         try {
           (await E.post(`/invoice-sale/${r}/items`, {
-            detail: "ط³ط·ط± ط¬ط¯ظٹط¯",
+            detail: "سطر جديد",
           }),
             await ge(r));
         } catch (v) {
@@ -404,7 +404,7 @@ function Rf() {
         }
     },
     Ee = async () => {
-      if (!(!r || !K || !window.confirm("ط­ط°ظپ ط§ظ„ط³ط·ط±طں")))
+      if (!(!r || !K || !window.confirm("حذف السطر؟")))
         try {
           (await E.delete(`/invoice-sale/${r}/items/${K}`),
             ie(""),
@@ -417,16 +417,13 @@ function Rf() {
       if (!r || !K) return;
       const v = o.find((ve) => ve.id === K);
       if (!v) return;
-      const w = window.prompt("ط§ظ„طھظپط§طµظٹظ„", v.detail ?? "");
+      const w = window.prompt("التفاصيل", v.detail ?? "");
       if (w == null) return;
-      const B = window.prompt("ط±ظ‚ظ… ط§ظ„ظ…ط§ط¯ط©", v.itemNo ?? "");
+      const B = window.prompt("رقم المادة", v.itemNo ?? "");
       if (B == null) return;
-      const ee = window.prompt("ط§ظ„ظƒظ…ظٹط©", he(v.listQty ?? ""));
+      const ee = window.prompt("الكمية", he(v.listQty ?? ""));
       if (ee == null) return;
-      const oe = window.prompt(
-        "ط¥ط¬ظ…ط§ظ„ظٹ ط§ظ„ط³ط¹ط±",
-        he(v.totalPrice ?? ""),
-      );
+      const oe = window.prompt("إجمالي السعر", he(v.totalPrice ?? ""));
       if (oe != null)
         try {
           (await E.patch(`/invoice-sale/${r}/items/${K}`, {
@@ -492,18 +489,18 @@ function Rf() {
     Dt = () => {
       var w;
       const v = (w = t[0]) == null ? void 0 : w.id;
-      v ? l(v) : window.alert("ظ„ط§ طھظˆط¬ط¯ ظپظˆط§طھظٹط± ط¨ظٹط¹.");
+      v ? l(v) : window.alert("لا توجد فواتير بيع.");
     },
     I = () => {
       if (!t.length) {
-        window.alert("ظ„ط§ طھظˆط¬ط¯ ظپظˆط§طھظٹط±.");
+        window.alert("لا توجد فواتير.");
         return;
       }
       const v = t.slice(0, 20).map((w, B) => {
         var ee;
-        return `${B + 1}. ${w.voucherNo} â€” ${((ee = w.container) == null ? void 0 : ee.containerNo) ?? "?"}`;
+        return `${B + 1}. ${w.voucherNo} — ${((ee = w.container) == null ? void 0 : ee.containerNo) ?? "?"}`;
       });
-      window.alert(`ط£ط­ط¯ط« ظپظˆط§طھظٹط± ط§ظ„ط¨ظٹط¹:
+      window.alert(`أحدث فواتير البيع:
 
 ${v.join(`
 `)}`);
@@ -556,7 +553,7 @@ ${v.join(`
             children: g,
           })
         : null,
-      s.jsx("div", { className: "is-titleline", children: "Sale Vouchers" }),
+      s.jsx("div", { className: "is-titleline", children: "Purchase Vouchers" }),
       s.jsxs("div", {
         className: "is-top-wrap",
         ref: me,
@@ -568,12 +565,12 @@ ${v.join(`
                 type: "button",
                 className: "is-btn-edit",
                 onClick: () => se((v) => !v),
-                children: J ? "ط¸â€ڑط¸ظ¾ط¸â€‍" : "ط·ع¾ط·آ¹ط·آ¯ط¸ظ¹ط¸â€‍",
+                children: J ? "إغلاق" : "تعديل",
               }),
               s.jsx("span", { className: "is-lbl", children: "%0" }),
               s.jsx("span", {
                 className: "is-lbl",
-                children: "ط·آ¹ط¸â€¦ط¸ث†ط¸â€‍ط·آ© ط·آ§ط¸â€‍ط¸â€¦ط¸ئ’ط·ع¾ط·آ¨",
+                children: "عمولة المكتب",
               }),
               s.jsx(
                 "input",
@@ -591,7 +588,7 @@ ${v.join(`
               s.jsx("span", {
                 className: "is-lbl",
                 children:
-                  "ط·آ³ط·آ¹ط·آ± ط¸â€ ط¸â€ڑط¸â€‍ ط·آ§ط¸â€‍ط¸â€¦ط·ع¾ط·آ± ط·آ§ط¸â€‍ط¸â€¦ط¸ئ’ط·آ¹ط·آ¨",
+                  "سعر نقل المتر المكعب",
               }),
               s.jsx(
                 "input",
@@ -620,7 +617,7 @@ ${v.join(`
               ),
               s.jsx("span", {
                 className: "is-rate-lbl",
-                children: "ط·آ³ط·آ¹ط·آ± ط·آ§ط¸â€‍ط·آµط·آ±ط¸ظ¾",
+                children: "سعر الصرف",
               }),
             ],
           }),
@@ -639,7 +636,7 @@ ${v.join(`
                         children: [
                           s.jsx("span", {
                             className: "is-mini-title",
-                            children: "ط¸â€¦ط·آ¬ط¸â€¦ط¸ث†ط·آ¹",
+                            children: "المجموع",
                           }),
                           s.jsx("input", {
                             className: "is-balance-input",
@@ -672,7 +669,7 @@ ${v.join(`
                           s.jsx("span", {
                             className: "is-lbl",
                             children:
-                              "ط·آ±ط¸â€ڑط¸â€¦ ط·آ§ط¸â€‍ط·آ­ط·آ§ط¸ث†ط¸ظ¹ط·آ©",
+                              "رقم الحاوية",
                           }),
                         ],
                       }),
@@ -680,11 +677,11 @@ ${v.join(`
                         type: "button",
                         className: "is-blue-pill",
                         onClick: () =>
-                          window.alert(`ط¹ظ…ظ„ط© ط§ظ„ط³ظ†ط¯: ${(a == null ? void 0 : a.currency) ?? "â€”"}
-ط³ط¹ط± ط§ظ„طµط±ظپ ط§ظ„ط­ط§ظ„ظٹ ظپظٹ ط§ظ„ظ†ظ…ظˆط°ط¬: ${xe}`),
-                        title: "ط¹ط±ط¶ ط§ظ„ط¹ظ…ظ„ط© ظˆط³ط¹ط± ط§ظ„طµط±ظپ",
+                          window.alert(`عملة السند: ${(a == null ? void 0 : a.currency) ?? "—"}
+سعر الصرف الحالي في النموذج: ${xe}`),
+                        title: "عرض العملة وسعر الصرف",
                         children:
-                          (a == null ? void 0 : a.currency) ?? "ط§ظ„ط¹ظ…ظ„ط©",
+                          (a == null ? void 0 : a.currency) ?? "العملة",
                       }),
                     ],
                   }),
@@ -695,13 +692,13 @@ ${v.join(`
                         type: "button",
                         className: "is-mini-act",
                         onClick: T,
-                        children: "ط·آ¬ط·آ¯ط¸ظ¹ط·آ¯",
+                        children: "جديد",
                       }),
                       s.jsx("button", {
                         type: "button",
                         className: "is-mini-act red",
                         onClick: q,
-                        children: "ط·آ­ط·آ°ط¸ظ¾",
+                        children: "حذف",
                       }),
                     ],
                   }),
@@ -716,16 +713,16 @@ ${v.join(`
                     options: k,
                     getOptionValue: (v) => v.id,
                     getOptionLabel: (v) => v.name,
-                    placeholder: "ط·آ§ط·آ®ط·ع¾ط·آ± ط·آ§ط¸â€‍ط·آ²ط·آ¨ط¸ث†ط¸â€ ",
+                    placeholder: "اختر الزبون",
                     searchPlaceholder:
-                      "ط·آ§ط·آ¨ط·آ­ط·آ« ط·آ¹ط¸â€  ط·آ²ط·آ¨ط¸ث†ط¸â€ ...",
+                      "ابحث عن زبون...",
                     clearLabel:
-                      "أ¢â‚¬â€‌ ط·آ§ط·آ®ط·ع¾ط·آ± ط·آ§ط¸â€‍ط·آ²ط·آ¨ط¸ث†ط¸â€  أ¢â‚¬â€‌",
+                      "— اختر الزبون —",
                     allowClear: !1,
                   }),
                   s.jsx("span", {
                     className: "is-lbl",
-                    children: "ط·آ§ط¸â€‍ط·آ²ط·آ¨ط¸ث†ط¸â€ ",
+                    children: "الزبون",
                   }),
                   s.jsx("div", { className: "is-spacer" }),
                   s.jsx(
@@ -741,7 +738,7 @@ ${v.join(`
                   ),
                   s.jsx("span", {
                     className: "is-lbl",
-                    children: "ط·ع¾ط·آ§ط·آ±ط¸ظ¹ط·آ® ط·آ§ط¸â€‍ط·آ¹ط·آ§ط¸â€¦ط·آ©",
+                    children: "تاريخ الفاتورة",
                   }),
                   s.jsxs("div", {
                     className: "is-voucher-stack",
@@ -765,7 +762,7 @@ ${v.join(`
                           t.length === 0
                             ? s.jsx("option", {
                                 value: "",
-                                children: "أ¢â‚¬â€‌",
+                                children: "—",
                               })
                             : t.map((v) =>
                                 s.jsxs(
@@ -787,7 +784,7 @@ ${v.join(`
                   }),
                   s.jsx("span", {
                     className: "is-lbl",
-                    children: "ط·ع¾ ط·آ§ط¸â€‍ط¸â€ڑط·آ§ط·آ¦ط¸â€¦ط·آ©",
+                    children: "القائمة",
                   }),
                   s.jsxs("div", {
                     className: "erp-workflow-row",
@@ -804,7 +801,7 @@ ${v.join(`
                             type: "button",
                             onClick: te,
                             children:
-                              "ط·آ¥ط·آ±ط·آ³ط·آ§ط¸â€‍ ط¸â€‍ط¸â€‍ط¸â€¦ط¸ث†ط·آ§ط¸ظ¾ط¸â€ڑط·آ©",
+                              "إرسال للموافقة",
                           })
                         : null,
                       (a == null ? void 0 : a.documentStatus) === "SUBMITTED" &&
@@ -815,12 +812,12 @@ ${v.join(`
                               s.jsx("button", {
                                 type: "button",
                                 onClick: Be,
-                                children: "ط·آ§ط·آ¹ط·ع¾ط¸â€¦ط·آ§ط·آ¯",
+                                children: "اعتماد",
                               }),
                               s.jsx("button", {
                                 type: "button",
                                 onClick: Se,
-                                children: "ط·آ±ط¸ظ¾ط·آ¶",
+                                children: "رفض",
                               }),
                             ],
                           })
@@ -836,12 +833,12 @@ ${v.join(`
                       defaultValue: Ce,
                       children: [
                         s.jsx("option", {
-                          value: "ط¯ظˆظ„ط§ط±",
-                          children: "ط¯ظˆظ„ط§ط±",
+                          value: "دولار",
+                          children: "دولار",
                         }),
                         s.jsx("option", {
-                          value: "ط¯ظٹظ†ط§ط±",
-                          children: "ط¯ظٹظ†ط§ط±",
+                          value: "دينار",
+                          children: "دينار",
                         }),
                       ],
                     },
@@ -849,7 +846,7 @@ ${v.join(`
                   ),
                   s.jsx("span", {
                     className: "is-lbl",
-                    children: "ط·آ§ط¸â€‍ط·آ¹ط¸â€¦ط¸â€‍ط·آ©",
+                    children: "العملة",
                   }),
                 ],
               }),
@@ -867,9 +864,9 @@ ${v.join(`
                     options: p,
                     getOptionValue: (v) => v.id,
                     getOptionLabel: (v) => v.name,
-                    placeholder: "â€”",
-                    searchPlaceholder: "ط§ط¨ط­ط« ط¹ظ† ظ…ط³طھظˆط¯ط¹...",
-                    clearLabel: "â€” ط¨ط¯ظˆظ† ظ…ط³طھظˆط¯ط¹ â€”",
+                    placeholder: "—",
+                    searchPlaceholder: "ابحث عن مستودع...",
+                    clearLabel: "— بدون مستودع —",
                   }),
                   s.jsx("span", {
                     className: "is-lbl",
@@ -887,7 +884,7 @@ ${v.join(`
                   ),
                   s.jsx("span", {
                     className: "is-lbl",
-                    children: "ط¸â€¦ط¸â€‍ط·آ§ط·آ­ط·آ¸ط·آ§ط·ع¾",
+                    children: "ملاحظات",
                   }),
                 ],
               }),
@@ -898,27 +895,27 @@ ${v.join(`
                   s.jsx("button", {
                     type: "submit",
                     className: "is-btn",
-                    children: "ط·آ­ط¸ظ¾ط·آ¸ ط·آ§ط¸â€‍ط·آ³ط¸â€ ط·آ¯",
+                    children: "حفظ الفاتورة",
                   }),
                   s.jsx("button", {
                     type: "button",
                     className: "is-item-btn green",
                     onClick: G,
-                    children: "+ ط·آ³ط·آ·ط·آ±",
+                    children: "+ سطر",
                   }),
                   s.jsx("button", {
                     type: "button",
                     className: "is-item-btn red",
                     onClick: Ee,
                     disabled: !K,
-                    children: "ط·آ­ط·آ°ط¸ظ¾ ط·آ³ط·آ·ط·آ±",
+                    children: "حذف سطر",
                   }),
                   s.jsx("button", {
                     type: "button",
                     className: "is-item-btn green",
                     onClick: Ne,
                     disabled: !K,
-                    children: "ط·ع¾ط·آ¹ط·آ¯ط¸ظ¹ط¸â€‍ ط·آ³ط·آ·ط·آ±",
+                    children: "تعديل سطر",
                   }),
                 ],
               }),
@@ -936,68 +933,12 @@ ${v.join(`
               children: s.jsxs("tr", {
                 children: [
                   s.jsx("th", {}),
-                  s.jsxs("th", {
-                    children: [
-                      "ط·آ³ط·آ¹ط·آ± ط·ع¾ط·آ­ط¸ث†ط¸ظ¹ط¸â€‍",
-                      s.jsx("br", {}),
-                      "ط·آ§ط¸â€‍ط·آ¯ط¸ث†ط¸â€‍ط·آ§ط·آ±",
-                    ],
-                  }),
-                  s.jsxs("th", {
-                    children: [
-                      "ط¸â€¦ط·آ¬ط¸â€¦ط¸ث†ط·آ¹ ط·آ³ط·آ¹ط·آ±",
-                      s.jsx("br", {}),
-                      "ط·آ§ط¸â€‍ط·آ¯ط¸ث†ط¸â€‍ط·آ§ط·آ±",
-                    ],
-                  }),
-                  s.jsxs("th", {
-                    children: [
-                      "ط·آ³ط·آ¹ط·آ±",
-                      s.jsx("br", {}),
-                      "ط·آ§ط¸â€‍ط·آ¯ط¸ث†ط¸â€‍ط·آ§ط·آ±",
-                    ],
-                  }),
-                  s.jsxs("th", {
-                    children: [
-                      "ط¸â€¦ط·آ¬ط¸â€¦ط¸ث†ط·آ¹ ط·آ§ط¸â€‍ط¸â€¦ط·ع¾ط·آ±",
-                      s.jsx("br", {}),
-                      "ط·آ§ط¸â€‍ط¸â€¦ط¸ئ’ط·آ¹ط·آ¨",
-                    ],
-                  }),
-                  s.jsx("th", { children: "ط¸ث†ط·آ²ط¸â€ " }),
-                  s.jsx("th", { children: "cbm" }),
-                  s.jsx("th", { children: "cbm" }),
-                  s.jsxs("th", {
-                    children: [
-                      "ط·آ¹ط·آ¯ط·آ¯",
-                      s.jsx("br", {}),
-                      "ط·آ§ط¸â€‍ط¸â€ڑط·آ§ط·آ¦ط¸â€¦ط·آ©",
-                    ],
-                  }),
-                  s.jsxs("th", {
-                    children: [
-                      "ط·آ³ط·آ¹ط·آ± ط¸ئ’ط¸â€‍",
-                      s.jsx("br", {}),
-                      "ط·آ§ط¸â€‍ط¸ظ¾",
-                    ],
-                  }),
-                  s.jsx("th", {
-                    children: "ط¸â€¦ط·آ¬ط¸â€¦ط¸ث†ط·آ¹ ط·آ³ط·آ¹ط·آ±",
-                  }),
-                  s.jsxs("th", {
-                    children: [
-                      "ط¸â€ڑط·آ·ط·آ¹ط·آ© ط·آ¯ط·آ§ط·آ®ط¸â€‍",
-                      s.jsx("br", {}),
-                      "ط·آ§ط¸â€‍ط¸ئ’ط·آ§ط·آ±ط·ع¾ط¸ث†ط¸â€ ",
-                    ],
-                  }),
-                  s.jsx("th", { children: "ط·آ³ط·آ¹ط·آ±" }),
-                  s.jsx("th", {
-                    children: "ط·آ§ط¸â€‍ط·ع¾ط¸ظ¾ط·آ§ط·آµط¸ظ¹ط¸â€‍",
-                  }),
-                  s.jsx("th", { children: "ط·آ±ط¸â€ڑط¸â€¦" }),
-                  s.jsx("th", { children: "Available" }),
-                  s.jsx("th", { children: "ط·ع¾" }),
+                  s.jsx("th", { children: "Item Code" }),
+                  s.jsx("th", { children: "Item Image" }),
+                  s.jsx("th", { children: "Item Details" }),
+                  s.jsx("th", { children: "Pieces per Carton" }),
+                  s.jsx("th", { children: "Cartons" }),
+                  s.jsx("th", { children: "Total Pieces" }),
                 ],
               }),
             }),
@@ -1006,9 +947,9 @@ ${v.join(`
                 o.length === 0
                   ? s.jsx("tr", {
                       children: s.jsx("td", {
-                        colSpan: 17,
+                        colSpan: 7,
                         style: { textAlign: "center", padding: 12 },
-                        children: "ط¸â€‍ط·آ§ ط·آ£ط·آ³ط·آ·ط·آ±",
+                        children: "لا توجد أسطر",
                       }),
                     })
                   : o.map((v) =>
@@ -1023,15 +964,13 @@ ${v.join(`
                           children: [
                             s.jsx("td", {
                               className: "is-arrow",
-                              children: "أ¢â€“آ¶",
+                              children: "▶",
                             }),
                             s.jsx("td", {
-                              onDoubleClick: () =>
-                                ne(v.id, "usdConvertRate", v.usdConvertRate),
+                              onDoubleClick: () => ne(v.id, "itemNo", v.itemNo),
                               children:
                                 (j == null ? void 0 : j.lineId) === v.id &&
-                                (j == null ? void 0 : j.field) ===
-                                  "usdConvertRate"
+                                (j == null ? void 0 : j.field) === "itemNo"
                                   ? s.jsx("input", {
                                       autoFocus: !0,
                                       className: "is-mini-input",
@@ -1043,14 +982,17 @@ ${v.join(`
                                           w.key === "Escape" && _e());
                                       },
                                     })
-                                  : he(v.usdConvertRate),
+                                  : (v.itemNo ?? ""),
                             }),
                             s.jsx("td", {
-                              onDoubleClick: () =>
-                                ne(v.id, "usdSumCol", v.usdSumCol),
+                              children: "[Image]",
+                            }),
+                            s.jsx("td", {
+                              className: "is-item-name",
+                              onDoubleClick: () => ne(v.id, "detail", v.detail),
                               children:
                                 (j == null ? void 0 : j.lineId) === v.id &&
-                                (j == null ? void 0 : j.field) === "usdSumCol"
+                                (j == null ? void 0 : j.field) === "detail"
                                   ? s.jsx("input", {
                                       autoFocus: !0,
                                       className: "is-mini-input",
@@ -1062,161 +1004,7 @@ ${v.join(`
                                           w.key === "Escape" && _e());
                                       },
                                     })
-                                  : he(v.usdSumCol),
-                            }),
-                            s.jsx("td", {
-                              onDoubleClick: () =>
-                                ne(v.id, "usdPriceCol", v.usdPriceCol),
-                              children:
-                                (j == null ? void 0 : j.lineId) === v.id &&
-                                (j == null ? void 0 : j.field) === "usdPriceCol"
-                                  ? s.jsx("input", {
-                                      autoFocus: !0,
-                                      className: "is-mini-input",
-                                      value: U,
-                                      onChange: (w) => W(w.target.value),
-                                      onBlur: Z,
-                                      onKeyDown: (w) => {
-                                        (w.key === "Enter" && Z(),
-                                          w.key === "Escape" && _e());
-                                      },
-                                    })
-                                  : he(v.usdPriceCol),
-                            }),
-                            s.jsx("td", {
-                              onDoubleClick: () =>
-                                ne(v.id, "cbmSumCol", v.cbmSumCol),
-                              children:
-                                (j == null ? void 0 : j.lineId) === v.id &&
-                                (j == null ? void 0 : j.field) === "cbmSumCol"
-                                  ? s.jsx("input", {
-                                      autoFocus: !0,
-                                      className: "is-mini-input",
-                                      value: U,
-                                      onChange: (w) => W(w.target.value),
-                                      onBlur: Z,
-                                      onKeyDown: (w) => {
-                                        (w.key === "Enter" && Z(),
-                                          w.key === "Escape" && _e());
-                                      },
-                                    })
-                                  : he(v.cbmSumCol),
-                            }),
-                            s.jsx("td", {
-                              onDoubleClick: () => ne(v.id, "weight", v.weight),
-                              children:
-                                (j == null ? void 0 : j.lineId) === v.id &&
-                                (j == null ? void 0 : j.field) === "weight"
-                                  ? s.jsx("input", {
-                                      autoFocus: !0,
-                                      className: "is-mini-input",
-                                      value: U,
-                                      onChange: (w) => W(w.target.value),
-                                      onBlur: Z,
-                                      onKeyDown: (w) => {
-                                        (w.key === "Enter" && Z(),
-                                          w.key === "Escape" && _e());
-                                      },
-                                    })
-                                  : he(v.weight),
-                            }),
-                            s.jsx("td", {
-                              onDoubleClick: () => ne(v.id, "cbm1", v.cbm1),
-                              children:
-                                (j == null ? void 0 : j.lineId) === v.id &&
-                                (j == null ? void 0 : j.field) === "cbm1"
-                                  ? s.jsx("input", {
-                                      autoFocus: !0,
-                                      className: "is-mini-input",
-                                      value: U,
-                                      onChange: (w) => W(w.target.value),
-                                      onBlur: Z,
-                                      onKeyDown: (w) => {
-                                        (w.key === "Enter" && Z(),
-                                          w.key === "Escape" && _e());
-                                      },
-                                    })
-                                  : he(v.cbm1),
-                            }),
-                            s.jsx("td", {
-                              onDoubleClick: () => ne(v.id, "cbm2", v.cbm2),
-                              children:
-                                (j == null ? void 0 : j.lineId) === v.id &&
-                                (j == null ? void 0 : j.field) === "cbm2"
-                                  ? s.jsx("input", {
-                                      autoFocus: !0,
-                                      className: "is-mini-input",
-                                      value: U,
-                                      onChange: (w) => W(w.target.value),
-                                      onBlur: Z,
-                                      onKeyDown: (w) => {
-                                        (w.key === "Enter" && Z(),
-                                          w.key === "Escape" && _e());
-                                      },
-                                    })
-                                  : he(v.cbm2),
-                            }),
-                            s.jsx("td", {
-                              onDoubleClick: () =>
-                                ne(v.id, "listQty", v.listQty),
-                              children:
-                                (j == null ? void 0 : j.lineId) === v.id &&
-                                (j == null ? void 0 : j.field) === "listQty"
-                                  ? s.jsx("input", {
-                                      autoFocus: !0,
-                                      className: "is-mini-input",
-                                      value: U,
-                                      onChange: (w) => W(w.target.value),
-                                      onBlur: Z,
-                                      onKeyDown: (w) => {
-                                        (w.key === "Enter" && Z(),
-                                          w.key === "Escape" && _e());
-                                      },
-                                    })
-                                  : he(v.listQty),
-                            }),
-                            s.jsx("td", {
-                              onDoubleClick: () =>
-                                ne(
-                                  v.id,
-                                  "pricePerThousand",
-                                  v.pricePerThousand,
-                                ),
-                              children:
-                                (j == null ? void 0 : j.lineId) === v.id &&
-                                (j == null ? void 0 : j.field) ===
-                                  "pricePerThousand"
-                                  ? s.jsx("input", {
-                                      autoFocus: !0,
-                                      className: "is-mini-input",
-                                      value: U,
-                                      onChange: (w) => W(w.target.value),
-                                      onBlur: Z,
-                                      onKeyDown: (w) => {
-                                        (w.key === "Enter" && Z(),
-                                          w.key === "Escape" && _e());
-                                      },
-                                    })
-                                  : he(v.pricePerThousand),
-                            }),
-                            s.jsx("td", {
-                              onDoubleClick: () =>
-                                ne(v.id, "totalPrice", v.totalPrice),
-                              children:
-                                (j == null ? void 0 : j.lineId) === v.id &&
-                                (j == null ? void 0 : j.field) === "totalPrice"
-                                  ? s.jsx("input", {
-                                      autoFocus: !0,
-                                      className: "is-mini-input",
-                                      value: U,
-                                      onChange: (w) => W(w.target.value),
-                                      onBlur: Z,
-                                      onKeyDown: (w) => {
-                                        (w.key === "Enter" && Z(),
-                                          w.key === "Escape" && _e());
-                                      },
-                                    })
-                                  : he(v.totalPrice),
+                                  : (v.detail ?? ""),
                             }),
                             s.jsx("td", {
                               onDoubleClick: () =>
@@ -1239,10 +1027,10 @@ ${v.join(`
                             }),
                             s.jsx("td", {
                               onDoubleClick: () =>
-                                ne(v.id, "linePrice", v.linePrice),
+                                ne(v.id, "listQty", v.listQty),
                               children:
                                 (j == null ? void 0 : j.lineId) === v.id &&
-                                (j == null ? void 0 : j.field) === "linePrice"
+                                (j == null ? void 0 : j.field) === "listQty"
                                   ? s.jsx("input", {
                                       autoFocus: !0,
                                       className: "is-mini-input",
@@ -1254,63 +1042,11 @@ ${v.join(`
                                           w.key === "Escape" && _e());
                                       },
                                     })
-                                  : he(v.linePrice),
+                                  : he(v.listQty),
                             }),
                             s.jsx("td", {
-                              className: "is-item-name",
-                              onDoubleClick: () => ne(v.id, "detail", v.detail),
-                              children:
-                                (j == null ? void 0 : j.lineId) === v.id &&
-                                (j == null ? void 0 : j.field) === "detail"
-                                  ? s.jsx("input", {
-                                      autoFocus: !0,
-                                      className: "is-mini-input",
-                                      value: U,
-                                      onChange: (w) => W(w.target.value),
-                                      onBlur: Z,
-                                      onKeyDown: (w) => {
-                                        (w.key === "Enter" && Z(),
-                                          w.key === "Escape" && _e());
-                                      },
-                                    })
-                                  : (v.detail ?? ""),
+                              children: he((Number(v.pcsInCarton ?? 0) * Number(v.listQty ?? 0))),
                             }),
-                            s.jsx("td", {
-                              onDoubleClick: () => ne(v.id, "itemNo", v.itemNo),
-                              children:
-                                (j == null ? void 0 : j.lineId) === v.id &&
-                                (j == null ? void 0 : j.field) === "itemNo"
-                                  ? s.jsx("input", {
-                                      autoFocus: !0,
-                                      className: "is-mini-input",
-                                      value: U,
-                                      onChange: (w) => W(w.target.value),
-                                      onBlur: Z,
-                                      onKeyDown: (w) => {
-                                        (w.key === "Enter" && Z(),
-                                          w.key === "Escape" && _e());
-                                      },
-                                    })
-                                  : (v.itemNo ?? ""),
-                            }),
-                            s.jsx("td", {
-                              style: {
-                                color:
-                                  v.itemId &&
-                                  Number(v.listQty ?? 0) >
-                                    Number(z[v.itemId] ?? 0)
-                                    ? "crimson"
-                                    : void 0,
-                                fontWeight:
-                                  v.itemId &&
-                                  Number(v.listQty ?? 0) >
-                                    Number(z[v.itemId] ?? 0)
-                                    ? 700
-                                    : void 0,
-                              },
-                              children: v.itemId ? he(z[v.itemId] ?? 0) : "â€”",
-                            }),
-                            s.jsx("td", { children: he(v.seq) }),
                           ],
                         },
                         v.id,
@@ -1337,9 +1073,9 @@ ${v.join(`
             className: "alert-error",
             style: { marginTop: 6 },
             children: [
-              "ظٹظˆط¬ط¯ ",
+              "يوجد ",
               X.length,
-              " ط³ط·ط± ط¨ظٹط¹ ط¨ظƒظ…ظٹط© ط£ظƒط¨ط± ظ…ظ† ط§ظ„ظ…طھط§ط­ ظپظٹ ط§ظ„ظ…ط³طھظˆط¯ط¹ ط§ظ„ظ…ط­ط¯ط¯.",
+              " سطر بيع بكمية أكبر من المتاح في المستودع المحدد.",
             ],
           })
         : null,
@@ -1421,7 +1157,7 @@ ${v.join(`
             children: [
               s.jsx("span", {
                 className: "is-sum-label",
-                children: "ط·آ§ط¸â€‍ط¸â€¦ط·آ­ط·آ§ط·آ³ط·آ¨ط·آ©",
+                children: "المحاسبة",
               }),
               s.jsx("input", {
                 className: "is-sum-input yellow",
@@ -1431,7 +1167,7 @@ ${v.join(`
               s.jsx("span", {
                 className: "is-sum-label",
                 children:
-                  "ط·آ§ط¸â€‍ط¸â€¦ط·آ­ط·آ§ط·آ³ط·آ¨ط·آ© ط·آ¯ط·آ§ط·آ¦ط¸â€ /ط¸â€¦ط·آ¯ط¸ظ¹ط¸â€ ",
+                  "المحاسبة دائن/مدين",
               }),
             ],
           }),
@@ -1452,7 +1188,7 @@ ${v.join(`
                     readOnly: !0,
                   }),
                   s.jsx("span", {
-                    children: "ط·آ§ط¸â€‍ط¸â€¦ط·آ¬ط¸â€¦ط¸ث†ط·آ¹",
+                    children: "المجموع",
                   }),
                 ],
               }),
@@ -1463,7 +1199,7 @@ ${v.join(`
                     value: he((d == null ? void 0 : d.paid) ?? ""),
                     readOnly: !0,
                   }),
-                  s.jsx("span", { children: "ط·آ§ط¸â€‍ط¸â€¦ط·آ³ط·آ¯ط·آ¯" }),
+                  s.jsx("span", { children: "المسدد" }),
                 ],
               }),
               s.jsxs("div", {
@@ -1475,7 +1211,7 @@ ${v.join(`
                   }),
                   s.jsx("span", {
                     children:
-                      "ط·آ§ط¸â€‍ط¸â€¦ط·آ¬ط¸â€¦ط¸ث†ط·آ¹ ط·آ§ط¸â€‍ط·آ¨ط·آ§ط¸â€ڑط¸ظ¹",
+                      "المجموع المتبقي",
                   }),
                 ],
               }),
@@ -1486,7 +1222,7 @@ ${v.join(`
                     value: he((d == null ? void 0 : d.profit) ?? ""),
                     readOnly: !0,
                   }),
-                  s.jsx("span", { children: "ط·آ£ط·آ±ط·آ¨ط·آ§ط·آ­" }),
+                  s.jsx("span", { children: "الأرباح" }),
                 ],
               }),
             ],
@@ -1494,7 +1230,7 @@ ${v.join(`
           s.jsx("div", {
             className: "is-yellow-note",
             children:
-              "ط·آ¨ط·آ¶ط·آ§ط·آ¹ط·آ© ط¸â€‍ط¸â€،ط·آ°ط·آ§ ط·آ§ط¸â€‍ط¸â€¦ط·آ³ط·ع¾ط·آ«ط¸â€¦ط·آ±",
+              "بضاعة لهذا المستثمر",
           }),
         ],
       }),
@@ -1541,9 +1277,9 @@ ${v.join(`
             className: "is-btn yellow",
             onClick: () => Vt(ae.current, { dir: "rtl", lang: "ar" }),
             children: [
-              "ط·آ·ط·آ¨ط·آ§ط·آ¹ط·آ©",
+              "طباعة",
               s.jsx("br", {}),
-              "ط·آ¹ط·آ±ط·آ¨ط¸ظ¹",
+              "عربي",
             ],
           }),
           s.jsxs("button", {
@@ -1562,8 +1298,8 @@ ${v.join(`
             type: "button",
             className: "is-btn yellow",
             onClick: () => {
-              const v = window.confirm(`ظ…ظˆط§ظپظ‚ = ظ†ط³ط®ط© Pride
-ط¥ظ„ط؛ط§ط، = ظ†ط³ط®ط© Faqr`);
+              const v = window.confirm(`موافق = نسخة Pride
+إلغاء = نسخة Faqr`);
               Ja(ae.current, v ? "Pride copy" : "Faqr copy");
             },
             children: ["Pride", s.jsx("br", {}), "Faqr"],

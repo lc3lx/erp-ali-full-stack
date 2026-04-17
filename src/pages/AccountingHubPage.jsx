@@ -80,7 +80,7 @@ export default function AccountingHubPage() {
         {
           page: "is",
           title: "فواتير البيع",
-          desc: "سندات العملاء، المجاميع، والربط مع الأستاذ العام.",
+          desc: "سندات الموردين، المجاميع، والربط مع الأستاذ العام.",
           accent: "hub-accent--indigo",
         },
       ],
