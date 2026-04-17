@@ -123,7 +123,10 @@ async function syncPurchaseInventory(tx: Prisma.TransactionClient, voucherId: st
 
   const linesWithQty = voucher.lines.filter((line) => purchaseLineQty(line) > 0);
   if (linesWithQty.length > 0 && !voucher.storeId) {
-    throw new AppError(409, "Select a store/warehouse before adding inventory purchase quantities");
+    // Allow entering purchase lines first, then selecting target store later.
+    // When store is missing, keep voucher lines as-is and clear any previously posted inventory moves.
+    await inv.removeInventoryMovesForReference(tx, voucherId, ["PURCHASE_VOUCHER"]);
+    return;
   }
 
   await ensureInventoryLineItemLinks(tx, linesWithQty);

@@ -276,6 +276,9 @@ export function ItemLineLinkPanel({ mode, voucherId, line, onSaved }) {
       dir="rtl"
     >
       <strong>ربط السطر بالصنف (مخزون + صورة)</strong>
+      <div style={{ marginTop: 4, fontSize: 12, color: "#475569" }}>
+        لاختيار صورة المنتج: اختر ملف صورة ثم اضغط حفظ الربط.
+      </div>
       <div style={{ marginTop: 8 }}>
         <label>صنف الكتالوج:</label>
         <SearchableDropdown
