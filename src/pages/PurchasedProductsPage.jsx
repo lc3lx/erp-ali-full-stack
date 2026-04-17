@@ -19,6 +19,7 @@ export default function PurchasedProductsPage() {
   const [onlyWithStock, setOnlyWithStock] = useState(true);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
+  const [warn, setWarn] = useState("");
 
   const filteredWarehouses = useMemo(() => {
     if (!storeId) return warehouses;
@@ -48,6 +49,7 @@ export default function PurchasedProductsPage() {
   const loadRows = useCallback(async () => {
     setLoading(true);
     setErr("");
+    setWarn("");
     try {
       const data = await api.get("/inventory/purchased-products", {
         storeId: storeId || undefined,
@@ -57,12 +59,74 @@ export default function PurchasedProductsPage() {
       });
       setRows(data.items ?? []);
     } catch (e) {
-      setErr(e.message);
-      setRows([]);
+      const isMissingPurchasedProductsApi =
+        Number(e?.status) === 404 &&
+        String(e?.message ?? "").includes("Cannot GET /api/v1/inventory/purchased-products");
+
+      if (!isMissingPurchasedProductsApi) {
+        setErr(e.message);
+        setRows([]);
+        return;
+      }
+
+      try {
+        // Fallback for older backend deployments that do not include /inventory/purchased-products yet.
+        const raw = await api.get("/inventory/stock-balances", {
+          warehouseId: warehouseId || undefined,
+        });
+        const stockRows = raw.items ?? [];
+        const byWarehouse = new Map(warehouses.map((w) => [w.id, w]));
+
+        const searchTerm = q.trim().toLowerCase();
+        const mapped = stockRows
+          .map((r) => {
+            const wh = byWarehouse.get(r.warehouseId);
+            const item = r.item ?? {};
+            const itemName = String(item.name ?? "");
+            const itemNo = String(item.itemNo ?? "");
+            const barcode = String(item.barcode ?? "");
+            const category = String(item.category ?? "");
+
+            if (storeId && wh?.storeId !== storeId) return null;
+            if (searchTerm) {
+              const hay = `${itemName} ${itemNo} ${barcode} ${category}`.toLowerCase();
+              if (!hay.includes(searchTerm)) return null;
+            }
+
+            const qtyOnHand = Number(r.qtyOnHand ?? 0);
+            if (onlyWithStock && !(qtyOnHand > 0)) return null;
+
+            return {
+              warehouseId: r.warehouseId,
+              warehouseName: r.warehouse?.name ?? wh?.name ?? "—",
+              warehouseCode: r.warehouse?.code ?? wh?.code ?? null,
+              storeId: wh?.storeId ?? null,
+              storeName: wh?.store?.name ?? null,
+              itemId: r.itemId,
+              item: {
+                ...item,
+                imageUrl: item.imageUrl ?? null,
+              },
+              purchasedQty: r.qtyOnHand ?? 0,
+              qtyOnHand: r.qtyOnHand ?? 0,
+              avgUnitCost: r.avgUnitCost ?? 0,
+              lastPurchaseAt: null,
+              lastVoucherId: null,
+              lastVoucherNo: null,
+            };
+          })
+          .filter(Boolean);
+
+        setRows(mapped);
+        setWarn("تم استخدام وضع التوافق: السيرفر لا يدعم بعد صفحة منتجات الشراء التفصيلية.");
+      } catch (fallbackError) {
+        setErr(fallbackError.message);
+        setRows([]);
+      }
     } finally {
       setLoading(false);
     }
-  }, [storeId, warehouseId, q, onlyWithStock]);
+  }, [storeId, warehouseId, q, onlyWithStock, warehouses]);
 
   useEffect(() => {
     loadMeta();
@@ -81,6 +145,7 @@ export default function PurchasedProductsPage() {
       </p>
 
       {err ? <div className="master-banner master-banner-err">{err}</div> : null}
+      {warn ? <div className="master-banner">{warn}</div> : null}
 
       <div className="master-form" style={{ marginBottom: 12 }}>
         <h3 className="master-form-title">تصفية العرض</h3>
