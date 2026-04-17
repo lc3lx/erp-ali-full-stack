@@ -9,6 +9,28 @@ import * as inv from "../services/inventoryStockService.js";
 export const inventoryRouter = Router();
 
 inventoryRouter.get(
+  "/purchased-products",
+  asyncHandler(async (req, res) => {
+    const q = z
+      .object({
+        storeId: z.string().uuid().optional(),
+        warehouseId: z.string().uuid().optional(),
+        q: z.string().optional(),
+        onlyWithStock: z.enum(["true", "false"]).optional(),
+      })
+      .parse(req.query);
+
+    const items = await inv.listPurchasedProducts({
+      storeId: q.storeId,
+      warehouseId: q.warehouseId,
+      q: q.q,
+      onlyWithStock: q.onlyWithStock !== "false",
+    });
+    res.json({ items });
+  }),
+);
+
+inventoryRouter.get(
   "/stock-balances",
   asyncHandler(async (req, res) => {
     const q = z
@@ -24,7 +46,7 @@ inventoryRouter.get(
       where: whereBal,
       include: {
         warehouse: { select: { id: true, name: true, code: true } },
-        item: { select: { id: true, name: true, itemNo: true, barcode: true } },
+        item: { select: { id: true, name: true, itemNo: true, barcode: true, imageUrl: true } },
       },
       orderBy: [{ warehouseId: "asc" }, { itemId: "asc" }],
     });
@@ -41,7 +63,7 @@ inventoryRouter.get(
     const rows = await prisma.invStockBalance.findMany({
       where: whereBal,
       include: {
-        item: { select: { id: true, name: true, itemNo: true, barcode: true } },
+        item: { select: { id: true, name: true, itemNo: true, barcode: true, imageUrl: true } },
       },
       orderBy: [{ itemId: "asc" }, { warehouseId: "asc" }],
     });

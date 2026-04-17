@@ -333,6 +333,7 @@ model Item {
   itemNo     String?
   name       String
   barcode    String?  @unique
+  imageUrl   String?
   category   String?
   defaultUom String? /// وحدة القياس الافتراضية (مثال: PCS، CTN)
   isActive   Boolean  @default(true)

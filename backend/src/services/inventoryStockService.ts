@@ -182,6 +182,165 @@ export async function ensureWarehouseForStore(
   });
 }
 
+type PurchasedProductsQuery = {
+  storeId?: string;
+  warehouseId?: string;
+  q?: string;
+  onlyWithStock?: boolean;
+};
+
+function matchesItemSearch(
+  item: { name: string; itemNo: string | null; barcode: string | null; category: string | null },
+  q: string,
+): boolean {
+  const needle = q.trim().toLowerCase();
+  if (!needle) return true;
+  const haystack = `${item.name} ${item.itemNo ?? ""} ${item.barcode ?? ""} ${item.category ?? ""}`.toLowerCase();
+  return haystack.includes(needle);
+}
+
+export async function listPurchasedProducts(query: PurchasedProductsQuery) {
+  const warehouseWhere: Prisma.InvWarehouseWhereInput = {};
+  if (query.storeId) warehouseWhere.storeId = query.storeId;
+  if (query.warehouseId) warehouseWhere.id = query.warehouseId;
+
+  const warehouses = await prisma.invWarehouse.findMany({
+    where: warehouseWhere,
+    select: {
+      id: true,
+      name: true,
+      code: true,
+      storeId: true,
+      store: { select: { id: true, name: true } },
+    },
+    orderBy: { name: "asc" },
+  });
+  if (warehouses.length === 0) return [];
+
+  const warehouseIds = warehouses.map((w) => w.id);
+  const grouped = await prisma.invStockMove.groupBy({
+    by: ["warehouseId", "itemId"],
+    where: {
+      warehouseId: { in: warehouseIds },
+      referenceKind: "PURCHASE_VOUCHER",
+      type: "PURCHASE_RECEIPT",
+    },
+    _sum: { qty: true },
+    _max: { moveDate: true },
+  });
+  if (grouped.length === 0) return [];
+
+  const itemIds = Array.from(new Set(grouped.map((g) => g.itemId)));
+  const [items, balances, latestMoves] = await Promise.all([
+    prisma.item.findMany({
+      where: { id: { in: itemIds } },
+      select: {
+        id: true,
+        name: true,
+        itemNo: true,
+        barcode: true,
+        imageUrl: true,
+        category: true,
+        defaultUom: true,
+        isActive: true,
+      },
+    }),
+    prisma.invStockBalance.findMany({
+      where: {
+        warehouseId: { in: warehouseIds },
+        itemId: { in: itemIds },
+      },
+      select: {
+        warehouseId: true,
+        itemId: true,
+        qtyOnHand: true,
+        avgUnitCost: true,
+      },
+    }),
+    prisma.invStockMove.findMany({
+      where: {
+        warehouseId: { in: warehouseIds },
+        itemId: { in: itemIds },
+        referenceKind: "PURCHASE_VOUCHER",
+        type: "PURCHASE_RECEIPT",
+      },
+      orderBy: [{ moveDate: "desc" }, { id: "desc" }],
+      select: {
+        warehouseId: true,
+        itemId: true,
+        referenceId: true,
+        moveDate: true,
+      },
+    }),
+  ]);
+
+  const itemById = new Map(items.map((it) => [it.id, it]));
+  const warehouseById = new Map(warehouses.map((wh) => [wh.id, wh]));
+  const balByKey = new Map(balances.map((b) => [`${b.warehouseId}|${b.itemId}`, b]));
+
+  const latestByKey = new Map<string, (typeof latestMoves)[number]>();
+  for (const move of latestMoves) {
+    const key = `${move.warehouseId}|${move.itemId}`;
+    if (!latestByKey.has(key)) latestByKey.set(key, move);
+  }
+
+  const voucherIds = Array.from(
+    new Set(
+      Array.from(latestByKey.values())
+        .map((x) => x.referenceId)
+        .filter((x): x is string => Boolean(x)),
+    ),
+  );
+  const vouchers = voucherIds.length
+    ? await prisma.purchaseInvoiceVoucher.findMany({
+        where: { id: { in: voucherIds } },
+        select: { id: true, voucherNo: true, voucherDate: true },
+      })
+    : [];
+  const voucherById = new Map(vouchers.map((v) => [v.id, v]));
+
+  const q = query.q?.trim() ?? "";
+  const rows = grouped
+    .map((g) => {
+      const key = `${g.warehouseId}|${g.itemId}`;
+      const item = itemById.get(g.itemId);
+      const warehouse = warehouseById.get(g.warehouseId);
+      if (!item || !warehouse) return null;
+      if (q && !matchesItemSearch(item, q)) return null;
+
+      const balance = balByKey.get(key);
+      const qtyOnHand = balance?.qtyOnHand ?? D(0);
+      if (query.onlyWithStock !== false && D(qtyOnHand).lte(0)) return null;
+
+      const latest = latestByKey.get(key) ?? null;
+      const voucher = latest?.referenceId ? voucherById.get(latest.referenceId) : null;
+
+      return {
+        warehouseId: warehouse.id,
+        warehouseName: warehouse.name,
+        warehouseCode: warehouse.code ?? null,
+        storeId: warehouse.storeId ?? null,
+        storeName: warehouse.store?.name ?? null,
+        itemId: item.id,
+        item,
+        purchasedQty: g._sum.qty ?? D(0),
+        qtyOnHand,
+        avgUnitCost: balance?.avgUnitCost ?? D(0),
+        lastPurchaseAt: latest?.moveDate ?? g._max.moveDate ?? null,
+        lastVoucherId: voucher?.id ?? null,
+        lastVoucherNo: voucher?.voucherNo ?? null,
+      };
+    })
+    .filter((row): row is NonNullable<typeof row> => Boolean(row))
+    .sort((a, b) => {
+      const byWarehouse = a.warehouseName.localeCompare(b.warehouseName);
+      if (byWarehouse !== 0) return byWarehouse;
+      return a.item.name.localeCompare(b.item.name);
+    });
+
+  return rows;
+}
+
 async function landedCostSharePerLine(
   tx: Prisma.TransactionClient,
   containerId: string,

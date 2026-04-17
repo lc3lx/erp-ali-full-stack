@@ -9,6 +9,7 @@ export const ALL_PAGE_IDS = [
   "items",
   "warehouses",
   "stock",
+  "pp",
   "suppliers",
   "official",
   "accounting",
@@ -46,6 +47,7 @@ export const NAV_GROUPS = [
     items: [
       { id: "iv", label: "فواتير الشراء" },
       { id: "is", label: "فواتير البيع" },
+      { id: "pp", label: "������ ������" },
       { id: "suppliers", label: "الموردون والتخليص" },
     ],
   },

@@ -15,6 +15,7 @@ import CustomersManagementPage from './pages/CustomersManagementPage.jsx'
 import StoresManagementPage from './pages/StoresManagementPage.jsx'
 import ItemsManagementPage from './pages/ItemsManagementPage.jsx'
 import StockInventoryPage from './pages/StockInventoryPage.jsx'
+import PurchasedProductsPage from './pages/PurchasedProductsPage.jsx'
 import SuppliersManagementPage from './pages/SuppliersManagementPage.jsx'
 import FinancialReportsPage from './pages/FinancialReportsPage.jsx'
 import DashboardPage from './pages/DashboardPage.jsx'
@@ -40,6 +41,7 @@ export default function App() {
       {(page === 'stores' || page === 'warehouses') && <StoresManagementPage />}
       {page === 'items' && <ItemsManagementPage />}
       {page === 'stock' && <StockInventoryPage />}
+      {page === 'pp' && <PurchasedProductsPage />}
       {page === 'suppliers' && <SuppliersManagementPage />}
       {page === 'official' && <OfficialDocumentsPage />}
       {page === 'freports' && <FinancialReportsPage />}

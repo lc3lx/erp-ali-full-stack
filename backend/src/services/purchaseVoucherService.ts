@@ -236,17 +236,18 @@ export async function getPurchaseVoucherStock(voucherId: string, itemId?: string
       itemId: { in: targetItemIds },
     },
     include: {
-      item: {
-        select: {
-          id: true,
-          name: true,
-          itemNo: true,
-          barcode: true,
-          defaultUom: true,
-          category: true,
+          item: {
+            select: {
+              id: true,
+              name: true,
+              itemNo: true,
+              barcode: true,
+              imageUrl: true,
+              defaultUom: true,
+              category: true,
+            },
+          },
         },
-      },
-    },
   });
 
   const byItem = new Map(rows.map((row) => [row.itemId, row]));
@@ -259,6 +260,7 @@ export async function getPurchaseVoucherStock(voucherId: string, itemId?: string
           name: true,
           itemNo: true,
           barcode: true,
+          imageUrl: true,
           defaultUom: true,
           category: true,
         },

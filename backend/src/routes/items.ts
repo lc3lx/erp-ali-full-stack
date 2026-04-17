@@ -8,6 +8,7 @@ import { routeParam } from "../utils/params.js";
 import { paginationQuerySchema } from "../utils/pagination.js";
 
 export const itemsRouter = Router();
+const MAX_ITEM_IMAGE_CHARS = 900_000;
 
 const listQuery = paginationQuerySchema.extend({
   q: z.string().optional(),
@@ -19,10 +20,16 @@ const itemBody = z.object({
   itemNo: z.string().optional().nullable(),
   name: z.string().min(1),
   barcode: z.string().optional().nullable(),
+  imageUrl: z.string().max(MAX_ITEM_IMAGE_CHARS).optional().nullable(),
   category: z.string().optional().nullable(),
   defaultUom: z.string().optional().nullable(),
   isActive: z.boolean().optional(),
 });
+
+function normalizeNullableText(value: string | null | undefined): string | null {
+  const t = String(value ?? "").trim();
+  return t ? t : null;
+}
 
 itemsRouter.get(
   "/",
@@ -63,7 +70,15 @@ itemsRouter.get(
       where,
       take: 50,
       orderBy: { name: "asc" },
-      select: { id: true, itemNo: true, name: true, barcode: true, defaultUom: true, category: true },
+      select: {
+        id: true,
+        itemNo: true,
+        name: true,
+        barcode: true,
+        imageUrl: true,
+        defaultUom: true,
+        category: true,
+      },
     });
     res.json({ items });
   }),
@@ -79,11 +94,12 @@ itemsRouter.post(
     }
     const row = await prisma.item.create({
       data: {
-        itemNo: body.itemNo?.trim() || null,
+        itemNo: normalizeNullableText(body.itemNo),
         name: body.name.trim(),
-        barcode: body.barcode?.trim() || null,
-        category: body.category?.trim() || null,
-        defaultUom: body.defaultUom?.trim() || null,
+        barcode: normalizeNullableText(body.barcode),
+        imageUrl: normalizeNullableText(body.imageUrl),
+        category: normalizeNullableText(body.category),
+        defaultUom: normalizeNullableText(body.defaultUom),
         isActive: body.isActive ?? true,
       },
     });
@@ -115,11 +131,12 @@ itemsRouter.patch(
       const row = await prisma.item.update({
         where: { id },
         data: {
-          ...(body.itemNo !== undefined ? { itemNo: body.itemNo?.trim() || null } : {}),
+          ...(body.itemNo !== undefined ? { itemNo: normalizeNullableText(body.itemNo) } : {}),
           ...(body.name !== undefined ? { name: body.name.trim() } : {}),
-          ...(body.barcode !== undefined ? { barcode: body.barcode?.trim() || null } : {}),
-          ...(body.category !== undefined ? { category: body.category?.trim() || null } : {}),
-          ...(body.defaultUom !== undefined ? { defaultUom: body.defaultUom?.trim() || null } : {}),
+          ...(body.barcode !== undefined ? { barcode: normalizeNullableText(body.barcode) } : {}),
+          ...(body.imageUrl !== undefined ? { imageUrl: normalizeNullableText(body.imageUrl) } : {}),
+          ...(body.category !== undefined ? { category: normalizeNullableText(body.category) } : {}),
+          ...(body.defaultUom !== undefined ? { defaultUom: normalizeNullableText(body.defaultUom) } : {}),
           ...(body.isActive !== undefined ? { isActive: body.isActive } : {}),
         },
       });
