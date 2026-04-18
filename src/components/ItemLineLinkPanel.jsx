@@ -168,13 +168,6 @@ export function ItemLineLinkPanel({ mode, voucherId, line, onSaved }) {
     loadStock(itemId || line?.itemId || "");
   }, [itemId, line?.itemId, loadStock]);
 
-  if (!voucherId || !line?.id) return null;
-
-  const base =
-    mode === "purchase"
-      ? `/invoice-vouchers/${voucherId}/items`
-      : `/invoice-sale/${voucherId}/items`;
-
   const requestedQty = useMemo(() => {
     if (!line) return 0;
     if (mode === "sale") return Number(line.listQty ?? 0);
@@ -182,6 +175,13 @@ export function ItemLineLinkPanel({ mode, voucherId, line, onSaved }) {
     if (pieces > 0) return pieces;
     return Number(line.boxesSum ?? 0);
   }, [line, mode]);
+
+  if (!voucherId || !line?.id) return null;
+
+  const base =
+    mode === "purchase"
+      ? `/invoice-vouchers/${voucherId}/items`
+      : `/invoice-sale/${voucherId}/items`;
 
   const showLowStockWarning =
     mode === "sale" &&
