@@ -122,14 +122,15 @@ async function syncPurchaseInventory(tx: Prisma.TransactionClient, voucherId: st
   if (!voucher) throw new AppError(404, "Voucher not found");
 
   const linesWithQty = voucher.lines.filter((line) => purchaseLineQty(line) > 0);
+  await ensureInventoryLineItemLinks(tx, linesWithQty);
+
   if (linesWithQty.length > 0 && !voucher.storeId) {
     // Allow entering purchase lines first, then selecting target store later.
-    // When store is missing, keep voucher lines as-is and clear any previously posted inventory moves.
+    // When store is missing, keep lines linked to items, and clear any previously posted inventory moves.
     await inv.removeInventoryMovesForReference(tx, voucherId, ["PURCHASE_VOUCHER"]);
     return;
   }
 
-  await ensureInventoryLineItemLinks(tx, linesWithQty);
   await inv.applyPurchaseVoucherInventory(tx, voucherId, voucher.voucherDate ?? new Date());
 }
 

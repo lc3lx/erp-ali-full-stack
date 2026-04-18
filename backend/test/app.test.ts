@@ -242,6 +242,59 @@ describe("api (PostgreSQL + seed optional)", () => {
     expect(Number(stock.body.items[0].qtyOnHand)).toBe(12);
   });
 
+  it("purchased products lists vouchers without store as unassigned rows", async (ctx) => {
+    if (!dbReady) ctx.skip();
+
+    const uniqueNo = `IT-NOSTORE-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const item = await prisma.item.create({
+      data: {
+        name: `Unassigned Item ${uniqueNo}`,
+        itemNo: uniqueNo,
+      },
+      select: { id: true, name: true, itemNo: true },
+    });
+
+    const voucher = await prisma.purchaseInvoiceVoucher.create({
+      data: {
+        voucherNo: `PV-NOSTORE-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        currency: "USD",
+        containerId,
+        supplierId,
+        paid: 0,
+        storeId: null,
+      },
+      select: { id: true },
+    });
+
+    await prisma.purchaseVoucherLine.create({
+      data: {
+        voucherId: voucher.id,
+        seq: 1,
+        itemId: item.id,
+        itemName: item.name,
+        itemNo: item.itemNo,
+        piecesSum: "7",
+        priceToCustomerSum: "70",
+      },
+      select: { id: true },
+    });
+
+    const purchased = await request(app)
+      .get("/api/v1/inventory/purchased-products")
+      .query({ q: uniqueNo, onlyWithStock: "true" })
+      .set("Authorization", `Bearer ${token}`);
+    expect(purchased.status).toBe(200);
+
+    const row = (purchased.body.items ?? []).find(
+      (x: { item?: { itemNo?: string | null }; lastVoucherId?: string | null }) =>
+        x.lastVoucherId === voucher.id || x.item?.itemNo === uniqueNo,
+    );
+    expect(row).toBeTruthy();
+    expect(row.warehouseName).toBe("Unassigned (No Store)");
+    expect(Number(row.purchasedQty)).toBe(7);
+    expect(Number(row.qtyOnHand)).toBe(7);
+  });
+
   it("sale voucher totals + post + repost reject", async (ctx) => {
     if (!dbReady) ctx.skip();
     const voucherNo = `SV-${Date.now()}-${Math.floor(Math.random() * 1000)}`;

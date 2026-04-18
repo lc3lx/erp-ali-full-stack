@@ -189,6 +189,31 @@ type PurchasedProductsQuery = {
   onlyWithStock?: boolean;
 };
 
+type PurchasedProductRow = {
+  warehouseId: string;
+  warehouseName: string;
+  warehouseCode: string | null;
+  storeId: string | null;
+  storeName: string | null;
+  itemId: string;
+  item: {
+    id: string;
+    name: string;
+    itemNo: string | null;
+    barcode: string | null;
+    imageUrl: string | null;
+    category: string | null;
+    defaultUom: string | null;
+    isActive: boolean;
+  };
+  purchasedQty: Prisma.Decimal;
+  qtyOnHand: Prisma.Decimal;
+  avgUnitCost: Prisma.Decimal;
+  lastPurchaseAt: Date | null;
+  lastVoucherId: string | null;
+  lastVoucherNo: string | null;
+};
+
 function matchesItemSearch(
   item: { name: string; itemNo: string | null; barcode: string | null; category: string | null },
   q: string,
@@ -200,6 +225,7 @@ function matchesItemSearch(
 }
 
 export async function listPurchasedProducts(query: PurchasedProductsQuery) {
+  const includeUnassignedPurchases = !query.storeId && !query.warehouseId;
   const warehouseWhere: Prisma.InvWarehouseWhereInput = {};
   if (query.storeId) warehouseWhere.storeId = query.storeId;
   if (query.warehouseId) warehouseWhere.id = query.warehouseId;
@@ -215,63 +241,105 @@ export async function listPurchasedProducts(query: PurchasedProductsQuery) {
     },
     orderBy: { name: "asc" },
   });
-  if (warehouses.length === 0) return [];
 
   const warehouseIds = warehouses.map((w) => w.id);
-  const grouped = await prisma.invStockMove.groupBy({
-    by: ["warehouseId", "itemId"],
-    where: {
-      warehouseId: { in: warehouseIds },
-      referenceKind: "PURCHASE_VOUCHER",
-      type: "PURCHASE_RECEIPT",
-    },
-    _sum: { qty: true },
-    _max: { moveDate: true },
-  });
-  if (grouped.length === 0) return [];
+  const grouped =
+    warehouseIds.length > 0
+      ? await prisma.invStockMove.groupBy({
+          by: ["warehouseId", "itemId"],
+          where: {
+            warehouseId: { in: warehouseIds },
+            referenceKind: "PURCHASE_VOUCHER",
+            type: "PURCHASE_RECEIPT",
+          },
+          _sum: { qty: true },
+          _max: { moveDate: true },
+        })
+      : [];
 
   const itemIds = Array.from(new Set(grouped.map((g) => g.itemId)));
-  const [items, balances, latestMoves] = await Promise.all([
-    prisma.item.findMany({
-      where: { id: { in: itemIds } },
-      select: {
-        id: true,
-        name: true,
-        itemNo: true,
-        barcode: true,
-        imageUrl: true,
-        category: true,
-        defaultUom: true,
-        isActive: true,
-      },
-    }),
-    prisma.invStockBalance.findMany({
-      where: {
-        warehouseId: { in: warehouseIds },
-        itemId: { in: itemIds },
-      },
-      select: {
-        warehouseId: true,
-        itemId: true,
-        qtyOnHand: true,
-        avgUnitCost: true,
-      },
-    }),
-    prisma.invStockMove.findMany({
-      where: {
-        warehouseId: { in: warehouseIds },
-        itemId: { in: itemIds },
-        referenceKind: "PURCHASE_VOUCHER",
-        type: "PURCHASE_RECEIPT",
-      },
-      orderBy: [{ moveDate: "desc" }, { id: "desc" }],
-      select: {
-        warehouseId: true,
-        itemId: true,
-        referenceId: true,
-        moveDate: true,
-      },
-    }),
+  const [items, balances, latestMoves, unassignedLines] = await Promise.all([
+    itemIds.length > 0
+      ? prisma.item.findMany({
+          where: { id: { in: itemIds } },
+          select: {
+            id: true,
+            name: true,
+            itemNo: true,
+            barcode: true,
+            imageUrl: true,
+            category: true,
+            defaultUom: true,
+            isActive: true,
+          },
+        })
+      : Promise.resolve([]),
+    warehouseIds.length > 0 && itemIds.length > 0
+      ? prisma.invStockBalance.findMany({
+          where: {
+            warehouseId: { in: warehouseIds },
+            itemId: { in: itemIds },
+          },
+          select: {
+            warehouseId: true,
+            itemId: true,
+            qtyOnHand: true,
+            avgUnitCost: true,
+          },
+        })
+      : Promise.resolve([]),
+    warehouseIds.length > 0 && itemIds.length > 0
+      ? prisma.invStockMove.findMany({
+          where: {
+            warehouseId: { in: warehouseIds },
+            itemId: { in: itemIds },
+            referenceKind: "PURCHASE_VOUCHER",
+            type: "PURCHASE_RECEIPT",
+          },
+          orderBy: [{ moveDate: "desc" }, { id: "desc" }],
+          select: {
+            warehouseId: true,
+            itemId: true,
+            referenceId: true,
+            moveDate: true,
+          },
+        })
+      : Promise.resolve([]),
+    includeUnassignedPurchases
+      ? prisma.purchaseVoucherLine.findMany({
+          where: {
+            itemId: { not: null },
+            voucher: { storeId: null },
+            OR: [{ piecesSum: { gt: 0 } }, { boxesSum: { gt: 0 } }],
+          },
+          select: {
+            itemId: true,
+            piecesSum: true,
+            boxesSum: true,
+            voucherId: true,
+            voucher: {
+              select: {
+                id: true,
+                voucherNo: true,
+                voucherDate: true,
+                updatedAt: true,
+              },
+            },
+            item: {
+              select: {
+                id: true,
+                name: true,
+                itemNo: true,
+                barcode: true,
+                imageUrl: true,
+                category: true,
+                defaultUom: true,
+                isActive: true,
+              },
+            },
+          },
+        })
+      : Promise.resolve([]),
   ]);
 
   const itemById = new Map(items.map((it) => [it.id, it]));
@@ -300,45 +368,109 @@ export async function listPurchasedProducts(query: PurchasedProductsQuery) {
   const voucherById = new Map(vouchers.map((v) => [v.id, v]));
 
   const q = query.q?.trim() ?? "";
-  const rows = grouped
-    .map((g) => {
-      const key = `${g.warehouseId}|${g.itemId}`;
-      const item = itemById.get(g.itemId);
-      const warehouse = warehouseById.get(g.warehouseId);
-      if (!item || !warehouse) return null;
-      if (q && !matchesItemSearch(item, q)) return null;
+  const rows: PurchasedProductRow[] = [];
 
-      const balance = balByKey.get(key);
-      const qtyOnHand = balance?.qtyOnHand ?? D(0);
-      if (query.onlyWithStock !== false && D(qtyOnHand).lte(0)) return null;
+  for (const g of grouped) {
+    const key = `${g.warehouseId}|${g.itemId}`;
+    const item = itemById.get(g.itemId);
+    const warehouse = warehouseById.get(g.warehouseId);
+    if (!item || !warehouse) continue;
+    if (q && !matchesItemSearch(item, q)) continue;
 
-      const latest = latestByKey.get(key) ?? null;
-      const voucher = latest?.referenceId ? voucherById.get(latest.referenceId) : null;
+    const balance = balByKey.get(key);
+    const qtyOnHand = balance?.qtyOnHand ?? D(0);
+    if (query.onlyWithStock !== false && D(qtyOnHand).lte(0)) continue;
 
-      return {
-        warehouseId: warehouse.id,
-        warehouseName: warehouse.name,
-        warehouseCode: warehouse.code ?? null,
-        storeId: warehouse.storeId ?? null,
-        storeName: warehouse.store?.name ?? null,
-        itemId: item.id,
-        item,
-        purchasedQty: g._sum.qty ?? D(0),
-        qtyOnHand,
-        avgUnitCost: balance?.avgUnitCost ?? D(0),
-        lastPurchaseAt: latest?.moveDate ?? g._max.moveDate ?? null,
-        lastVoucherId: voucher?.id ?? null,
-        lastVoucherNo: voucher?.voucherNo ?? null,
-      };
-    })
-    .filter((row): row is NonNullable<typeof row> => Boolean(row))
-    .sort((a, b) => {
-      const byWarehouse = a.warehouseName.localeCompare(b.warehouseName);
-      if (byWarehouse !== 0) return byWarehouse;
-      return a.item.name.localeCompare(b.item.name);
+    const latest = latestByKey.get(key) ?? null;
+    const voucher = latest?.referenceId ? voucherById.get(latest.referenceId) : null;
+
+    rows.push({
+      warehouseId: warehouse.id,
+      warehouseName: warehouse.name,
+      warehouseCode: warehouse.code ?? null,
+      storeId: warehouse.storeId ?? null,
+      storeName: warehouse.store?.name ?? null,
+      itemId: item.id,
+      item,
+      purchasedQty: g._sum.qty ?? D(0),
+      qtyOnHand,
+      avgUnitCost: balance?.avgUnitCost ?? D(0),
+      lastPurchaseAt: latest?.moveDate ?? g._max.moveDate ?? null,
+      lastVoucherId: voucher?.id ?? null,
+      lastVoucherNo: voucher?.voucherNo ?? null,
     });
+  }
 
-  return rows;
+  if (includeUnassignedPurchases && unassignedLines.length > 0) {
+    const unassignedByItem = new Map<
+      string,
+      {
+        item: NonNullable<(typeof unassignedLines)[number]["item"]>;
+        purchasedQty: Prisma.Decimal;
+        lastPurchaseAt: Date | null;
+        lastVoucherId: string | null;
+        lastVoucherNo: string | null;
+      }
+    >();
+
+    for (const line of unassignedLines) {
+      if (!line.itemId || !line.item) continue;
+      if (q && !matchesItemSearch(line.item, q)) continue;
+
+      const qty = lineQty({ piecesSum: line.piecesSum, boxesSum: line.boxesSum });
+      if (qty.lte(0)) continue;
+
+      const at = line.voucher.voucherDate ?? line.voucher.updatedAt ?? null;
+      const prev = unassignedByItem.get(line.itemId);
+      if (!prev) {
+        unassignedByItem.set(line.itemId, {
+          item: line.item,
+          purchasedQty: qty,
+          lastPurchaseAt: at,
+          lastVoucherId: line.voucherId,
+          lastVoucherNo: line.voucher.voucherNo,
+        });
+        continue;
+      }
+
+      prev.purchasedQty = prev.purchasedQty.add(qty);
+      const prevTs = prev.lastPurchaseAt?.getTime() ?? Number.NEGATIVE_INFINITY;
+      const curTs = at?.getTime() ?? Number.NEGATIVE_INFINITY;
+      if (curTs > prevTs) {
+        prev.lastPurchaseAt = at;
+        prev.lastVoucherId = line.voucherId;
+        prev.lastVoucherNo = line.voucher.voucherNo;
+      }
+    }
+
+    for (const [itemId, agg] of unassignedByItem.entries()) {
+      // Treat pending quantities as available to keep them visible in the default "only with stock" view.
+      const qtyOnHand = agg.purchasedQty;
+      if (query.onlyWithStock !== false && qtyOnHand.lte(0)) continue;
+
+      rows.push({
+        warehouseId: `unassigned:${itemId}`,
+        warehouseName: "Unassigned (No Store)",
+        warehouseCode: null,
+        storeId: null,
+        storeName: null,
+        itemId,
+        item: agg.item,
+        purchasedQty: agg.purchasedQty,
+        qtyOnHand,
+        avgUnitCost: D(0),
+        lastPurchaseAt: agg.lastPurchaseAt,
+        lastVoucherId: agg.lastVoucherId,
+        lastVoucherNo: agg.lastVoucherNo,
+      });
+    }
+  }
+
+  return rows.sort((a, b) => {
+    const byWarehouse = a.warehouseName.localeCompare(b.warehouseName);
+    if (byWarehouse !== 0) return byWarehouse;
+    return a.item.name.localeCompare(b.item.name);
+  });
 }
 
 async function landedCostSharePerLine(
