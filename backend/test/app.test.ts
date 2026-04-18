@@ -191,6 +191,55 @@ describe("api (PostgreSQL + seed optional)", () => {
     expect(repost.status).toBe(409);
   });
 
+  it("editing approved purchase voucher reopens it to draft", async (ctx) => {
+    if (!dbReady) ctx.skip();
+    const voucherNo = `PV-EDIT-APPROVED-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const create = await request(app)
+      .post("/api/v1/invoice-vouchers")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        voucherNo,
+        currency: "USD",
+        containerId,
+        supplierId,
+        paid: 0,
+      });
+    expect(create.status).toBe(201);
+    const voucherId = create.body.id as string;
+
+    const addLine = await request(app)
+      .post(`/api/v1/invoice-vouchers/${voucherId}/items`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        priceToCustomerSum: "120",
+      });
+    expect(addLine.status).toBe(201);
+
+    const submit = await request(app)
+      .post(`/api/v1/invoice-vouchers/${voucherId}/workflow/submit`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({});
+    expect(submit.status).toBe(200);
+
+    const approve = await request(app)
+      .post(`/api/v1/invoice-vouchers/${voucherId}/workflow/approve`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({});
+    expect(approve.status).toBe(200);
+    expect(approve.body.documentStatus).toBe("APPROVED");
+
+    const patch = await request(app)
+      .patch(`/api/v1/invoice-vouchers/${voucherId}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        notes: "edit after approval",
+      });
+    expect(patch.status).toBe(200);
+    expect(patch.body.documentStatus).toBe("DRAFT");
+    expect(patch.body.approvedAt).toBeNull();
+    expect(patch.body.approvedById).toBeNull();
+  });
+
   it("purchase line auto-links/creates item and updates stock", async (ctx) => {
     if (!dbReady) ctx.skip();
 

@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, type SourceDocumentStatus } from "@prisma/client";
 import { prisma } from "../db/client.js";
 import { AppError } from "../utils/errors.js";
 import { skipTake, type PaginationQuery } from "../utils/pagination.js";
@@ -30,6 +30,22 @@ type PurchaseInventoryLine = {
   piecesSum: Prisma.Decimal | null;
   boxesSum: Prisma.Decimal | null;
 };
+
+async function reopenPurchaseApprovalIfNeeded(
+  tx: Prisma.TransactionClient,
+  voucherId: string,
+  previousStatus: SourceDocumentStatus,
+) {
+  if (previousStatus !== "APPROVED") return;
+  await tx.purchaseInvoiceVoucher.update({
+    where: { id: voucherId },
+    data: {
+      documentStatus: "DRAFT",
+      approvedAt: null,
+      approvedById: null,
+    },
+  });
+}
 
 async function ensureInventoryLineItemLinks(
   tx: Prisma.TransactionClient,
@@ -198,6 +214,7 @@ export async function updatePurchaseVoucher(id: string, data: Prisma.PurchaseInv
     await prisma.$transaction(async (tx) => {
       await tx.purchaseInvoiceVoucher.update({ where: { id }, data });
       await syncPurchaseInventory(tx, id);
+      await reopenPurchaseApprovalIfNeeded(tx, id, existing.documentStatus);
     });
     await purchaseVoucherTotals(id);
     return getPurchaseVoucher(id);
@@ -319,6 +336,7 @@ export async function addPurchaseLine(
       data: { ...body, seq, voucherId },
     });
     await syncPurchaseInventory(tx, voucherId);
+    await reopenPurchaseApprovalIfNeeded(tx, voucherId, v.documentStatus);
     return row;
   });
 }
@@ -345,6 +363,7 @@ export async function updatePurchaseLine(
     if (!line) throw new AppError(404, "Line not found");
     const updated = await tx.purchaseVoucherLine.update({ where: { id: lineId }, data });
     await syncPurchaseInventory(tx, voucherId);
+    await reopenPurchaseApprovalIfNeeded(tx, voucherId, head.documentStatus);
     return updated;
   });
   await purchaseVoucherTotals(voucherId);
@@ -364,6 +383,7 @@ export async function deletePurchaseLine(voucherId: string, lineId: string) {
     if (!line) throw new AppError(404, "Line not found");
     await tx.purchaseVoucherLine.delete({ where: { id: lineId } });
     await syncPurchaseInventory(tx, voucherId);
+    await reopenPurchaseApprovalIfNeeded(tx, voucherId, head.documentStatus);
   });
   await purchaseVoucherTotals(voucherId);
 }

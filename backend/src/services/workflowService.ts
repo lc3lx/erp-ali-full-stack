@@ -32,10 +32,19 @@ export function assertCanEditSaleVoucher(doc: SaleDoc) {
 }
 
 export function assertCanEditPurchaseVoucher(doc: PurchaseDoc) {
-  if (!isEditableStatus(doc.documentStatus)) {
+  // Purchase vouchers can be corrected after approval as long as they are not posted.
+  // Any edit will reopen the document to DRAFT (handled in purchaseVoucherService).
+  if (doc.glJournalEntryId) {
     throw new AppError(
       403,
-      `Cannot edit purchase invoice in status ${doc.documentStatus}. Only DRAFT is editable.`,
+      "Cannot edit purchase invoice after posting to GL.",
+      "WORKFLOW_EDIT_BLOCKED",
+    );
+  }
+  if (doc.documentStatus !== "DRAFT" && doc.documentStatus !== "APPROVED") {
+    throw new AppError(
+      403,
+      `Cannot edit purchase invoice in status ${doc.documentStatus}. Only DRAFT or APPROVED is editable before posting.`,
       "WORKFLOW_EDIT_BLOCKED",
     );
   }
