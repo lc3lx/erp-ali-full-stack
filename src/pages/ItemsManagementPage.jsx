@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../lib/api.js";
+import { optimizeImageFile } from "../lib/imageUtils.js";
 import "../App.css";
 
 function emptyForm() {
@@ -9,6 +10,7 @@ function emptyForm() {
     barcode: "",
     category: "",
     defaultUom: "",
+    imageUrl: "",
     isActive: true,
   };
 }
@@ -20,6 +22,7 @@ export default function ItemsManagementPage() {
   const [err, setErr] = useState("");
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(true);
+  const [imageBusy, setImageBusy] = useState(false);
 
   const loadList = useCallback(async () => {
     setLoading(true);
@@ -57,6 +60,7 @@ export default function ItemsManagementPage() {
         barcode: p.barcode ?? "",
         category: p.category ?? "",
         defaultUom: p.defaultUom ?? "",
+        imageUrl: p.imageUrl ?? "",
         isActive: p.isActive !== false,
       });
     }
@@ -77,6 +81,7 @@ export default function ItemsManagementPage() {
       barcode: form.barcode.trim() || null,
       category: form.category.trim() || null,
       defaultUom: form.defaultUom.trim() || null,
+      imageUrl: form.imageUrl || null,
       isActive: form.isActive,
     };
     try {
@@ -104,6 +109,26 @@ export default function ItemsManagementPage() {
     } catch (ex) {
       setErr(ex.message);
     }
+  };
+
+  const onPickImage = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setImageBusy(true);
+    setErr("");
+    try {
+      const optimized = await optimizeImageFile(file);
+      setForm((prev) => ({ ...prev, imageUrl: optimized }));
+    } catch (e) {
+      setErr(e.message);
+    } finally {
+      setImageBusy(false);
+      event.target.value = "";
+    }
+  };
+
+  const onClearImage = () => {
+    setForm((prev) => ({ ...prev, imageUrl: "" }));
   };
 
   return (
@@ -192,6 +217,35 @@ export default function ItemsManagementPage() {
               onChange={(e) => setForm({ ...form, defaultUom: e.target.value })}
             />
           </label>
+          <div className="master-field">
+            <span style={{ marginBottom: 4, display: "block" }}>صورة الصنف</span>
+            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
+              <div
+                style={{
+                  width: 64,
+                  height: 64,
+                  border: "1px solid #d1d5db",
+                  borderRadius: 6,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  overflow: "hidden",
+                  background: "#f8fafc",
+                }}
+              >
+                {form.imageUrl ? (
+                  <img src={form.imageUrl} alt="صورة الصنف" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ) : (
+                  <span style={{ fontSize: 11, color: "#6b7280" }}>بدون</span>
+                )}
+              </div>
+              <input type="file" accept="image/*" onChange={onPickImage} disabled={imageBusy} />
+              <button type="button" className="io-btn" onClick={onClearImage} disabled={imageBusy}>
+                حذف الصورة
+              </button>
+              {imageBusy ? <span style={{ fontSize: 12, color: "#334155" }}>جارٍ التجهيز...</span> : null}
+            </div>
+          </div>
           <label className="master-field">
             <input
               type="checkbox"
