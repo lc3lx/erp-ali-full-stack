@@ -23,6 +23,7 @@ export default function ItemsManagementPage() {
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(true);
   const [imageBusy, setImageBusy] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const loadList = useCallback(async () => {
     setLoading(true);
@@ -104,6 +105,7 @@ export default function ItemsManagementPage() {
     try {
       await api.delete(`/items/${selectedId}`);
       setSelectedId("");
+      setIsModalOpen(false);
       setMsg("تم الحذف");
       await loadList();
     } catch (ex) {
@@ -143,9 +145,19 @@ export default function ItemsManagementPage() {
         <div className="master-panel">
           <div className="master-toolbar">
             <span className="master-toolbar-lbl">الأصناف ({items.length})</span>
-            <button type="button" className="master-btn master-btn-ghost" onClick={loadList}>
-              تحديث
-            </button>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button 
+                type="button" 
+                className="io-btn-primary" 
+                onClick={() => { setSelectedId(""); setIsModalOpen(true); }}
+                style={{ padding: "6px 12px", background: "#0ea5e9", color: "#fff", border: "none", borderRadius: "6px", cursor: "pointer" }}
+              >
+                ➕ إضافة صنف جديد
+              </button>
+              <button type="button" className="master-btn master-btn-ghost" onClick={loadList}>
+                تحديث
+              </button>
+            </div>
           </div>
           <div className="master-table-wrap">
             <table className="master-table">
@@ -161,7 +173,8 @@ export default function ItemsManagementPage() {
                   <tr
                     key={r.id}
                     className={selectedId === r.id ? "master-row-active" : undefined}
-                    onClick={() => setSelectedId(r.id)}
+                    onClick={() => { setSelectedId(r.id); setIsModalOpen(true); }}
+                    style={{ cursor: "pointer" }}
                   >
                     <td>{r.name}</td>
                     <td>{r.category ?? ""}</td>
@@ -173,99 +186,112 @@ export default function ItemsManagementPage() {
           </div>
         </div>
 
-        <form className="master-form" onSubmit={onSave}>
-          <h3 className="master-form-title">{selectedId ? "تعديل صنف" : "صنف جديد"}</h3>
-          <label className="master-field">
-            الرقم
-            <input
-              className="io-date-input master-input"
-              value={form.itemNo}
-              onChange={(e) => setForm({ ...form, itemNo: e.target.value })}
-            />
-          </label>
-          <label className="master-field">
-            الاسم <span className="master-req">*</span>
-            <input
-              className="io-date-input master-input"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              required
-            />
-          </label>
-          <label className="master-field">
-            الباركود
-            <input
-              className="io-date-input master-input"
-              dir="ltr"
-              value={form.barcode}
-              onChange={(e) => setForm({ ...form, barcode: e.target.value })}
-            />
-          </label>
-          <label className="master-field">
-            التصنيف
-            <input
-              className="io-date-input master-input"
-              value={form.category}
-              onChange={(e) => setForm({ ...form, category: e.target.value })}
-            />
-          </label>
-          <label className="master-field">
-            وحدة القياس
-            <input
-              className="io-date-input master-input"
-              value={form.defaultUom}
-              onChange={(e) => setForm({ ...form, defaultUom: e.target.value })}
-            />
-          </label>
-          <div className="master-field">
-            <span style={{ marginBottom: 4, display: "block" }}>صورة الصنف</span>
-            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
-              <div
-                style={{
-                  width: 64,
-                  height: 64,
-                  border: "1px solid #d1d5db",
-                  borderRadius: 6,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  overflow: "hidden",
-                  background: "#f8fafc",
-                }}
-              >
-                {form.imageUrl ? (
-                  <img src={form.imageUrl} alt="صورة الصنف" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                ) : (
-                  <span style={{ fontSize: 11, color: "#6b7280" }}>بدون</span>
-                )}
+        {isModalOpen && (
+          <div style={{
+            position: "fixed", top: 0, left: 0, width: "100%", height: "100%",
+            backgroundColor: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 9999
+          }}>
+            <form className="master-form" onSubmit={onSave} style={{ maxHeight: "90vh", overflowY: "auto", width: "500px", maxWidth: "90%", margin: 0, boxShadow: "0 10px 25px rgba(0,0,0,0.2)" }}>
+              <h3 className="master-form-title">{selectedId ? "تعديل صنف" : "صنف جديد"}</h3>
+              <label className="master-field">
+                الرقم
+                <input
+                  className="io-date-input master-input"
+                  value={form.itemNo}
+                  onChange={(e) => setForm({ ...form, itemNo: e.target.value })}
+                />
+              </label>
+              <label className="master-field">
+                الاسم <span className="master-req">*</span>
+                <input
+                  className="io-date-input master-input"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  required
+                />
+              </label>
+              <label className="master-field">
+                الباركود
+                <input
+                  className="io-date-input master-input"
+                  dir="ltr"
+                  value={form.barcode}
+                  onChange={(e) => setForm({ ...form, barcode: e.target.value })}
+                />
+              </label>
+              <label className="master-field">
+                التصنيف
+                <input
+                  className="io-date-input master-input"
+                  value={form.category}
+                  onChange={(e) => setForm({ ...form, category: e.target.value })}
+                />
+              </label>
+              <label className="master-field">
+                وحدة القياس
+                <input
+                  className="io-date-input master-input"
+                  value={form.defaultUom}
+                  onChange={(e) => setForm({ ...form, defaultUom: e.target.value })}
+                />
+              </label>
+              <div className="master-field">
+                <span style={{ marginBottom: 4, display: "block", fontWeight: "bold" }}>صورة الصنف</span>
+                <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12, padding: "10px", background: "#f1f5f9", borderRadius: "8px", border: "1px dashed #cbd5e1" }}>
+                  <div
+                    style={{
+                      width: 80,
+                      height: 80,
+                      border: "1px solid #d1d5db",
+                      borderRadius: 6,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      overflow: "hidden",
+                      background: "#fff",
+                    }}
+                  >
+                    {form.imageUrl ? (
+                      <img src={form.imageUrl} alt="صورة الصنف" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    ) : (
+                      <span style={{ fontSize: 11, color: "#94a3b8" }}>بدون صورة</span>
+                    )}
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <input type="file" accept="image/*" onChange={onPickImage} disabled={imageBusy} style={{ fontSize: 13 }} />
+                    {form.imageUrl && (
+                      <button type="button" className="io-btn" onClick={onClearImage} disabled={imageBusy} style={{ color: "crimson", alignSelf: "flex-start" }}>
+                        حذف الصورة
+                      </button>
+                    )}
+                  </div>
+                  {imageBusy ? <span style={{ fontSize: 12, color: "#3b82f6", fontWeight: "bold" }}>جارٍ التجهيز...</span> : null}
+                </div>
               </div>
-              <input type="file" accept="image/*" onChange={onPickImage} disabled={imageBusy} />
-              <button type="button" className="io-btn" onClick={onClearImage} disabled={imageBusy}>
-                حذف الصورة
-              </button>
-              {imageBusy ? <span style={{ fontSize: 12, color: "#334155" }}>جارٍ التجهيز...</span> : null}
-            </div>
+              <label className="master-field">
+                <input
+                  type="checkbox"
+                  checked={form.isActive}
+                  onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+                />{" "}
+                نشط
+              </label>
+              <div className="master-actions" style={{ justifyContent: "flex-end", marginTop: 20 }}>
+                {selectedId && (
+                  <button type="button" className="io-btn" onClick={onDelete} disabled={!selectedId} style={{ color: "crimson" }}>
+                    حذف الصنف
+                  </button>
+                )}
+                <button type="button" className="io-btn" onClick={() => setIsModalOpen(false)}>
+                  إغلاق
+                </button>
+                <button type="submit" className="io-btn-primary" disabled={imageBusy}>
+                  حفظ الصنف
+                </button>
+              </div>
+            </form>
           </div>
-          <label className="master-field">
-            <input
-              type="checkbox"
-              checked={form.isActive}
-              onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
-            />{" "}
-            نشط
-          </label>
-          <div className="master-actions">
-            <button type="submit" className="io-btn-primary">
-              حفظ
-            </button>
-            <button type="button" className="io-btn" onClick={() => setSelectedId("")}>
-              جديد
-            </button>
-            <button type="button" className="io-btn" onClick={onDelete} disabled={!selectedId}>
-              حذف
-            </button>
-          </div>
-        </form>
+        )}
       </div>
     </div>
   );

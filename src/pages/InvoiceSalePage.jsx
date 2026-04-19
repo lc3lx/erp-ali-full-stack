@@ -1,1416 +1,1062 @@
-import * as u from "react";
-import { Fragment, jsx, jsxs } from "react/jsx-runtime";
-import { api as E } from "../lib/api.js";
-import { useAuth as ps } from "../context/AuthContext.jsx";
-import { GlSaleVoucherPost as Ef } from "../components/GlDocumentPost.jsx";
-import { DocumentStatusBadge as Id } from "../components/erp/DocumentStatusBadge.jsx";
-import { ItemLineLinkPanel as Dd } from "../components/ItemLineLinkPanel.jsx";
-import { SearchableDropdown as Zs } from "../components/SearchableDropdown.jsx";
-import { formatIsoToDisplay as Et, toApiDateTime as Ct } from "../lib/dates.js";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { api } from "../lib/api.js";
+import { useAuth } from "../context/AuthContext.jsx";
+import { GlSaleVoucherPost } from "../components/GlDocumentPost.jsx";
+import { DocumentStatusBadge } from "../components/erp/DocumentStatusBadge.jsx";
+import { SearchableDropdown } from "../components/SearchableDropdown.jsx";
+import { formatIsoToDisplay, toApiDateTime } from "../lib/dates.js";
 import {
-  MASTERS_REFRESH_EVENT as $n,
-  navigateAppPage as kn,
-  printRootWithLocale as Vt,
-  printWithBanner as Ja,
+  MASTERS_REFRESH_EVENT,
+  navigateAppPage,
+  printRootWithLocale,
+  printWithBanner,
 } from "../lib/uiActions.js";
 import "../App.css";
 
-const s = { jsx, jsxs, Fragment };
-function he(e) {
-  return e == null || e === "" ? "" : String(e);
+function str(v) {
+  if (v == null || v === "") return "";
+  return String(v);
 }
-function Df(e) {
-  const t = String(e ?? "").trim();
-  if (!t) return null;
-  const n = Number(t);
+
+function numOrNull(v) {
+  const s = String(v ?? "").trim();
+  if (!s) return null;
+  const n = Number(s);
   return Number.isFinite(n) ? n : null;
 }
-const Lf = {
-  "إغلاق": "إغلاق",
-  "تعديل": "تعديل",
-  "عمولة المكتب":
-    "عمولة المكتب",
-  "سعر نقل المتر المكعب":
-    "سعر نقل المتر المكعب",
-  "سعر الصرف": "سعر الصرف",
-  "المجموع": "المجموع",
-  "رقم الحاوية": "رقم الحاوية",
-  "جديد": "جديد",
-  "حذف": "حذف",
-  "الزبون": "الزبون",
-  "تاريخ الفاتورة":
-    "تاريخ الفاتورة",
-  "ط·آ§ط¸â€‍ط¸â€ڑط·آ§ط·آ¦ط¸â€¦ط·آ©": "القائمة",
-  "إرسال للموافقة":
-    "إرسال للموافقة",
-  "اعتماد": "اعتماد",
-  "رفض": "رفض",
-  "العملة": "العملة",
-  "ملاحظات": "ملاحظات",
-  "حفظ الفاتورة": "حفظ الفاتورة",
-  "حذف ط·آ³ط·آ·ط·آ±": "حذف سطر",
-  "تعديل ط·آ³ط·آ·ط·آ±": "تعديل سطر",
-  "سعر تحويل": "سعر تحويل",
-  "دولار": "دولار",
-  "دينار": "دينار",
-  "ط·آ§ط¸â€‍دولار": "دولار",
-  "المجموع ط·آ³ط·آ¹ط·آ±": "مجموع سعر",
-  "المجموع ط·آ§ط¸â€‍ط¸â€¦ط·ع¾ط·آ±": "مجموع المتر",
-  "المكعب": "المكعب",
-  "وزن": "وزن",
-  "عدد": "عدد",
-  "القائمة": "القائمة",
-  "سعر كل": "سعر كل",
-  "ألف": "ألف",
-  "قطعة داخل": "قطعة داخل",
-  "الكرتون": "الكرتون",
-  "التفاصيل": "التفاصيل",
-  "الرقم": "الرقم",
-  "لا توجد أسطر": "لا توجد أسطر",
-  "المحاسبة": "المحاسبة",
-  "المحاسبة ط·آ¯ط·آ§ط·آ¦ط¸â€ /ط¸â€¦ط·آ¯ط¸ظ¹ط¸â€ ":
-    "المحاسبة دائن/مدين",
-  "ط·آ§ط¸â€‍المجموع": "المجموع",
-  "المسدد": "المسدد",
-  "ط·آ§ط¸â€‍المجموع ط·آ§ط¸â€‍ط·آ¨ط·آ§ط¸â€ڑط¸ظ¹":
-    "المتبقي",
-  "الأرباح": "الأرباح",
-  "بضاعة لهذا المستثمر":
-    "بضاعة لهذا المستثمر",
-  "طباعة": "طباعة",
-  "عربي": "عربي",
-  "ط·آ§ط·آ®ط·ع¾ط·آ± الزبون": "اختر الزبون",
-  "¸â€‍ط·آ§ ط·آ£ط·آ³ط·آ·ط·آ±": "لا توجد أسطر",
-  "ابحث عن زبون...":
-    "ابحث عن زبون...",
-  "أ¢â€“آ¶": "▶",
-  "أ¢â‚¬â€‌": "—",
-  "يوجد ": "يوجد ",
-  " سطر بيع بكمية أكبر من المتاح في المستودع المحدد.":
-    " سطر بيع بكمية أكبر من المتاح في المستودع المحدد.",
-  "ابحث عن مستودع...": "ابحث عن مستودع...",
-  "— بدون مستودع —": "— بدون مستودع —",
-};
-const mojibakeHintRegex = /(?:â€|Ã|Â|�|ط[\u00a0-\u00ff]|ظ[\u00a0-\u00ff])/g;
-const windows1256EncodeMap = (() => {
-  if (typeof TextDecoder === "undefined" || typeof Uint8Array === "undefined")
-    return null;
-  try {
-    const e = new TextDecoder("windows-1256");
-    const t = new Map();
-    for (let n = 0; n < 256; n += 1) {
-      const r = e.decode(Uint8Array.of(n));
-      t.has(r) || t.set(r, n);
-    }
-    return t;
-  } catch {
-    return null;
-  }
-})();
-const utf8Decoder =
-  typeof TextDecoder !== "undefined"
-    ? new TextDecoder("utf-8", { fatal: !1 })
-    : null;
-function mojibakeScore(e) {
-  if (!e) return 0;
-  const t = e.match(mojibakeHintRegex);
-  return t ? t.length : 0;
-}
-function decodeMojibakeWindows1256ToUtf8(e) {
-  if (!e || !windows1256EncodeMap || !utf8Decoder) return e;
-  let t = e;
-  for (let n = 0; n < 3; n += 1) {
-    const r = mojibakeScore(t);
-    if (!r) break;
-    const l = [];
-    let a = !0;
-    for (const i of t) {
-      const o = windows1256EncodeMap.get(i);
-      if (o == null) {
-        a = !1;
-        break;
-      }
-      l.push(o);
-    }
-    if (!a || !l.length) break;
-    let i = t;
-    try {
-      i = utf8Decoder.decode(new Uint8Array(l));
-    } catch {
-      break;
-    }
-    if (!i || i === t) break;
-    if (mojibakeScore(i) > r) break;
-    t = i;
-  }
-  return t;
-}
-function br(e) {
-  let t = he(e);
-  for (const [n, r] of Object.entries(Lf)) t = t.split(n).join(r);
-  t = decodeMojibakeWindows1256ToUtf8(t);
-  for (const [n, r] of Object.entries(Lf)) t = t.split(n).join(r);
-  return t;
-}
-function Rf() {
-  const { user: e } = ps(),
-    [t, n] = u.useState([]),
-    [r, l] = u.useState(""),
-    [a, i] = u.useState(null),
-    [o, c] = u.useState([]),
-    [d, x] = u.useState(null),
-    [g, h] = u.useState(""),
-    [C, D] = u.useState([]),
-    [k, P] = u.useState([]),
-    [p, m] = u.useState([]),
-    [y, f] = u.useState(""),
-    [S, b] = u.useState(""),
-    [L, A] = u.useState([]),
-    [z, _] = u.useState({}),
-    [R, Y] = u.useState(""),
-    [K, ie] = u.useState(""),
-    [J, se] = u.useState(!1),
-    [j, V] = u.useState(null),
-    [U, W] = u.useState(""),
-    ae = u.useRef(null),
-    me = u.useRef(null),
-    ze = u.useRef(null),
-    pe = u.useRef(null);
-  u.useEffect(() => {
-    const v = ae.current;
-    if (!v) return;
-    const w = document.createTreeWalker(v, NodeFilter.SHOW_TEXT);
-    let B = w.nextNode();
-    for (; B; ) {
-      const ee = B,
-        oe = ee.nodeValue ?? "",
-        ve = br(oe);
-      (ve !== oe && (ee.nodeValue = ve), (B = w.nextNode()));
-    }
-    (v.querySelectorAll("[title]").forEach((ee) => {
-      const oe = ee.getAttribute("title");
-      if (!oe) return;
-      const ve = br(oe);
-      ve !== oe && ee.setAttribute("title", ve);
-    }),
-      v.querySelectorAll("input[placeholder]").forEach((ee) => {
-        const oe = ee.getAttribute("placeholder");
-        if (!oe) return;
-        const ve = br(oe);
-        ve !== oe && ee.setAttribute("placeholder", ve);
-      }));
-  }, [a, o, t, J, K, R]);
-  const ge = u.useCallback(async (v) => {
-    if (!v) return;
-    const [w, B, ee] = await Promise.all([
-      E.get(`/invoice-sale/${v}`),
-      E.get(`/invoice-sale/${v}/items`),
-      E.get(`/invoice-sale/${v}/totals`),
+
+export default function InvoiceSalePage() {
+  const { user } = useAuth();
+  const [list, setList] = useState([]);
+  const [voucherId, setVoucherId] = useState("");
+  const [detail, setDetail] = useState(null);
+  const [lines, setLines] = useState([]);
+  const [totals, setTotals] = useState(null);
+  const [err, setErr] = useState("");
+  const [containers, setContainers] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [stores, setStores] = useState([]);
+  const [catalog, setCatalog] = useState([]);
+  const [selectedLineId, setSelectedLineId] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [editingCell, setEditingCell] = useState(null);
+  const [cellValue, setCellValue] = useState("");
+  const pageRootRef = useRef(null);
+  const headerBlockRef = useRef(null);
+  const linesBlockRef = useRef(null);
+  const totalsBlockRef = useRef(null);
+
+  const [isLineEditOpen, setIsLineEditOpen] = useState(false);
+  const [lineForm, setLineForm] = useState({
+    id: "", itemId: "", detail: "", itemNo: "",
+    usdConvertRate: "", usdSumCol: "", usdPriceCol: "",
+    cbmSumCol: "", weight: "", cbm1: "", cbm2: "",
+    listQty: "", pricePerThousand: "", totalPrice: "",
+    pcsInCarton: "", linePrice: ""
+  });
+
+  const reloadVoucher = useCallback(async (id) => {
+    if (!id) return;
+    const [d, itemsRes, t] = await Promise.all([
+      api.get(`/invoice-sale/${id}`),
+      api.get(`/invoice-sale/${id}/items`),
+      api.get(`/invoice-sale/${id}/totals`),
     ]);
-    (i(w), c(B.items ?? []), x(ee));
+    setDetail(d);
+    setLines(itemsRes.items ?? []);
+    setTotals(t);
   }, []);
-  (u.useEffect(() => {
-    let v = !1;
-    return (
+
+  useEffect(() => {
+    let c = false;
+    (async () => {
+      try {
+        const [data, cont, cust, st, catRes] = await Promise.all([
+          api.get("/invoice-sale", { page: 1, pageSize: 100 }),
+          api.get("/containers", { page: 1, pageSize: 200 }),
+          api.get("/parties", { type: "CUSTOMER", page: 1, pageSize: 300 }),
+          api.get("/stores"),
+          api.get("/items/lookup"),
+        ]);
+        if (c) return;
+        const items = data.items ?? [];
+        setList(items);
+        setVoucherId((prev) => {
+          if (prev && items.some((x) => x.id === prev)) return prev;
+          return items[0]?.id ?? "";
+        });
+        setContainers(cont.items ?? []);
+        setCustomers(cust.items ?? []);
+        setStores(st.items ?? []);
+        setCatalog(catRes.items ?? []);
+      } catch (e) {
+        if (!c) setErr(e.message);
+      }
+    })();
+    return () => {
+      c = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const onRefresh = (e) => {
+      const scope = e.detail?.scope;
+      if (!scope) return;
       (async () => {
         try {
-          const [w, B, ee, oe] = await Promise.all([
-            E.get("/invoice-sale", { page: 1, pageSize: 100 }),
-            E.get("/containers", { page: 1, pageSize: 200 }),
-            E.get("/parties", { type: "SUPPLIER", page: 1, pageSize: 300 }),
-            E.get("/stores"),
-          ]);
-          if (v) return;
-          const ve = w.items ?? [];
-          (n(ve),
-            l((Nt) => {
-              var Xt;
-              return Nt && ve.some((gn) => gn.id === Nt)
-                ? Nt
-                : (((Xt = ve[0]) == null ? void 0 : Xt.id) ?? "");
-            }),
-            D(B.items ?? []),
-            P(ee.items ?? []),
-            m(oe.items ?? []));
-        } catch (w) {
-          v || h(br(w.message));
+          if (scope === "customers" || scope === "all") {
+            const cust = await api.get("/parties", { type: "CUSTOMER", page: 1, pageSize: 300 });
+            setCustomers(cust.items ?? []);
+          }
+          if (scope === "stores" || scope === "all") {
+            const st = await api.get("/stores");
+            setStores(st.items ?? []);
+          }
+          if (scope === "all") {
+            const cont = await api.get("/containers", { page: 1, pageSize: 200 });
+            setContainers(cont.items ?? []);
+          }
+        } catch (ex) {
+          setErr(ex.message);
         }
-      })(),
-      () => {
-        v = !0;
+      })();
+    };
+    window.addEventListener(MASTERS_REFRESH_EVENT, onRefresh);
+    return () => window.removeEventListener(MASTERS_REFRESH_EVENT, onRefresh);
+  }, []);
+
+  useEffect(() => {
+    const cn = sessionStorage.getItem("saleVouchersJumpContainerNo")?.trim();
+    if (!cn || !list.length) return;
+    const match = list.find((v) => String(v.container?.containerNo ?? "").trim() === cn);
+    sessionStorage.removeItem("saleVouchersJumpContainerNo");
+    if (match) setVoucherId(match.id);
+  }, [list]);
+
+  useEffect(() => {
+    if (!voucherId) {
+      setDetail(null);
+      setLines([]);
+      setTotals(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        await reloadVoucher(voucherId);
+        if (!cancelled) setErr("");
+      } catch (e) {
+        if (!cancelled) setErr(e.message);
       }
-    );
-  }, []),
-    u.useEffect(() => {
-      const v = (w) => {
-        var ee;
-        const B = (ee = w.detail) == null ? void 0 : ee.scope;
-        B &&
-          (async () => {
-            try {
-              if (B === "customers" || B === "all") {
-                const oe = await E.get("/parties", {
-                  type: "CUSTOMER",
-                  page: 1,
-                  pageSize: 300,
-                });
-                P(oe.items ?? []);
-              }
-              if (B === "stores" || B === "all") {
-                const oe = await E.get("/stores");
-                m(oe.items ?? []);
-              }
-              if (B === "all") {
-                const oe = await E.get("/containers", {
-                  page: 1,
-                  pageSize: 200,
-                });
-                D(oe.items ?? []);
-              }
-            } catch (oe) {
-              h(br(oe.message));
-            }
-          })();
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [voucherId, reloadVoucher]);
+
+  useEffect(() => {
+    setSelectedLineId("");
+    setEditing(false);
+  }, [voucherId]);
+
+  const exchangeRate = str(detail?.exchangeRate ?? "6.8");
+  const date = detail?.voucherDate ? formatIsoToDisplay(detail.voucherDate) : "";
+  const voucherNo = detail?.voucherNo ?? "";
+  const currency = detail?.currency ?? "دولار";
+  const agg = totals?.aggregates;
+  const formId = "is-header-form";
+
+  const onWorkflowSubmit = async () => {
+    if (!voucherId) return;
+    try {
+      await api.post(`/invoice-sale/${voucherId}/workflow/submit`, {});
+      await reloadVoucher(voucherId);
+    } catch (e) {
+      window.alert(e.message);
+    }
+  };
+  const onWorkflowApprove = async () => {
+    if (!voucherId) return;
+    try {
+      await api.post(`/invoice-sale/${voucherId}/workflow/approve`, {});
+      await reloadVoucher(voucherId);
+    } catch (e) {
+      window.alert(e.message);
+    }
+  };
+  const onWorkflowReject = async () => {
+    if (!voucherId) return;
+    const comment = window.prompt("سبب الرفض (اختياري)") ?? "";
+    try {
+      await api.post(`/invoice-sale/${voucherId}/workflow/reject`, { comment: comment || null });
+      await reloadVoucher(voucherId);
+    } catch (e) {
+      window.alert(e.message);
+    }
+  };
+
+  const onSave = async (e) => {
+    e.preventDefault();
+    if (!voucherId) return;
+    const formEl = document.getElementById(formId);
+    if (!formEl) return;
+    const fd = new FormData(formEl);
+    try {
+      await api.patch(`/invoice-sale/${voucherId}`, {
+        voucherNo: String(fd.get("voucherNo") || "").trim() || undefined,
+        voucherDate: toApiDateTime(String(fd.get("voucherDate") || "")) ?? null,
+        exchangeRate: fd.get("exchangeRate") || undefined,
+        officeCommission: fd.get("officeCommission") || undefined,
+        cbmTransportPrice: fd.get("cbmTransportPrice") || undefined,
+        currency: fd.get("currency") || undefined,
+        containerId: fd.get("containerId") || undefined,
+        customerId: fd.get("customerId") || undefined,
+        storeId: fd.get("storeId") || null,
+        notes: fd.get("notes") || null,
+      });
+      await reloadVoucher(voucherId);
+      const data = await api.get("/invoice-sale", { page: 1, pageSize: 100 });
+      setList(data.items ?? []);
+      setEditing(false);
+    } catch (ex) {
+      setErr(ex.message);
+    }
+  };
+
+  const onNew = async () => {
+    const cid = containers[0]?.id;
+    const custId = customers[0]?.id;
+    if (!cid || !custId) {
+      window.alert("تحتاج حاوية وزبون على الأقل.");
+      return;
+    }
+    const vn = window.prompt("رقم سند البيع؟", `S-${Date.now()}`);
+    if (!vn || !vn.trim()) return;
+    try {
+      const v = await api.post("/invoice-sale", {
+        voucherNo: vn.trim(),
+        containerId: cid,
+        customerId: custId,
+        currency: "دولار",
+      });
+      const data = await api.get("/invoice-sale", { page: 1, pageSize: 100 });
+      setList(data.items ?? []);
+      setVoucherId(v.id);
+    } catch (e) {
+      setErr(e.message);
+    }
+  };
+
+  const onDelete = async () => {
+    if (!voucherId || !window.confirm("حذف سند البيع؟")) return;
+    try {
+      await api.delete(`/invoice-sale/${voucherId}`);
+      const data = await api.get("/invoice-sale", { page: 1, pageSize: 100 });
+      const items = data.items ?? [];
+      setList(items);
+      setVoucherId(items[0]?.id ?? "");
+    } catch (e) {
+      setErr(e.message);
+    }
+  };
+
+  const openLineEditor = (isEdit = false) => {
+    if (!voucherId) return;
+    if (isEdit) {
+      if (!selectedLineId) return;
+      const row = lines.find((x) => x.id === selectedLineId);
+      if (!row) return;
+      setLineForm({
+        id: row.id,
+        itemId: row.itemId || "",
+        detail: row.detail || "",
+        itemNo: row.itemNo || "",
+        usdConvertRate: str(row.usdConvertRate),
+        usdSumCol: str(row.usdSumCol),
+        usdPriceCol: str(row.usdPriceCol),
+        cbmSumCol: str(row.cbmSumCol),
+        weight: str(row.weight),
+        cbm1: str(row.cbm1),
+        cbm2: str(row.cbm2),
+        listQty: str(row.listQty),
+        pricePerThousand: str(row.pricePerThousand),
+        totalPrice: str(row.totalPrice),
+        pcsInCarton: str(row.pcsInCarton),
+        linePrice: str(row.linePrice),
+      });
+    } else {
+      setLineForm({
+        id: "", itemId: "", detail: "", itemNo: "",
+        usdConvertRate: "", usdSumCol: "", usdPriceCol: "",
+        cbmSumCol: "", weight: "", cbm1: "", cbm2: "",
+        listQty: "", pricePerThousand: "", totalPrice: "",
+        pcsInCarton: "", linePrice: "",
+      });
+    }
+    setIsLineEditOpen(true);
+  };
+
+  const saveLineForm = async (e) => {
+    e.preventDefault();
+    try {
+      const payload = {
+        itemId: lineForm.itemId || null,
+        detail: lineForm.detail.trim() || null,
+        itemNo: lineForm.itemNo.trim() || null,
+        usdConvertRate: numOrNull(lineForm.usdConvertRate),
+        usdSumCol: numOrNull(lineForm.usdSumCol),
+        usdPriceCol: numOrNull(lineForm.usdPriceCol),
+        cbmSumCol: numOrNull(lineForm.cbmSumCol),
+        weight: numOrNull(lineForm.weight),
+        cbm1: numOrNull(lineForm.cbm1),
+        cbm2: numOrNull(lineForm.cbm2),
+        listQty: numOrNull(lineForm.listQty),
+        pricePerThousand: numOrNull(lineForm.pricePerThousand),
+        totalPrice: numOrNull(lineForm.totalPrice),
+        pcsInCarton: numOrNull(lineForm.pcsInCarton),
+        linePrice: numOrNull(lineForm.linePrice),
       };
-      return (
-        window.addEventListener($n, v),
-        () => window.removeEventListener($n, v)
-      );
-    }, []),
-    u.useEffect(() => {
-      var B;
-      const v =
-        (B = sessionStorage.getItem("saleVouchersJumpContainerNo")) == null
-          ? void 0
-          : B.trim();
-      if (!v || !t.length) return;
-      const w = t.find((ee) => {
-        var oe;
-        return (
-          String(
-            ((oe = ee.container) == null ? void 0 : oe.containerNo) ?? "",
-          ).trim() === v
-        );
-      });
-      (sessionStorage.removeItem("saleVouchersJumpContainerNo"), w && l(w.id));
-    }, [t]),
-    u.useEffect(() => {
-      if (!r) {
-        (i(null), c([]), x(null));
-        return;
+      if (lineForm.id) {
+        await api.patch(`/invoice-sale/${voucherId}/items/${lineForm.id}`, payload);
+      } else {
+        await api.post(`/invoice-sale/${voucherId}/items`, payload);
       }
-      let v = !1;
-      return (
-        (async () => {
-          try {
-            (await ge(r), v || h(""));
-          } catch (w) {
-            v || h(br(w.message));
-          }
-        })(),
-        () => {
-          v = !0;
-        }
-      );
-    }, [r, ge]),
-    u.useEffect(() => {
-      (ie(""), se(!1));
-    }, [r]),
-    u.useEffect(() => {
-      (f((a == null ? void 0 : a.customerId) ?? ""),
-        b((a == null ? void 0 : a.storeId) ?? ""));
-    }, [
-      a == null ? void 0 : a.id,
-      a == null ? void 0 : a.customerId,
-      a == null ? void 0 : a.storeId,
-      a == null ? void 0 : a.updatedAt,
-    ]),
-    u.useEffect(() => {
-      if (!r) {
-        (A([]), _({}), Y(""));
-        return;
-      }
-      let v = !1;
-      return (
-        (async () => {
-          var w;
-          try {
-            const B = await E.get(`/invoice-sale/${r}/stock`);
-            if (v) return;
-            const ee = B.items ?? [];
-            (A(ee), Y(((w = B.warehouse) == null ? void 0 : w.name) ?? ""));
-            const oe = {};
-            for (const ve of ee) oe[ve.itemId] = Number(ve.qtyOnHand ?? 0);
-            _(oe);
-          } catch {
-            if (v) return;
-            (A([]), _({}), Y(""));
-          }
-        })(),
-        () => {
-          v = !0;
-        }
-      );
-    }, [r, o]));
-  const xe = he((a == null ? void 0 : a.exchangeRate) ?? "6.8"),
-    Me = a != null && a.voucherDate ? Et(a.voucherDate) : "",
-    ye = (a == null ? void 0 : a.voucherNo) ?? "",
-    Ce = br(he((a == null ? void 0 : a.currency) ?? "دولار")) || "دولار",
-    F = d == null ? void 0 : d.aggregates,
-    re = "is-header-form",
-    te = async () => {
-      if (r)
-        try {
-          (await E.post(`/invoice-sale/${r}/workflow/submit`, {}), await ge(r));
-        } catch (v) {
-          window.alert(br(v.message));
-        }
-    },
-    Be = async () => {
-      if (r)
-        try {
-          (await E.post(`/invoice-sale/${r}/workflow/approve`, {}),
-            await ge(r));
-        } catch (v) {
-          window.alert(br(v.message));
-        }
-    },
-    Se = async () => {
-      if (!r) return;
-      const v = window.prompt("سبب الرفض (اختياري)") ?? "";
-      try {
-        (await E.post(`/invoice-sale/${r}/workflow/reject`, {
-          comment: v || null,
-        }),
-          await ge(r));
-      } catch (w) {
-        window.alert(br(w.message));
-      }
-    },
-    Re = async (v) => {
-      if ((v.preventDefault(), !r)) return;
-      const w = document.getElementById(re);
-      if (!w) return;
-      const B = new FormData(w);
-      try {
-        (await E.patch(`/invoice-sale/${r}`, {
-          voucherNo: String(B.get("voucherNo") || "").trim() || void 0,
-          voucherDate: Ct(String(B.get("voucherDate") || "")) ?? null,
-          exchangeRate: B.get("exchangeRate") || void 0,
-          officeCommission: B.get("officeCommission") || void 0,
-          cbmTransportPrice: B.get("cbmTransportPrice") || void 0,
-          currency: B.get("currency") || void 0,
-          containerId: B.get("containerId") || null,
-          customerId: y || void 0,
-          storeId: S || null,
-          notes: B.get("notes") || null,
-        }),
-          await ge(r));
-        const ee = await E.get("/invoice-sale", { page: 1, pageSize: 100 });
-        (n(ee.items ?? []), se(!1));
-      } catch (ee) {
-        h(br(ee.message));
-      }
-    },
-    T = async () => {
-      var ee, oe;
-      const v = (ee = C[0]) == null ? void 0 : ee.id,
-        w = (oe = k[0]) == null ? void 0 : oe.id;
-      if (!w) {
-        window.alert("يجب اختيار زبون على الأقل.");
-        return;
-      }
-      const B = window.prompt("رقم فاتورة البيع", `S-${Date.now()}`);
-      if (!(!B || !B.trim()))
-        try {
-          const ve = await E.post("/invoice-sale", {
-              voucherNo: B.trim(),
-              containerId: v || undefined,
-              customerId: w,
-              currency: "دولار",
-            }),
-            Nt = await E.get("/invoice-sale", { page: 1, pageSize: 100 });
-          (n(Nt.items ?? []), l(ve.id));
-        } catch (ve) {
-          h(br(ve.message));
-        }
-    },
-    q = async () => {
-      var v;
-      if (!(!r || !window.confirm("حذف فاتورة البيع؟")))
-        try {
-          await E.delete(`/invoice-sale/${r}`);
-          const B =
-            (await E.get("/invoice-sale", { page: 1, pageSize: 100 })).items ??
-            [];
-          (n(B), l(((v = B[0]) == null ? void 0 : v.id) ?? ""));
-        } catch (w) {
-          h(br(w.message));
-        }
-    },
-    G = async () => {
-      if (r)
-        try {
-          (await E.post(`/invoice-sale/${r}/items`, {
-            detail: "سطر جديد",
-          }),
-            await ge(r));
-        } catch (v) {
-          h(br(v.message));
-        }
-    },
-    Ee = async () => {
-      if (!(!r || !K || !window.confirm("حذف السطر؟")))
-        try {
-          (await E.delete(`/invoice-sale/${r}/items/${K}`),
-            ie(""),
-            await ge(r));
-        } catch (v) {
-          h(br(v.message));
-        }
-    },
-    Ne = async () => {
-      if (!r || !K) return;
-      const v = o.find((ve) => ve.id === K);
-      if (!v) return;
-      const w = window.prompt("التفاصيل", v.detail ?? "");
-      if (w == null) return;
-      const B = window.prompt("رقم المادة", v.itemNo ?? "");
-      if (B == null) return;
-      const ee = window.prompt("الكمية", he(v.listQty ?? ""));
-      if (ee == null) return;
-      const oe = window.prompt("إجمالي السعر", he(v.totalPrice ?? ""));
-      if (oe != null)
-        try {
-          (await E.patch(`/invoice-sale/${r}/items/${K}`, {
-            detail: w,
-            itemNo: B,
-            listQty: Number(ee) || 0,
-            totalPrice: Number(oe) || 0,
-          }),
-            await ge(r));
-        } catch (ve) {
-          h(br(ve.message));
-        }
-    },
-    Pe = new Set([
-      "usdConvertRate",
-      "usdSumCol",
-      "usdPriceCol",
-      "cbmSumCol",
-      "weight",
-      "cbm1",
-      "cbm2",
-      "listQty",
-      "pricePerThousand",
-      "totalPrice",
-      "pcsInCarton",
-      "linePrice",
-      "detail",
-      "itemNo",
-    ]),
-    O = new Set([
-      "usdConvertRate",
-      "usdSumCol",
-      "usdPriceCol",
-      "cbmSumCol",
-      "weight",
-      "cbm1",
-      "cbm2",
-      "listQty",
-      "pricePerThousand",
-      "totalPrice",
-      "pcsInCarton",
-      "linePrice",
-    ]),
-    ne = (v, w, B) => {
-      Pe.has(w) && (ie(v), V({ lineId: v, field: w }), W(he(B)));
-    },
-    Z = async () => {
-      if (!j || !r) return;
-      const { lineId: v, field: w } = j,
-        B = {};
-      O.has(w) ? (B[w] = Df(U)) : (B[w] = U.trim() || null);
-      try {
-        (await E.patch(`/invoice-sale/${r}/items/${v}`, B), await ge(r));
-      } catch (ee) {
-        h(br(ee.message));
-      } finally {
-        (V(null), W(""));
-      }
-    },
-    _e = () => {
-      (V(null), W(""));
-    },
-    Dt = () => {
-      var w;
-      const v = (w = t[0]) == null ? void 0 : w.id;
-      v ? l(v) : window.alert("لا توجد فواتير بيع.");
-    },
-    I = () => {
-      if (!t.length) {
-        window.alert("لا توجد فواتير.");
-        return;
-      }
-      const v = t.slice(0, 20).map((w, B) => {
-        var ee;
-        return `${B + 1}. ${br(w.voucherNo)} — ${br(((ee = w.container) == null ? void 0 : ee.containerNo) ?? "?")}`;
-      });
-      window.alert(`أحدث فواتير البيع:
+      await reloadVoucher(voucherId);
+      setIsLineEditOpen(false);
+    } catch (ex) {
+      setErr(ex.message);
+    }
+  };
 
-${v.join(`
-`)}`);
-    },
-    H = () => {
-      var v;
-      return (v = me.current) == null
-        ? void 0
-        : v.scrollIntoView({ behavior: "smooth", block: "start" });
-    },
-    le = () => {
-      var v;
-      return (v = ze.current) == null
-        ? void 0
-        : v.scrollIntoView({ behavior: "smooth", block: "start" });
-    },
-    N = () => {
-      var v;
-      return (v = pe.current) == null
-        ? void 0
-        : v.scrollIntoView({ behavior: "smooth", block: "start" });
-    },
-    $ = () => {
-      var w, B;
-      const v =
-        (B =
-          (w = a == null ? void 0 : a.container) == null
-            ? void 0
-            : w.containerNo) == null
-          ? void 0
-          : B.trim();
-      (v && sessionStorage.setItem("reportsJumpContainerNo", v), kn("list"));
-    },
-    X = o.filter((v) => {
-      if (!v.itemId) return !1;
-      const w = Number(v.listQty ?? 0);
-      if (w <= 0) return !1;
-      const B = Number(z[v.itemId] ?? 0);
-      return w > B;
-    });
-  return s.jsxs("div", {
-    className: "is-page",
-    dir: "ltr",
-    ref: ae,
-    children: [
-      g
-        ? s.jsx("div", {
-            className: "alert-error",
-            style: { margin: 6 },
-            children: g,
-          })
-        : null,
-      s.jsx("div", { className: "is-titleline", children: "Purchase Vouchers" }),
-      s.jsxs("div", {
-        className: "is-top-wrap",
-        ref: me,
-        children: [
-          s.jsxs("div", {
-            className: "is-top-row",
-            children: [
-              s.jsx("button", {
-                type: "button",
-                className: "is-btn-edit",
-                onClick: () => se((v) => !v),
-                children: J ? "إغلاق" : "تعديل",
-              }),
-              s.jsx("span", { className: "is-lbl", children: "%0" }),
-              s.jsx("span", {
-                className: "is-lbl",
-                children: "عمولة المكتب",
-              }),
-              s.jsx(
-                "input",
-                {
-                  className: "is-small-input",
-                  name: "officeCommission",
-                  form: re,
-                  readOnly: !J,
-                  defaultValue: he(
-                    (a == null ? void 0 : a.officeCommission) ?? "0",
-                  ),
-                },
-                `oc-${r}-${a == null ? void 0 : a.updatedAt}`,
-              ),
-              s.jsx("span", {
-                className: "is-lbl",
-                children:
-                  "سعر نقل المتر المكعب",
-              }),
-              s.jsx(
-                "input",
-                {
-                  className: "is-small-input",
-                  name: "cbmTransportPrice",
-                  form: re,
-                  readOnly: !J,
-                  defaultValue: he(
-                    (a == null ? void 0 : a.cbmTransportPrice) ?? "",
-                  ),
-                },
-                `cbm-${r}-${a == null ? void 0 : a.updatedAt}`,
-              ),
-              s.jsx("div", { className: "is-spacer" }),
-              s.jsx(
-                "input",
-                {
-                  className: "is-rate-input",
-                  name: "exchangeRate",
-                  form: re,
-                  readOnly: !J,
-                  defaultValue: xe,
-                },
-                `er-${r}-${a == null ? void 0 : a.updatedAt}`,
-              ),
-              s.jsx("span", {
-                className: "is-rate-lbl",
-                children: "سعر الصرف",
-              }),
-            ],
-          }),
-          s.jsxs("form", {
-            id: re,
-            onSubmit: Re,
-            children: [
-              s.jsxs("div", {
-                className: "is-mid-row",
-                children: [
-                  s.jsxs("div", {
-                    className: "is-left-cluster",
-                    children: [
-                      s.jsxs("div", {
-                        className: "is-balance-line",
-                        children: [
-                          s.jsx("span", {
-                            className: "is-mini-title",
-                            children: "المجموع",
-                          }),
-                          s.jsx("input", {
-                            className: "is-balance-input",
-                            value: he((d == null ? void 0 : d.total) ?? ""),
-                            readOnly: !0,
-                          }),
-                        ],
-                      }),
-                      s.jsxs("div", {
-                        className: "is-container-line",
-                        children: [
-                          s.jsx(
-                            "select",
-                            {
-                              className: "is-container-input",
-                              name: "containerId",
-                              disabled: !J,
-                              defaultValue:
-                                (a == null ? void 0 : a.containerId) ?? "",
-                              children: [
-                                s.jsx("option", { value: "", children: "— بدون حاوية —" }),
-                                ...C.map((v) =>
-                                  s.jsx(
-                                    "option",
-                                    { value: v.id, children: br(v.containerNo) },
-                                    v.id,
-                                  ),
-                                ),
-                              ],
-                            },
-                            `ct-${r}-${a == null ? void 0 : a.updatedAt}`,
-                          ),
-                          s.jsx("span", {
-                            className: "is-lbl",
-                            children:
-                              "رقم الحاوية",
-                          }),
-                        ],
-                      }),
-                      s.jsx("button", {
-                        type: "button",
-                        className: "is-blue-pill",
-                        onClick: () =>
-                          window.alert(`عملة السند: ${br((a == null ? void 0 : a.currency) ?? "—")}
-سعر الصرف الحالي في النموذج: ${xe}`),
-                        title: "عرض العملة وسعر الصرف",
-                        children:
-                          br((a == null ? void 0 : a.currency) ?? "العملة"),
-                      }),
-                    ],
-                  }),
-                  s.jsxs("div", {
-                    className: "is-mini-actions",
-                    children: [
-                      s.jsx("button", {
-                        type: "button",
-                        className: "is-mini-act",
-                        onClick: T,
-                        children: "جديد",
-                      }),
-                      s.jsx("button", {
-                        type: "button",
-                        className: "is-mini-act red",
-                        onClick: q,
-                        children: "حذف",
-                      }),
-                    ],
-                  }),
-                  s.jsx(Zs, {
-                    name: "customerId",
-                    dir: "rtl",
-                    className: "is-search-select",
-                    inputClassName: "is-supplier-box",
-                    disabled: !J,
-                    value: y,
-                    onChange: f,
-                    options: k,
-                    getOptionValue: (v) => v.id,
-                    getOptionLabel: (v) => br(v.name),
-                    placeholder: "اختر الزبون",
-                    searchPlaceholder:
-                      "ابحث عن زبون...",
-                    clearLabel:
-                      "— اختر الزبون —",
-                    allowClear: !1,
-                  }),
-                  s.jsx("span", {
-                    className: "is-lbl",
-                    children: "الزبون",
-                  }),
-                  s.jsx("div", { className: "is-spacer" }),
-                  s.jsx(
-                    "input",
-                    {
-                      className: "is-date-input",
-                      name: "voucherDate",
-                      readOnly: !J,
-                      placeholder: "dd/mm/yyyy",
-                      defaultValue: Me,
-                    },
-                    `vd-${r}-${a == null ? void 0 : a.updatedAt}`,
-                  ),
-                  s.jsx("span", {
-                    className: "is-lbl",
-                    children: "تاريخ الفاتورة",
-                  }),
-                  s.jsxs("div", {
-                    className: "is-voucher-stack",
-                    children: [
-                      s.jsx(
-                        "input",
-                        {
-                          className: "is-voucher-input",
-                          name: "voucherNo",
-                          readOnly: !J,
-                          defaultValue: br(ye),
-                        },
-                        `vn-${r}-${a == null ? void 0 : a.updatedAt}`,
-                      ),
-                      s.jsx("select", {
-                        className: "is-voucher-list",
-                        size: Math.min(5, Math.max(3, t.length || 3)),
-                        value: r,
-                        onChange: (v) => l(v.target.value),
-                        children:
-                          t.length === 0
-                            ? s.jsx("option", {
-                                value: "",
-                                children: "—",
-                              })
-                            : t.map((v) =>
-                                s.jsxs(
-                                  "option",
-                                  {
-                                    value: v.id,
-                                    children: [
-                                      br(v.voucherNo),
-                                      " (",
-                                      br(v.currency),
-                                      ")",
-                                    ],
-                                  },
-                                  v.id,
-                                ),
-                              ),
-                      }),
-                    ],
-                  }),
-                  s.jsx("span", {
-                    className: "is-lbl",
-                    children: "القائمة",
-                  }),
-                  s.jsxs("div", {
-                    className: "erp-workflow-row",
-                    style: { gridColumn: "1 / -1" },
-                    children: [
-                      s.jsx(Id, {
-                        status: a == null ? void 0 : a.documentStatus,
-                      }),
-                      (a == null ? void 0 : a.documentStatus) === "DRAFT" &&
-                      ((e == null ? void 0 : e.role) === "DATA_ENTRY" ||
-                        (e == null ? void 0 : e.role) === "ACCOUNTANT" ||
-                        (e == null ? void 0 : e.role) === "ADMIN")
-                        ? s.jsx("button", {
-                            type: "button",
-                            onClick: te,
-                            children:
-                              "إرسال للموافقة",
-                          })
-                        : null,
-                      (a == null ? void 0 : a.documentStatus) === "SUBMITTED" &&
-                      ((e == null ? void 0 : e.role) === "ACCOUNTANT" ||
-                        (e == null ? void 0 : e.role) === "ADMIN")
-                        ? s.jsxs(s.Fragment, {
-                            children: [
-                              s.jsx("button", {
-                                type: "button",
-                                onClick: Be,
-                                children: "اعتماد",
-                              }),
-                              s.jsx("button", {
-                                type: "button",
-                                onClick: Se,
-                                children: "رفض",
-                              }),
-                            ],
-                          })
-                        : null,
-                    ],
-                  }),
-                  s.jsxs(
-                    "select",
-                    {
-                      className: "is-currency-select",
-                      name: "currency",
-                      disabled: !J,
-                      defaultValue: Ce,
-                      children: [
-                        s.jsx("option", {
-                          value: "دولار",
-                          children: "دولار",
-                        }),
-                        s.jsx("option", {
-                          value: "دينار",
-                          children: "دينار",
-                        }),
-                      ],
-                    },
-                    `cur-${r}-${a == null ? void 0 : a.updatedAt}`,
-                  ),
-                  s.jsx("span", {
-                    className: "is-lbl",
-                    children: "العملة",
-                  }),
-                ],
-              }),
-              s.jsxs("div", {
-                className: "is-top-row third",
-                children: [
-                  s.jsx("div", { className: "is-spacer" }),
-                  s.jsx(Zs, {
-                    name: "storeId",
-                    className: "is-search-select",
-                    inputClassName: "is-store-select",
-                    disabled: !J,
-                    value: S,
-                    onChange: b,
-                    options: p,
-                    getOptionValue: (v) => v.id,
-                    getOptionLabel: (v) => br(v.name),
-                    placeholder: "—",
-                    searchPlaceholder: "ابحث عن مستودع...",
-                    clearLabel: "— بدون مستودع —",
-                  }),
-                  s.jsx("span", {
-                    className: "is-lbl",
-                    children: "Store Target",
-                  }),
-                  s.jsx(
-                    "input",
-                    {
-                      className: "is-notes-input",
-                      name: "notes",
-                      readOnly: !J,
-                      defaultValue: br((a == null ? void 0 : a.notes) ?? ""),
-                    },
-                    `nt-${r}-${a == null ? void 0 : a.updatedAt}`,
-                  ),
-                  s.jsx("span", {
-                    className: "is-lbl",
-                    children: "ملاحظات",
-                  }),
-                ],
-              }),
-              s.jsxs("div", {
-                className: "is-top-row",
-                style: { marginTop: 8 },
-                children: [
-                  s.jsx("button", {
-                    type: "submit",
-                    className: "is-btn",
-                    children: "حفظ الفاتورة",
-                  }),
-                  s.jsx("button", {
-                    type: "button",
-                    className: "is-item-btn green",
-                    onClick: G,
-                    children: "+ سطر",
-                  }),
-                  s.jsx("button", {
-                    type: "button",
-                    className: "is-item-btn red",
-                    onClick: Ee,
-                    disabled: !K,
-                    children: "حذف سطر",
-                  }),
-                  s.jsx("button", {
-                    type: "button",
-                    className: "is-item-btn green",
-                    onClick: Ne,
-                    disabled: !K,
-                    children: "تعديل سطر",
-                  }),
-                ],
-              }),
-            ],
-          }),
-        ],
-      }),
-      s.jsx("div", {
-        className: "is-table-wrap",
-        ref: ze,
-        children: s.jsxs("table", {
-          className: "is-table",
-          children: [
-            s.jsx("thead", {
-              children: s.jsxs("tr", {
-                children: [
-                  s.jsx("th", {}),
-                  s.jsx("th", { children: "Item Code" }),
-                  s.jsx("th", { children: "Item Image" }),
-                  s.jsx("th", { children: "Item Details" }),
-                  s.jsx("th", { children: "Pieces per Carton" }),
-                  s.jsx("th", { children: "Cartons" }),
-                  s.jsx("th", { children: "Total Pieces" }),
-                ],
-              }),
-            }),
-            s.jsx("tbody", {
-              children:
-                o.length === 0
-                  ? s.jsx("tr", {
-                      children: s.jsx("td", {
-                        colSpan: 7,
-                        style: { textAlign: "center", padding: 12 },
-                        children: "لا توجد أسطر",
-                      }),
-                    })
-                  : o.map((v) =>
-                      s.jsxs(
-                        "tr",
-                        {
-                          style: {
-                            cursor: "pointer",
-                            background: K === v.id ? "#e8f4ff" : void 0,
-                          },
-                          onClick: () => ie(v.id),
-                          children: [
-                            s.jsx("td", {
-                              className: "is-arrow",
-                              children: "▶",
-                            }),
-                            s.jsx("td", {
-                              onDoubleClick: () => ne(v.id, "itemNo", v.itemNo),
-                              children:
-                                (j == null ? void 0 : j.lineId) === v.id &&
-                                (j == null ? void 0 : j.field) === "itemNo"
-                                  ? s.jsx("input", {
-                                      autoFocus: !0,
-                                      className: "is-mini-input",
-                                      value: U,
-                                      onChange: (w) => W(w.target.value),
-                                      onBlur: Z,
-                                      onKeyDown: (w) => {
-                                        (w.key === "Enter" && Z(),
-                                          w.key === "Escape" && _e());
-                                      },
-                                    })
-                                  : br(v.itemNo ?? ""),
-                            }),
-                            s.jsx("td", {
-                              children: "[Image]",
-                            }),
-                            s.jsx("td", {
-                              className: "is-item-name",
-                              onDoubleClick: () => ne(v.id, "detail", v.detail),
-                              children:
-                                (j == null ? void 0 : j.lineId) === v.id &&
-                                (j == null ? void 0 : j.field) === "detail"
-                                  ? s.jsx("input", {
-                                      autoFocus: !0,
-                                      className: "is-mini-input",
-                                      value: U,
-                                      onChange: (w) => W(w.target.value),
-                                      onBlur: Z,
-                                      onKeyDown: (w) => {
-                                        (w.key === "Enter" && Z(),
-                                          w.key === "Escape" && _e());
-                                      },
-                                    })
-                                  : br(v.detail ?? ""),
-                            }),
-                            s.jsx("td", {
-                              onDoubleClick: () =>
-                                ne(v.id, "pcsInCarton", v.pcsInCarton),
-                              children:
-                                (j == null ? void 0 : j.lineId) === v.id &&
-                                (j == null ? void 0 : j.field) === "pcsInCarton"
-                                  ? s.jsx("input", {
-                                      autoFocus: !0,
-                                      className: "is-mini-input",
-                                      value: U,
-                                      onChange: (w) => W(w.target.value),
-                                      onBlur: Z,
-                                      onKeyDown: (w) => {
-                                        (w.key === "Enter" && Z(),
-                                          w.key === "Escape" && _e());
-                                      },
-                                    })
-                                  : he(v.pcsInCarton),
-                            }),
-                            s.jsx("td", {
-                              onDoubleClick: () =>
-                                ne(v.id, "listQty", v.listQty),
-                              children:
-                                (j == null ? void 0 : j.lineId) === v.id &&
-                                (j == null ? void 0 : j.field) === "listQty"
-                                  ? s.jsx("input", {
-                                      autoFocus: !0,
-                                      className: "is-mini-input",
-                                      value: U,
-                                      onChange: (w) => W(w.target.value),
-                                      onBlur: Z,
-                                      onKeyDown: (w) => {
-                                        (w.key === "Enter" && Z(),
-                                          w.key === "Escape" && _e());
-                                      },
-                                    })
-                                  : he(v.listQty),
-                            }),
-                            s.jsx("td", {
-                              children: he((Number(v.pcsInCarton ?? 0) * Number(v.listQty ?? 0))),
-                            }),
-                          ],
-                        },
-                        v.id,
-                      ),
-                    ),
-            }),
-          ],
-        }),
-      }),
-      R
-        ? s.jsxs("div", {
-            style: { marginTop: 6, fontSize: 12, color: "#334155" },
-            children: [
-              "Warehouse: ",
-              s.jsx("strong", { children: br(R) }),
-              " (",
-              L.length,
-              " items)",
-            ],
-          })
-        : null,
-      X.length > 0
-        ? s.jsxs("div", {
-            className: "alert-error",
-            style: { marginTop: 6 },
-            children: [
-              "يوجد ",
-              X.length,
-              " سطر بيع بكمية أكبر من المتاح في المستودع المحدد.",
-            ],
-          })
-        : null,
-      s.jsxs("div", {
-        className: "is-sum-row",
-        children: [
-          s.jsxs("div", {
-            className: "is-sum-grid",
-            children: [
-              s.jsxs("div", {
-                className: "is-sum-item",
-                children: [
-                  s.jsx("div", {
-                    className: "is-sum-item-box",
-                    children: he((F == null ? void 0 : F.totalPrice) ?? ""),
-                  }),
-                  s.jsx("div", {
-                    className: "is-sum-item-label",
-                    children: "Total Price",
-                  }),
-                ],
-              }),
-              s.jsxs("div", {
-                className: "is-sum-item",
-                children: [
-                  s.jsx("div", {
-                    className: "is-sum-item-box",
-                    children: he((F == null ? void 0 : F.cbmSum) ?? ""),
-                  }),
-                  s.jsx("div", {
-                    className: "is-sum-item-label",
-                    children: "CBM Sum",
-                  }),
-                ],
-              }),
-              s.jsxs("div", {
-                className: "is-sum-item",
-                children: [
-                  s.jsx("div", {
-                    className: "is-sum-item-box",
-                    children: he((F == null ? void 0 : F.listQty) ?? ""),
-                  }),
-                  s.jsx("div", {
-                    className: "is-sum-item-label",
-                    children: "List Qty",
-                  }),
-                ],
-              }),
-              s.jsxs("div", {
-                className: "is-sum-item",
-                children: [
-                  s.jsx("div", {
-                    className: "is-sum-item-box",
-                    children: he(""),
-                  }),
-                  s.jsx("div", {
-                    className: "is-sum-item-label",
-                    children: "-",
-                  }),
-                ],
-              }),
-              s.jsxs("div", {
-                className: "is-sum-item",
-                children: [
-                  s.jsx("div", {
-                    className: "is-sum-item-box",
-                    children: he((d == null ? void 0 : d.total) ?? ""),
-                  }),
-                  s.jsx("div", {
-                    className: "is-sum-item-label",
-                    children: "Total",
-                  }),
-                ],
-              }),
-            ],
-          }),
-          s.jsxs("div", {
-            className: "is-accounting-row",
-            children: [
-              s.jsx("span", {
-                className: "is-sum-label",
-                children: "المحاسبة",
-              }),
-              s.jsx("input", {
-                className: "is-sum-input yellow",
-                value: he((a == null ? void 0 : a.accountingDebit) ?? "0"),
-                readOnly: !0,
-              }),
-              s.jsx("span", {
-                className: "is-sum-label",
-                children:
-                  "المحاسبة دائن/مدين",
-              }),
-            ],
-          }),
-        ],
-      }),
-      s.jsxs("div", {
-        className: "is-sum-bottom",
-        ref: pe,
-        children: [
-          s.jsxs("div", {
-            className: "is-total-box",
-            children: [
-              s.jsxs("div", {
-                className: "is-total-line",
-                children: [
-                  s.jsx("input", {
-                    value: he((d == null ? void 0 : d.total) ?? ""),
-                    readOnly: !0,
-                  }),
-                  s.jsx("span", {
-                    children: "المجموع",
-                  }),
-                ],
-              }),
-              s.jsxs("div", {
-                className: "is-total-line",
-                children: [
-                  s.jsx("input", {
-                    value: he((d == null ? void 0 : d.paid) ?? ""),
-                    readOnly: !0,
-                  }),
-                  s.jsx("span", { children: "المسدد" }),
-                ],
-              }),
-              s.jsxs("div", {
-                className: "is-total-line",
-                children: [
-                  s.jsx("input", {
-                    value: he((d == null ? void 0 : d.remaining) ?? ""),
-                    readOnly: !0,
-                  }),
-                  s.jsx("span", {
-                    children:
-                      "المجموع المتبقي",
-                  }),
-                ],
-              }),
-              s.jsxs("div", {
-                className: "is-total-line",
-                children: [
-                  s.jsx("input", {
-                    value: he((d == null ? void 0 : d.profit) ?? ""),
-                    readOnly: !0,
-                  }),
-                  s.jsx("span", { children: "الأرباح" }),
-                ],
-              }),
-            ],
-          }),
-          s.jsx("div", {
-            className: "is-yellow-note",
-            children:
-              "بضاعة لهذا المستثمر",
-          }),
-        ],
-      }),
-      s.jsx(Dd, {
-        mode: "sale",
-        voucherId: r,
-        line: o.find((v) => v.id === K),
-        onSaved: () => ge(r),
-      }),
-      s.jsx(Ef, {
-        voucherId: r,
-        glJournalEntryId: a == null ? void 0 : a.glJournalEntryId,
-        documentStatus: a == null ? void 0 : a.documentStatus,
-        onPosted: () => ge(r),
-      }),
-      s.jsxs("div", {
-        className: "is-bottom-actions",
-        children: [
-          s.jsx("button", {
-            type: "button",
-            className: "is-btn",
-            onClick: T,
-            children: "NEW",
-          }),
-          s.jsx("button", {
-            type: "button",
-            className: "is-btn red",
-            onClick: q,
-            children: "Delete",
-          }),
-          s.jsx("button", {
-            type: "button",
-            className: "is-btn",
-            onClick: () => {
-              var v;
-              return (v = document.getElementById(re)) == null
-                ? void 0
-                : v.requestSubmit();
-            },
-            children: "Save",
-          }),
-          s.jsxs("button", {
-            type: "button",
-            className: "is-btn yellow",
-            onClick: () => Vt(ae.current, { dir: "rtl", lang: "ar" }),
-            children: [
-              "طباعة",
-              s.jsx("br", {}),
-              "عربي",
-            ],
-          }),
-          s.jsxs("button", {
-            type: "button",
-            className: "is-btn yellow",
-            onClick: () => Vt(ae.current, { dir: "ltr", lang: "en" }),
-            children: ["Print", s.jsx("br", {}), "EN"],
-          }),
-          s.jsxs("button", {
-            type: "button",
-            className: "is-btn yellow",
-            onClick: $,
-            children: ["Open Container", s.jsx("br", {}), "in List"],
-          }),
-          s.jsxs("button", {
-            type: "button",
-            className: "is-btn yellow",
-            onClick: () => {
-              const v = window.confirm(`موافق = نسخة Pride
-إلغاء = نسخة Faqr`);
-              Ja(ae.current, v ? "Pride copy" : "Faqr copy");
-            },
-            children: ["Pride", s.jsx("br", {}), "Faqr"],
-          }),
-          s.jsx("button", {
-            type: "button",
-            className: "is-btn",
-            onClick: Dt,
-            children: "Last Voucher",
-          }),
-          s.jsxs("button", {
-            type: "button",
-            className: "is-btn",
-            onClick: I,
-            children: ["Last Edited", s.jsx("br", {}), "Vouchers"],
-          }),
-          s.jsxs("button", {
-            type: "button",
-            className: "is-btn",
-            onClick: () => r && ge(r),
-            children: ["Reload Last", s.jsx("br", {}), "Voucher"],
-          }),
-          s.jsx("button", {
-            type: "button",
-            className: "is-btn green",
-            onClick: () => {
-              (se(!1), h(""), ie(""));
-            },
-            children: "X",
-          }),
-          s.jsx("button", {
-            type: "button",
-            className: "is-btn blue",
-            onClick: N,
-            children: "third",
-          }),
-          s.jsx("button", {
-            type: "button",
-            className: "is-btn blue",
-            onClick: le,
-            children: "second",
-          }),
-          s.jsx("button", {
-            type: "button",
-            className: "is-btn blue",
-            onClick: H,
-            children: "main",
-          }),
-        ],
-      }),
-    ],
-  });
+  const onAddLine = () => openLineEditor(false);
+  const onEditLine = () => openLineEditor(true);
+
+  const onDeleteLine = async () => {
+    if (!voucherId || !selectedLineId || !window.confirm("حذف السطر؟")) return;
+    try {
+      await api.delete(`/invoice-sale/${voucherId}/items/${selectedLineId}`);
+      setSelectedLineId("");
+      await reloadVoucher(voucherId);
+    } catch (e) {
+      setErr(e.message);
+    }
+  };
+
+  const editableFields = new Set([
+    "usdConvertRate",
+    "usdSumCol",
+    "usdPriceCol",
+    "cbmSumCol",
+    "weight",
+    "cbm1",
+    "cbm2",
+    "listQty",
+    "pricePerThousand",
+    "totalPrice",
+    "pcsInCarton",
+    "linePrice",
+    "detail",
+    "itemNo",
+    "itemId",
+  ]);
+
+  const numericFields = new Set([
+    "usdConvertRate",
+    "usdSumCol",
+    "usdPriceCol",
+    "cbmSumCol",
+    "weight",
+    "cbm1",
+    "cbm2",
+    "listQty",
+    "pricePerThousand",
+    "totalPrice",
+    "pcsInCarton",
+    "linePrice",
+  ]);
+
+  const beginCellEdit = (lineId, field, currentValue) => {
+    if (!editableFields.has(field)) return;
+    setSelectedLineId(lineId);
+    setEditingCell({ lineId, field });
+    setCellValue(str(currentValue));
+  };
+
+  const saveCellEdit = async () => {
+    if (!editingCell || !voucherId) return;
+    const { lineId, field } = editingCell;
+    const payload = {};
+    if (numericFields.has(field)) payload[field] = numOrNull(cellValue);
+    else payload[field] = cellValue.trim() || null;
+    try {
+      await api.patch(`/invoice-sale/${voucherId}/items/${lineId}`, payload);
+      await reloadVoucher(voucherId);
+    } catch (e) {
+      setErr(e.message);
+    } finally {
+      setEditingCell(null);
+      setCellValue("");
+    }
+  };
+
+  const cancelCellEdit = () => {
+    setEditingCell(null);
+    setCellValue("");
+  };
+
+  const goLatestVoucher = () => {
+    const id = list[0]?.id;
+    if (id) setVoucherId(id);
+    else window.alert("لا توجد فواتير بيع.");
+  };
+
+  const showRecentVoucherList = () => {
+    if (!list.length) {
+      window.alert("لا توجد فواتير.");
+      return;
+    }
+    const lines = list.slice(0, 20).map((v, i) => `${i + 1}. ${v.voucherNo} — ${v.container?.containerNo ?? "?"}`);
+    window.alert(`أحدث سندات البيع:\n\n${lines.join("\n")}`);
+  };
+
+  const scrollHeader = () => headerBlockRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const scrollLines = () => linesBlockRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const scrollTotals = () => totalsBlockRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  const openContainerInList = () => {
+    const cn = detail?.container?.containerNo?.trim();
+    if (cn) sessionStorage.setItem("reportsJumpContainerNo", cn);
+    navigateAppPage("list");
+  };
+
+  return (
+    <div className="is-page" dir="ltr" ref={pageRootRef}>
+      {err ? <div className="alert-error" style={{ margin: 6 }}>{err}</div> : null}
+      <div className="is-titleline">Sale Vouchers</div>
+
+      <div className="is-top-wrap" ref={headerBlockRef}>
+        <div className="is-top-row">
+          <button type="button" className="is-btn-edit" onClick={() => setEditing((x) => !x)}>
+            {editing ? "قفل" : "تعديل"}
+          </button>
+          <span className="is-lbl">%0</span>
+          <span className="is-lbl">عمولة المكتب</span>
+          <input
+            className="is-small-input"
+            name="officeCommission"
+            form={formId}
+            readOnly={!editing}
+            defaultValue={str(detail?.officeCommission ?? "0")}
+            key={`oc-${voucherId}-${detail?.updatedAt}`}
+          />
+          <span className="is-lbl">سعر نقل المتر المكعب</span>
+          <input
+            className="is-small-input"
+            name="cbmTransportPrice"
+            form={formId}
+            readOnly={!editing}
+            defaultValue={str(detail?.cbmTransportPrice ?? "")}
+            key={`cbm-${voucherId}-${detail?.updatedAt}`}
+          />
+
+          <div className="is-spacer" />
+
+          <input
+            className="is-rate-input"
+            name="exchangeRate"
+            form={formId}
+            readOnly={!editing}
+            defaultValue={exchangeRate}
+            key={`er-${voucherId}-${detail?.updatedAt}`}
+          />
+          <span className="is-rate-lbl">سعر الصرف</span>
+        </div>
+
+        <form id={formId} onSubmit={onSave}>
+          <div className="is-mid-row">
+            <div className="is-left-cluster">
+              <div className="is-balance-line">
+                <span className="is-mini-title">مجموع</span>
+                <input className="is-balance-input" value={str(totals?.total ?? "")} readOnly />
+              </div>
+              <div className="is-container-line">
+                <select
+                  className="is-container-input"
+                  name="containerId"
+                  disabled={!editing}
+                  defaultValue={detail?.containerId ?? ""}
+                  key={`ct-${voucherId}-${detail?.updatedAt}`}
+                >
+                  {containers.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.containerNo}
+                    </option>
+                  ))}
+                </select>
+                <span className="is-lbl">رقم الحاوية</span>
+              </div>
+              <button
+                type="button"
+                className="is-blue-pill"
+                onClick={() =>
+                  window.alert(`عملة السند: ${detail?.currency ?? "—"}\nسعر الصرف الحالي في النموذج: ${exchangeRate}`)
+                }
+                title="عرض العملة وسعر الصرف"
+              >
+                {detail?.currency ?? "العملة"}
+              </button>
+            </div>
+
+            <div className="is-mini-actions">
+              <button type="button" className="is-mini-act" onClick={onNew}>
+                جديد
+              </button>
+              <button type="button" className="is-mini-act red" onClick={onDelete}>
+                حذف
+              </button>
+            </div>
+
+            <select
+              className="is-supplier-box"
+              name="customerId"
+              dir="rtl"
+              disabled={!editing}
+              defaultValue={detail?.customerId ?? ""}
+              key={`cu-${voucherId}-${detail?.updatedAt}`}
+              style={{ border: "1px solid #ccc", minHeight: 36 }}
+            >
+              {customers.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+            <span className="is-lbl">الزبون</span>
+
+            <div className="is-spacer" />
+
+            <input
+              className="is-date-input"
+              name="voucherDate"
+              readOnly={!editing}
+              placeholder="dd/mm/yyyy"
+              defaultValue={date}
+              key={`vd-${voucherId}-${detail?.updatedAt}`}
+            />
+            <span className="is-lbl">تاريخ العامة</span>
+
+            <div className="is-voucher-stack">
+              <input
+                className="is-voucher-input"
+                name="voucherNo"
+                readOnly={!editing}
+                defaultValue={voucherNo}
+                key={`vn-${voucherId}-${detail?.updatedAt}`}
+              />
+              <select
+                className="is-voucher-list"
+                size={Math.min(5, Math.max(3, list.length || 3))}
+                value={voucherId}
+                onChange={(e) => setVoucherId(e.target.value)}
+              >
+                {list.length === 0 ? (
+                  <option value="">—</option>
+                ) : (
+                  list.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.voucherNo} ({v.currency})
+                    </option>
+                  ))
+                )}
+              </select>
+            </div>
+            <span className="is-lbl">ت القائمة</span>
+
+            <div className="erp-workflow-row" style={{ gridColumn: "1 / -1" }}>
+              <DocumentStatusBadge status={detail?.documentStatus} />
+              {detail?.documentStatus === "DRAFT" && (user?.role === "DATA_ENTRY" || user?.role === "ACCOUNTANT" || user?.role === "ADMIN") ? (
+                <button type="button" onClick={onWorkflowSubmit}>
+                  إرسال للموافقة
+                </button>
+              ) : null}
+              {detail?.documentStatus === "SUBMITTED" && (user?.role === "ACCOUNTANT" || user?.role === "ADMIN") ? (
+                <>
+                  <button type="button" onClick={onWorkflowApprove}>
+                    اعتماد
+                  </button>
+                  <button type="button" onClick={onWorkflowReject}>
+                    رفض
+                  </button>
+                </>
+              ) : null}
+            </div>
+
+            <select
+              className="is-currency-select"
+              name="currency"
+              disabled={!editing}
+              defaultValue={currency}
+              key={`cur-${voucherId}-${detail?.updatedAt}`}
+            >
+              <option value="دولار">دولار</option>
+              <option value="دينار">دينار</option>
+            </select>
+            <span className="is-lbl">العملة</span>
+          </div>
+
+          <div className="is-top-row third">
+            <div className="is-spacer" />
+            <select
+              className="is-store-select"
+              name="storeId"
+              disabled={!editing}
+              defaultValue={detail?.storeId ?? ""}
+              key={`st-${voucherId}-${detail?.updatedAt}`}
+            >
+              <option value="">—</option>
+              {stores.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+            <span className="is-lbl">Store Targit</span>
+            <input
+              className="is-notes-input"
+              name="notes"
+              readOnly={!editing}
+              defaultValue={detail?.notes ?? ""}
+              key={`nt-${voucherId}-${detail?.updatedAt}`}
+            />
+            <span className="is-lbl">ملاحظات</span>
+          </div>
+          <div className="is-top-row" style={{ marginTop: 8 }}>
+            <button type="submit" className="is-btn">
+              حفظ السند
+            </button>
+            <button type="button" className="is-item-btn green" onClick={onAddLine}>
+              + سطر
+            </button>
+            <button type="button" className="is-item-btn red" onClick={onDeleteLine} disabled={!selectedLineId}>
+              حذف سطر
+            </button>
+            <button type="button" className="is-item-btn green" onClick={onEditLine} disabled={!selectedLineId}>
+              تعديل سطر
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div className="is-table-wrap" ref={linesBlockRef}>
+        <table className="is-table">
+          <thead>
+            <tr>
+              <th />
+              <th>
+                سعر تحويل
+                <br />
+                الدولار
+              </th>
+              <th>
+                مجموع سعر
+                <br />
+                الدولار
+              </th>
+              <th>
+                سعر
+                <br />
+                الدولار
+              </th>
+              <th>
+                مجموع المتر
+                <br />
+                المكعب
+              </th>
+              <th>وزن</th>
+              <th>cbm</th>
+              <th>cbm</th>
+              <th>
+                عدد
+                <br />
+                القائمة
+              </th>
+              <th>
+                سعر كل
+                <br />
+                الف
+              </th>
+              <th>مجموع سعر</th>
+              <th>
+                قطعة داخل
+                <br />
+                الكارتون
+              </th>
+              <th>سعر</th>
+              <th>التفاصيل</th>
+              <th>رقم</th>
+              <th>ت</th>
+            </tr>
+          </thead>
+          <tbody>
+            {lines.length === 0 ? (
+              <tr>
+                <td colSpan={16} style={{ textAlign: "center", padding: 12 }}>
+                  لا أسطر
+                </td>
+              </tr>
+            ) : (
+              lines.map((r) => (
+                <tr
+                  key={r.id}
+                  style={{
+                    cursor: "pointer",
+                    background: selectedLineId === r.id ? "#e8f4ff" : undefined,
+                  }}
+                  onClick={() => setSelectedLineId(r.id)}
+                >
+                  <td className="is-arrow">▶</td>
+                  <td onDoubleClick={() => beginCellEdit(r.id, "usdConvertRate", r.usdConvertRate)}>
+                    {editingCell?.lineId === r.id && editingCell?.field === "usdConvertRate" ? (
+                      <input
+                        autoFocus
+                        className="is-mini-input"
+                        value={cellValue}
+                        onChange={(e) => setCellValue(e.target.value)}
+                        onBlur={saveCellEdit}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") saveCellEdit();
+                          if (e.key === "Escape") cancelCellEdit();
+                        }}
+                      />
+                    ) : (
+                      str(r.usdConvertRate)
+                    )}
+                  </td>
+                  <td onDoubleClick={() => beginCellEdit(r.id, "usdSumCol", r.usdSumCol)}>
+                    {editingCell?.lineId === r.id && editingCell?.field === "usdSumCol" ? (
+                      <input autoFocus className="is-mini-input" value={cellValue} onChange={(e) => setCellValue(e.target.value)} onBlur={saveCellEdit} onKeyDown={(e) => { if (e.key === "Enter") saveCellEdit(); if (e.key === "Escape") cancelCellEdit(); }} />
+                    ) : (
+                      str(r.usdSumCol)
+                    )}
+                  </td>
+                  <td onDoubleClick={() => beginCellEdit(r.id, "usdPriceCol", r.usdPriceCol)}>
+                    {editingCell?.lineId === r.id && editingCell?.field === "usdPriceCol" ? (
+                      <input autoFocus className="is-mini-input" value={cellValue} onChange={(e) => setCellValue(e.target.value)} onBlur={saveCellEdit} onKeyDown={(e) => { if (e.key === "Enter") saveCellEdit(); if (e.key === "Escape") cancelCellEdit(); }} />
+                    ) : (
+                      str(r.usdPriceCol)
+                    )}
+                  </td>
+                  <td onDoubleClick={() => beginCellEdit(r.id, "cbmSumCol", r.cbmSumCol)}>
+                    {editingCell?.lineId === r.id && editingCell?.field === "cbmSumCol" ? (
+                      <input autoFocus className="is-mini-input" value={cellValue} onChange={(e) => setCellValue(e.target.value)} onBlur={saveCellEdit} onKeyDown={(e) => { if (e.key === "Enter") saveCellEdit(); if (e.key === "Escape") cancelCellEdit(); }} />
+                    ) : (
+                      str(r.cbmSumCol)
+                    )}
+                  </td>
+                  <td onDoubleClick={() => beginCellEdit(r.id, "weight", r.weight)}>
+                    {editingCell?.lineId === r.id && editingCell?.field === "weight" ? (
+                      <input autoFocus className="is-mini-input" value={cellValue} onChange={(e) => setCellValue(e.target.value)} onBlur={saveCellEdit} onKeyDown={(e) => { if (e.key === "Enter") saveCellEdit(); if (e.key === "Escape") cancelCellEdit(); }} />
+                    ) : (
+                      str(r.weight)
+                    )}
+                  </td>
+                  <td onDoubleClick={() => beginCellEdit(r.id, "cbm1", r.cbm1)}>
+                    {editingCell?.lineId === r.id && editingCell?.field === "cbm1" ? (
+                      <input autoFocus className="is-mini-input" value={cellValue} onChange={(e) => setCellValue(e.target.value)} onBlur={saveCellEdit} onKeyDown={(e) => { if (e.key === "Enter") saveCellEdit(); if (e.key === "Escape") cancelCellEdit(); }} />
+                    ) : (
+                      str(r.cbm1)
+                    )}
+                  </td>
+                  <td onDoubleClick={() => beginCellEdit(r.id, "cbm2", r.cbm2)}>
+                    {editingCell?.lineId === r.id && editingCell?.field === "cbm2" ? (
+                      <input autoFocus className="is-mini-input" value={cellValue} onChange={(e) => setCellValue(e.target.value)} onBlur={saveCellEdit} onKeyDown={(e) => { if (e.key === "Enter") saveCellEdit(); if (e.key === "Escape") cancelCellEdit(); }} />
+                    ) : (
+                      str(r.cbm2)
+                    )}
+                  </td>
+                  <td onDoubleClick={() => beginCellEdit(r.id, "listQty", r.listQty)}>
+                    {editingCell?.lineId === r.id && editingCell?.field === "listQty" ? (
+                      <input autoFocus className="is-mini-input" value={cellValue} onChange={(e) => setCellValue(e.target.value)} onBlur={saveCellEdit} onKeyDown={(e) => { if (e.key === "Enter") saveCellEdit(); if (e.key === "Escape") cancelCellEdit(); }} />
+                    ) : (
+                      str(r.listQty)
+                    )}
+                  </td>
+                  <td onDoubleClick={() => beginCellEdit(r.id, "pricePerThousand", r.pricePerThousand)}>
+                    {editingCell?.lineId === r.id && editingCell?.field === "pricePerThousand" ? (
+                      <input autoFocus className="is-mini-input" value={cellValue} onChange={(e) => setCellValue(e.target.value)} onBlur={saveCellEdit} onKeyDown={(e) => { if (e.key === "Enter") saveCellEdit(); if (e.key === "Escape") cancelCellEdit(); }} />
+                    ) : (
+                      str(r.pricePerThousand)
+                    )}
+                  </td>
+                  <td onDoubleClick={() => beginCellEdit(r.id, "totalPrice", r.totalPrice)}>
+                    {editingCell?.lineId === r.id && editingCell?.field === "totalPrice" ? (
+                      <input autoFocus className="is-mini-input" value={cellValue} onChange={(e) => setCellValue(e.target.value)} onBlur={saveCellEdit} onKeyDown={(e) => { if (e.key === "Enter") saveCellEdit(); if (e.key === "Escape") cancelCellEdit(); }} />
+                    ) : (
+                      str(r.totalPrice)
+                    )}
+                  </td>
+                  <td onDoubleClick={() => beginCellEdit(r.id, "pcsInCarton", r.pcsInCarton)}>
+                    {editingCell?.lineId === r.id && editingCell?.field === "pcsInCarton" ? (
+                      <input autoFocus className="is-mini-input" value={cellValue} onChange={(e) => setCellValue(e.target.value)} onBlur={saveCellEdit} onKeyDown={(e) => { if (e.key === "Enter") saveCellEdit(); if (e.key === "Escape") cancelCellEdit(); }} />
+                    ) : (
+                      str(r.pcsInCarton)
+                    )}
+                  </td>
+                  <td onDoubleClick={() => beginCellEdit(r.id, "linePrice", r.linePrice)}>
+                    {editingCell?.lineId === r.id && editingCell?.field === "linePrice" ? (
+                      <input autoFocus className="is-mini-input" value={cellValue} onChange={(e) => setCellValue(e.target.value)} onBlur={saveCellEdit} onKeyDown={(e) => { if (e.key === "Enter") saveCellEdit(); if (e.key === "Escape") cancelCellEdit(); }} />
+                    ) : (
+                      str(r.linePrice)
+                    )}
+                  </td>
+                  <td className="is-item-name" onDoubleClick={() => beginCellEdit(r.id, "detail", r.detail)}>
+                    {editingCell?.lineId === r.id && editingCell?.field === "detail" ? (
+                      <input autoFocus className="is-mini-input" value={cellValue} onChange={(e) => setCellValue(e.target.value)} onBlur={saveCellEdit} onKeyDown={(e) => { if (e.key === "Enter") saveCellEdit(); if (e.key === "Escape") cancelCellEdit(); }} />
+                    ) : (
+                      r.detail ?? ""
+                    )}
+                  </td>
+                  <td onDoubleClick={() => beginCellEdit(r.id, "itemNo", r.itemNo)}>
+                    {editingCell?.lineId === r.id && editingCell?.field === "itemNo" ? (
+                      <input autoFocus className="is-mini-input" value={cellValue} onChange={(e) => setCellValue(e.target.value)} onBlur={saveCellEdit} onKeyDown={(e) => { if (e.key === "Enter") saveCellEdit(); if (e.key === "Escape") cancelCellEdit(); }} />
+                    ) : (
+                      r.itemNo ?? ""
+                    )}
+                  </td>
+                  <td>{str(r.seq)}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="is-sum-row">
+        <div className="is-sum-grid">
+          <div className="is-sum-item">
+            <div className="is-sum-item-box">{str(agg?.totalPrice ?? "")}</div>
+            <div className="is-sum-item-label">Total Price</div>
+          </div>
+          <div className="is-sum-item">
+            <div className="is-sum-item-box">{str(agg?.cbmSum ?? "")}</div>
+            <div className="is-sum-item-label">CBM Sum</div>
+          </div>
+          <div className="is-sum-item">
+            <div className="is-sum-item-box">{str(agg?.listQty ?? "")}</div>
+            <div className="is-sum-item-label">List Qty</div>
+          </div>
+          <div className="is-sum-item">
+            <div className="is-sum-item-box">{str("")}</div>
+            <div className="is-sum-item-label">-</div>
+          </div>
+          <div className="is-sum-item">
+            <div className="is-sum-item-box">{str(totals?.total ?? "")}</div>
+            <div className="is-sum-item-label">Total</div>
+          </div>
+        </div>
+        <div className="is-accounting-row">
+          <span className="is-sum-label">المحاسبة</span>
+          <input className="is-sum-input yellow" value={str(detail?.accountingDebit ?? "0")} readOnly />
+          <span className="is-sum-label">المحاسبة دائن/مدين</span>
+        </div>
+      </div>
+
+      <div className="is-sum-bottom" ref={totalsBlockRef}>
+        <div className="is-total-box">
+          <div className="is-total-line">
+            <input value={str(totals?.total ?? "")} readOnly />
+            <span>المجموع</span>
+          </div>
+          <div className="is-total-line">
+            <input value={str(totals?.paid ?? "")} readOnly />
+            <span>المسدد</span>
+          </div>
+          <div className="is-total-line">
+            <input value={str(totals?.remaining ?? "")} readOnly />
+            <span>المجموع الباقي</span>
+          </div>
+          <div className="is-total-line">
+            <input value={str(totals?.profit ?? "")} readOnly />
+            <span>أرباح</span>
+          </div>
+        </div>
+        <div className="is-yellow-note">بضاعة لهذا المستثمر</div>
+      </div>
+
+      {isLineEditOpen && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, width: "100%", height: "100%",
+          backgroundColor: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 9999
+        }} dir="rtl">
+          <form className="master-form" onSubmit={saveLineForm} style={{ maxHeight: "90vh", overflowY: "auto", width: "650px", maxWidth: "95%", margin: 0, boxShadow: "0 10px 25px rgba(0,0,0,0.2)", background: "#fff", padding: 20, borderRadius: 8 }}>
+            <h3 className="master-form-title" style={{marginTop: 0, borderBottom: "1px solid #e5e7eb", paddingBottom: 10}}>{lineForm.id ? "تعديل سطر البيع" : "إضافة سطر بيع جديد"}</h3>
+            
+            <div style={{ marginBottom: 15 }}>
+              <label style={{ display: "block", fontSize: 13, marginBottom: 4, fontWeight: 600 }}>ربط السطر بمنتج الكتالوج</label>
+              <div style={{ border: "1px solid #d1d5db", borderRadius: 4 }}>
+                <SearchableDropdown
+                  value={lineForm.itemId}
+                  onChange={(val) => {
+                    const it = catalog.find(x => x.id === val);
+                    setLineForm({ 
+                       ...lineForm, 
+                       itemId: val, 
+                       detail: it?.name || lineForm.detail, 
+                       itemNo: it?.itemNo || lineForm.itemNo 
+                    });
+                  }}
+                  options={catalog}
+                  getOptionValue={x => x.id}
+                  getOptionLabel={x => `${x.name}${x.itemNo ? ` (${x.itemNo})` : ""}`}
+                  placeholder="— ابحث عن المادة —"
+                  clearLabel="— بدون ربط —"
+                />
+              </div>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 15 }}>
+              <label className="master-field">التفاصيل
+                <input className="io-date-input master-input" value={lineForm.detail} onChange={e => setLineForm({...lineForm, detail: e.target.value})} />
+              </label>
+              <label className="master-field">رقم المادة
+                <input className="io-date-input master-input" value={lineForm.itemNo} onChange={e => setLineForm({...lineForm, itemNo: e.target.value})} />
+              </label>
+              <label className="master-field">سعر تحويل الدولار
+                <input className="io-date-input master-input" value={lineForm.usdConvertRate} onChange={e => setLineForm({...lineForm, usdConvertRate: e.target.value})} />
+              </label>
+              <label className="master-field">مجموع سعر الدولار
+                <input className="io-date-input master-input" value={lineForm.usdSumCol} onChange={e => setLineForm({...lineForm, usdSumCol: e.target.value})} />
+              </label>
+              <label className="master-field">سعر الدولار
+                <input className="io-date-input master-input" value={lineForm.usdPriceCol} onChange={e => setLineForm({...lineForm, usdPriceCol: e.target.value})} />
+              </label>
+              <label className="master-field">مجموع المتر المكعب
+                <input className="io-date-input master-input" value={lineForm.cbmSumCol} onChange={e => setLineForm({...lineForm, cbmSumCol: e.target.value})} />
+              </label>
+              <label className="master-field">وزن
+                <input className="io-date-input master-input" value={lineForm.weight} onChange={e => setLineForm({...lineForm, weight: e.target.value})} />
+              </label>
+              <label className="master-field">CBM 1
+                <input className="io-date-input master-input" value={lineForm.cbm1} onChange={e => setLineForm({...lineForm, cbm1: e.target.value})} />
+              </label>
+              <label className="master-field">CBM 2
+                <input className="io-date-input master-input" value={lineForm.cbm2} onChange={e => setLineForm({...lineForm, cbm2: e.target.value})} />
+              </label>
+              <label className="master-field">عدد القائمة
+                <input className="io-date-input master-input" value={lineForm.listQty} onChange={e => setLineForm({...lineForm, listQty: e.target.value})} />
+              </label>
+              <label className="master-field">سعر كل الف
+                <input className="io-date-input master-input" value={lineForm.pricePerThousand} onChange={e => setLineForm({...lineForm, pricePerThousand: e.target.value})} />
+              </label>
+              <label className="master-field">مجموع السعر
+                <input className="io-date-input master-input" value={lineForm.totalPrice} onChange={e => setLineForm({...lineForm, totalPrice: e.target.value})} />
+              </label>
+              <label className="master-field">قطعة داخل الكرتون
+                <input className="io-date-input master-input" value={lineForm.pcsInCarton} onChange={e => setLineForm({...lineForm, pcsInCarton: e.target.value})} />
+              </label>
+              <label className="master-field">سعر
+                <input className="io-date-input master-input" value={lineForm.linePrice} onChange={e => setLineForm({...lineForm, linePrice: e.target.value})} />
+              </label>
+            </div>
+            
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, paddingTop: 15, borderTop: "1px solid #e5e7eb" }}>
+              <button type="button" className="io-btn" onClick={() => setIsLineEditOpen(false)}>إلغاء</button>
+              <button type="submit" className="io-btn-primary">حفظ السطر</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      <GlSaleVoucherPost
+        voucherId={voucherId}
+        glJournalEntryId={detail?.glJournalEntryId}
+        documentStatus={detail?.documentStatus}
+        onPosted={() => reloadVoucher(voucherId)}
+      />
+
+      <div className="is-bottom-actions">
+        <button type="button" className="is-btn" onClick={onNew}>
+          NEW
+        </button>
+        <button type="button" className="is-btn red" onClick={onDelete}>
+          Delete
+        </button>
+        <button type="button" className="is-btn" onClick={() => document.getElementById(formId)?.requestSubmit()}>
+          Save
+        </button>
+        <button
+          type="button"
+          className="is-btn yellow"
+          onClick={() => printRootWithLocale(pageRootRef.current, { dir: "rtl", lang: "ar" })}
+        >
+          طباعة
+          <br />
+          عربي
+        </button>
+        <button
+          type="button"
+          className="is-btn yellow"
+          onClick={() => printRootWithLocale(pageRootRef.current, { dir: "ltr", lang: "en" })}
+        >
+          Print
+          <br />
+          EN
+        </button>
+        <button type="button" className="is-btn yellow" onClick={openContainerInList}>
+          In costomer
+          <br />
+          or wen house
+        </button>
+        <button
+          type="button"
+          className="is-btn yellow"
+          onClick={() => {
+            const usePride = window.confirm("موافق = نسخة Pride\nإلغاء = نسخة Faqr");
+            printWithBanner(pageRootRef.current, usePride ? "Pride copy" : "Faqr copy");
+          }}
+        >
+          Pride
+          <br />
+          Faqr
+        </button>
+        <button type="button" className="is-btn" onClick={goLatestVoucher}>
+          Last Voucher
+        </button>
+        <button type="button" className="is-btn" onClick={showRecentVoucherList}>
+          Last Edited
+          <br />
+          Vouchers
+        </button>
+        <button
+          type="button"
+          className="is-btn"
+          onClick={() => voucherId && reloadVoucher(voucherId)}
+        >
+          Re Load Last
+          <br />
+          Voucher
+        </button>
+        <button
+          type="button"
+          className="is-btn green"
+          onClick={() => {
+            setEditing(false);
+            setErr("");
+            setSelectedLineId("");
+          }}
+        >
+          X
+        </button>
+        <button type="button" className="is-btn blue" onClick={scrollTotals}>
+          third
+        </button>
+        <button type="button" className="is-btn blue" onClick={scrollLines}>
+          secoud
+        </button>
+        <button type="button" className="is-btn blue" onClick={scrollHeader}>
+          main
+        </button>
+      </div>
+    </div>
+  );
 }
-
-export default Rf;

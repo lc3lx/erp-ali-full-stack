@@ -1,155 +1,974 @@
-import * as u from "react";
-import { Fragment, jsx, jsxs } from "react/jsx-runtime";
-import { api as E } from "../lib/api.js";
-import { useAuth as ps } from "../context/AuthContext.jsx";
-import { GlPurchaseVoucherPost as Pf } from "../components/GlDocumentPost.jsx";
-import { DocumentStatusBadge as Id } from "../components/erp/DocumentStatusBadge.jsx";
-import { ItemLineLinkPanel as Dd } from "../components/ItemLineLinkPanel.jsx";
-import { SearchableDropdown as Zs } from "../components/SearchableDropdown.jsx";
-import { formatIsoToDisplay as Et, toApiDateTime as Ct } from "../lib/dates.js";
-import { MASTERS_REFRESH_EVENT as $n, navigateAppPage as kn, printRootWithLocale as Vt } from "../lib/uiActions.js";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { api } from "../lib/api.js";
+import { useAuth } from "../context/AuthContext.jsx";
+import { GlPurchaseVoucherPost } from "../components/GlDocumentPost.jsx";
+import { DocumentStatusBadge } from "../components/erp/DocumentStatusBadge.jsx";
+import { SearchableDropdown } from "../components/SearchableDropdown.jsx";
+import { formatIsoToDisplay, toApiDateTime } from "../lib/dates.js";
+import { MASTERS_REFRESH_EVENT, navigateAppPage, printRootWithLocale } from "../lib/uiActions.js";
 import "../App.css";
 
-const s = { jsx, jsxs, Fragment };
-
-function ue(e) {
-  return e == null || e === "" ? "" : String(e);
+function str(v) {
+  if (v == null || v === "") return "";
+  return String(v);
 }
 
-function Oe(e) {
-  const t = String(e ?? "").trim();
-  if (!t) return null;
-  const n = Number(t);
+function numOrNull(v) {
+  const s = String(v ?? "").trim();
+  if (!s) return null;
+  const n = Number(s);
   return Number.isFinite(n) ? n : null;
 }
 
-const Tf = {
-  "إغلاق": "إغلاق",
-  "تعديل": "تعديل",
-  "عمولة المكتب": "عمولة المكتب",
-  "سعر نقل المتر المكعب": "سعر نقل المتر المكعب",
-  "سعر الصرف": "سعر الصرف",
-  "مجموع": "المجموع",
-  "رقم الحاوية": "رقم الحاوية",
-  "جديد": "جديد",
-  "حذف": "حذف",
-  "المورد": "المورد",
-  "تاريخ الفاتورة": "تاريخ الفاتورة",
-  "تاريخ العامة": "تاريخ الفاتورة",
-  "إرسال للموافقة": "إرسال للموافقة",
-  "اعتماد": "اعتماد",
-  "رفض": "رفض",
-  "العملة": "العملة",
-  "ملاحظات": "ملاحظات",
-  "حفظ السند": "حفظ الفاتورة",
-  "حذف سطر": "حذف سطر",
-  "تعديل سطر": "تعديل سطر",
-  "الدولار": "الدولار",
-  "دولار": "دولار",
-  "دينار": "دينار",
-  "وزن": "وزن",
-  "القائمة": "القائمة",
-  "التفاصيل": "التفاصيل",
-  "رقم": "الرقم",
-  "لا أسطر": "لا توجد أسطر",
-  "طباعة": "طباعة",
-  "عربي": "عربي",
-  "اختر المورد": "اختر المورد",
-  "ابحث عن مورد...": "ابحث عن مورد...",
-  "سبب الرفض (اختياري)": "سبب الرفض (اختياري)",
-  "تحتاج على الأقل حاوية ومورد في الجداول.": "يجب وجود حاوية ومورد على الأقل في الجداول.",
-  "رقم سند الشراء؟": "رقم فاتورة الشراء",
-  "حذف السند؟": "حذف الفاتورة؟",
-  "اسم المادة": "اسم المادة",
-  "رقم المادة": "رقم المادة",
-  "سطر جديد": "سطر جديد",
-  "الوزن الإجمالي": "الوزن الإجمالي",
-  "مجموع السعر": "مجموع السعر",
-  "حذف السطر؟": "حذف السطر؟",
-  "لا توجد فواتير شراء في القائمة.": "لا توجد فواتير شراء في القائمة.",
-  "لا توجد فواتير.": "لا توجد فواتير.",
-  "أحدث السندات (حسب التعديل):": "أحدث الفواتير (حسب آخر تعديل):",
-  "فتح الحاوية في قائمة الحاويات": "فتح الحاوية في قائمة الحاويات",
-  "▶": "▶",
-  "—": "—",
-};
+export default function InvoiceVouchersPage() {
+  const { user } = useAuth();
+  const [list, setList] = useState([]);
+  const [voucherId, setVoucherId] = useState("");
+  const [detail, setDetail] = useState(null);
+  const [lines, setLines] = useState([]);
+  const [totals, setTotals] = useState(null);
+  const [err, setErr] = useState("");
+  const [containers, setContainers] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
+  const [stores, setStores] = useState([]);
+  const [catalog, setCatalog] = useState([]);
+  const [selectedLineId, setSelectedLineId] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [editingCell, setEditingCell] = useState(null);
+  const [cellValue, setCellValue] = useState("");
+  const pageRootRef = useRef(null);
+  const headerBlockRef = useRef(null);
+  const linesBlockRef = useRef(null);
 
-const mojibakeHintRegex =
-  /(?:\u00E2\u0080|\u00C3|\u00C2|\uFFFD|\u0637[\u00A0-\u00FF]|\u0638[\u00A0-\u00FF])/g;
+  const [isLineEditOpen, setIsLineEditOpen] = useState(false);
+  const [lineForm, setLineForm] = useState({
+    id: "", itemId: "", itemName: "", itemNo: "",
+    priceToCustomerSum: "", weightSum: "", weight: "",
+    cbmSum: "", cbm: "", boxesSum: "", piecesSum: "",
+    priceSum: "", cartonPcs: "", unitPrice: ""
+  });
 
-const windows1256EncodeMap = (() => {
-  if (typeof TextDecoder === "undefined" || typeof Uint8Array === "undefined") {
-    return null;
-  }
-  try {
-    const e = new TextDecoder("windows-1256");
-    const t = new Map();
-    for (let n = 0; n < 256; n += 1) {
-      const r = e.decode(Uint8Array.of(n));
-      if (!t.has(r)) t.set(r, n);
-    }
-    return t;
-  } catch {
-    return null;
-  }
-})();
+  const reloadVoucher = useCallback(async (id) => {
+    if (!id) return;
+    const [d, itemsRes, t] = await Promise.all([
+      api.get(`/invoice-vouchers/${id}`),
+      api.get(`/invoice-vouchers/${id}/items`),
+      api.get(`/invoice-vouchers/${id}/totals`),
+    ]);
+    setDetail(d);
+    setLines(itemsRes.items ?? []);
+    setTotals(t);
+  }, []);
 
-const utf8Decoder =
-  typeof TextDecoder !== "undefined" ? new TextDecoder("utf-8", { fatal: false }) : null;
-
-function mojibakeScore(e) {
-  if (!e) return 0;
-  const t = e.match(mojibakeHintRegex);
-  return t ? t.length : 0;
-}
-
-function decodeMojibakeWindows1256ToUtf8(e) {
-  if (!e || !windows1256EncodeMap || !utf8Decoder) return e;
-  let t = e;
-  for (let n = 0; n < 3; n += 1) {
-    const r = mojibakeScore(t);
-    if (!r) break;
-
-    const l = [];
-    let a = true;
-    for (const i of t) {
-      const o = windows1256EncodeMap.get(i);
-      if (o == null) {
-        a = false;
-        break;
+  useEffect(() => {
+    let c = false;
+    (async () => {
+      try {
+        const [data, cont, sup, st, catRes] = await Promise.all([
+          api.get("/invoice-vouchers", { page: 1, pageSize: 100 }),
+          api.get("/containers", { page: 1, pageSize: 200 }),
+          api.get("/parties", { type: "SUPPLIER", page: 1, pageSize: 300 }),
+          api.get("/stores"),
+          api.get("/items/lookup")
+        ]);
+        if (c) return;
+        const items = data.items ?? [];
+        setList(items);
+        setVoucherId((prev) => {
+          if (prev && items.some((x) => x.id === prev)) return prev;
+          return items[0]?.id ?? "";
+        });
+        setContainers(cont.items ?? []);
+        setSuppliers(sup.items ?? []);
+        setStores(st.items ?? []);
+        setCatalog(catRes.items ?? []);
+      } catch (e) {
+        if (!c) setErr(e.message);
       }
-      l.push(o);
+    })();
+    return () => {
+      c = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const onRefresh = (e) => {
+      const scope = e.detail?.scope;
+      if (scope !== "stores" && scope !== "all") return;
+      (async () => {
+        try {
+          if (scope === "stores") {
+            const st = await api.get("/stores");
+            setStores(st.items ?? []);
+          } else {
+            const [cont, sup, st] = await Promise.all([
+              api.get("/containers", { page: 1, pageSize: 200 }),
+              api.get("/parties", { type: "SUPPLIER", page: 1, pageSize: 300 }),
+              api.get("/stores"),
+            ]);
+            setContainers(cont.items ?? []);
+            setSuppliers(sup.items ?? []);
+            setStores(st.items ?? []);
+          }
+        } catch (ex) {
+          setErr(ex.message);
+        }
+      })();
+    };
+    window.addEventListener(MASTERS_REFRESH_EVENT, onRefresh);
+    return () => window.removeEventListener(MASTERS_REFRESH_EVENT, onRefresh);
+  }, []);
+
+  useEffect(() => {
+    const cn = sessionStorage.getItem("purchaseVouchersJumpContainerNo")?.trim();
+    if (!cn || !list.length) return;
+    const match = list.find((v) => String(v.container?.containerNo ?? "").trim() === cn);
+    sessionStorage.removeItem("purchaseVouchersJumpContainerNo");
+    if (match) setVoucherId(match.id);
+  }, [list]);
+
+  useEffect(() => {
+    if (!voucherId) {
+      setDetail(null);
+      setLines([]);
+      setTotals(null);
+      return;
     }
+    let cancelled = false;
+    (async () => {
+      try {
+        await reloadVoucher(voucherId);
+        if (!cancelled) setErr("");
+      } catch (e) {
+        if (!cancelled) setErr(e.message);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [voucherId, reloadVoucher]);
 
-    if (!a || !l.length) break;
+  useEffect(() => {
+    setSelectedLineId("");
+    setEditing(false);
+  }, [voucherId]);
 
-    let i = t;
+  const exchangeRate = str(detail?.exchangeRate ?? "6.7");
+  const date = detail?.voucherDate ? formatIsoToDisplay(detail.voucherDate) : "";
+  const voucherNo = detail?.voucherNo ?? "";
+  const currency = detail?.currency ?? "دولار";
+  const agg = totals?.aggregates;
+
+  const formId = "iv-header-form";
+
+  const onWorkflowSubmit = async () => {
+    if (!voucherId) return;
     try {
-      i = utf8Decoder.decode(new Uint8Array(l));
-    } catch {
-      break;
+      await api.post(`/invoice-vouchers/${voucherId}/workflow/submit`, {});
+      await reloadVoucher(voucherId);
+    } catch (e) {
+      window.alert(e.message);
     }
+  };
+  const onWorkflowApprove = async () => {
+    if (!voucherId) return;
+    try {
+      await api.post(`/invoice-vouchers/${voucherId}/workflow/approve`, {});
+      await reloadVoucher(voucherId);
+    } catch (e) {
+      window.alert(e.message);
+    }
+  };
+  const onWorkflowReject = async () => {
+    if (!voucherId) return;
+    const comment = window.prompt("سبب الرفض (اختياري)") ?? "";
+    try {
+      await api.post(`/invoice-vouchers/${voucherId}/workflow/reject`, { comment: comment || null });
+      await reloadVoucher(voucherId);
+    } catch (e) {
+      window.alert(e.message);
+    }
+  };
 
-    if (!i || i === t) break;
-    if (mojibakeScore(i) > r) break;
-    t = i;
-  }
-  return t;
+  const onSave = async (e) => {
+    e.preventDefault();
+    if (!voucherId) return;
+    const formEl = document.getElementById(formId);
+    if (!formEl) return;
+    const fd = new FormData(formEl);
+    try {
+      await api.patch(`/invoice-vouchers/${voucherId}`, {
+        voucherNo: String(fd.get("voucherNo") || "").trim() || undefined,
+        voucherDate: toApiDateTime(String(fd.get("voucherDate") || "")) ?? null,
+        exchangeRate: fd.get("exchangeRate") || undefined,
+        officeCommission: fd.get("officeCommission") || undefined,
+        cbmTransportPrice: fd.get("cbmTransportPrice") || undefined,
+        currency: fd.get("currency") || undefined,
+        containerId: fd.get("containerId") || undefined,
+        supplierId: fd.get("supplierId") || undefined,
+        storeId: fd.get("storeId") || null,
+        notes: fd.get("notes") || null,
+      });
+      await reloadVoucher(voucherId);
+      const data = await api.get("/invoice-vouchers", { page: 1, pageSize: 100 });
+      setList(data.items ?? []);
+      setEditing(false);
+    } catch (ex) {
+      setErr(ex.message);
+    }
+  };
+
+  const onNew = async () => {
+    const cid = containers[0]?.id;
+    const sid = suppliers[0]?.id;
+    if (!cid || !sid) {
+      window.alert("تحتاج على الأقل حاوية ومورد في الجداول.");
+      return;
+    }
+    const vn = window.prompt("رقم سند الشراء؟", `P-${Date.now()}`);
+    if (!vn || !vn.trim()) return;
+    try {
+      const v = await api.post("/invoice-vouchers", {
+        voucherNo: vn.trim(),
+        containerId: cid,
+        supplierId: sid,
+        currency: "دولار",
+      });
+      const data = await api.get("/invoice-vouchers", { page: 1, pageSize: 100 });
+      setList(data.items ?? []);
+      setVoucherId(v.id);
+    } catch (e) {
+      setErr(e.message);
+    }
+  };
+
+  const onDelete = async () => {
+    if (!voucherId || !window.confirm("حذف السند؟")) return;
+    try {
+      await api.delete(`/invoice-vouchers/${voucherId}`);
+      const data = await api.get("/invoice-vouchers", { page: 1, pageSize: 100 });
+      const items = data.items ?? [];
+      setList(items);
+      setVoucherId(items[0]?.id ?? "");
+    } catch (e) {
+      setErr(e.message);
+    }
+  };
+
+  const openLineEditor = (isEdit = false) => {
+    if (!voucherId) return;
+    if (isEdit) {
+      if (!selectedLineId) return;
+      const row = lines.find((x) => x.id === selectedLineId);
+      if (!row) return;
+      setLineForm({
+        id: row.id,
+        itemId: row.itemId || "",
+        itemName: row.itemName || "",
+        itemNo: row.itemNo || "",
+        priceToCustomerSum: str(row.priceToCustomerSum),
+        weightSum: str(row.weightSum),
+        weight: str(row.weight),
+        cbmSum: str(row.cbmSum),
+        cbm: str(row.cbm),
+        boxesSum: str(row.boxesSum),
+        piecesSum: str(row.piecesSum),
+        priceSum: str(row.priceSum),
+        cartonPcs: str(row.cartonPcs),
+        unitPrice: str(row.unitPrice),
+      });
+    } else {
+      setLineForm({
+        id: "", itemId: "", itemName: "", itemNo: "",
+        priceToCustomerSum: "", weightSum: "", weight: "",
+        cbmSum: "", cbm: "", boxesSum: "", piecesSum: "",
+        priceSum: "", cartonPcs: "", unitPrice: "",
+      });
+    }
+    setIsLineEditOpen(true);
+  };
+
+  const saveLineForm = async (e) => {
+    e.preventDefault();
+    try {
+      const payload = {
+        itemId: lineForm.itemId || null,
+        itemName: lineForm.itemName.trim() || null,
+        itemNo: lineForm.itemNo.trim() || null,
+        priceToCustomerSum: numOrNull(lineForm.priceToCustomerSum),
+        weightSum: numOrNull(lineForm.weightSum),
+        weight: numOrNull(lineForm.weight),
+        cbmSum: numOrNull(lineForm.cbmSum),
+        cbm: numOrNull(lineForm.cbm),
+        boxesSum: numOrNull(lineForm.boxesSum),
+        piecesSum: numOrNull(lineForm.piecesSum),
+        priceSum: numOrNull(lineForm.priceSum),
+        cartonPcs: numOrNull(lineForm.cartonPcs),
+        unitPrice: numOrNull(lineForm.unitPrice),
+      };
+      if (lineForm.id) {
+        await api.patch(`/invoice-vouchers/${voucherId}/items/${lineForm.id}`, payload);
+      } else {
+        await api.post(`/invoice-vouchers/${voucherId}/items`, payload);
+      }
+      await reloadVoucher(voucherId);
+      setIsLineEditOpen(false);
+    } catch (ex) {
+      setErr(ex.message);
+    }
+  };
+
+  const onAddLine = () => openLineEditor(false);
+  const onEditLine = () => openLineEditor(true);
+
+  const editableFields = new Set([
+    "priceToCustomerSum",
+    "weightSum",
+    "weight",
+    "cbmSum",
+    "cbm",
+    "boxesSum",
+    "piecesSum",
+    "priceSum",
+    "cartonPcs",
+    "unitPrice",
+    "itemName",
+    "itemNo",
+    "itemId"
+  ]);
+
+  const numericFields = new Set([
+    "priceToCustomerSum",
+    "weightSum",
+    "weight",
+    "cbmSum",
+    "cbm",
+    "boxesSum",
+    "piecesSum",
+    "priceSum",
+    "cartonPcs",
+    "unitPrice",
+  ]);
+
+  const beginCellEdit = (lineId, field, currentValue) => {
+    if (!editableFields.has(field)) return;
+    setSelectedLineId(lineId);
+    setEditingCell({ lineId, field });
+    setCellValue(str(currentValue));
+  };
+
+  const saveCellEdit = async () => {
+    if (!editingCell || !voucherId) return;
+    const { lineId, field } = editingCell;
+    const payload = {};
+    if (numericFields.has(field)) payload[field] = numOrNull(cellValue);
+    else payload[field] = cellValue.trim() || null;
+    try {
+      await api.patch(`/invoice-vouchers/${voucherId}/items/${lineId}`, payload);
+      await reloadVoucher(voucherId);
+    } catch (e) {
+      setErr(e.message);
+    } finally {
+      setEditingCell(null);
+      setCellValue("");
+    }
+  };
+
+  const cancelCellEdit = () => {
+    setEditingCell(null);
+    setCellValue("");
+  };
+
+  const goLatestVoucher = () => {
+    const id = list[0]?.id;
+    if (id) setVoucherId(id);
+    else window.alert("لا توجد فواتير شراء في القائمة.");
+  };
+
+  const showRecentVoucherList = () => {
+    if (!list.length) {
+      window.alert("لا توجد فواتير.");
+      return;
+    }
+    const lines = list.slice(0, 20).map((v, i) => `${i + 1}. ${v.voucherNo} — ${v.container?.containerNo ?? "?"}`);
+    window.alert(`أحدث السندات (حسب التعديل):\n\n${lines.join("\n")}`);
+  };
+
+  const scrollHeader = () => headerBlockRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const scrollLines = () => linesBlockRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  const openLinkedContainer = () => {
+    const cn = detail?.container?.containerNo?.trim();
+    if (cn) sessionStorage.setItem("reportsJumpContainerNo", cn);
+    navigateAppPage("list");
+  };
+
+  return (
+    <div className="iv-page" dir="ltr" ref={pageRootRef}>
+      {err ? <div className="alert-error" style={{ margin: 6 }}>{err}</div> : null}
+      <div className="iv-titleline">Invoice Vouchers</div>
+
+      <div className="iv-top-tabs" ref={headerBlockRef}>
+        <button type="button" className="iv-tab active" onClick={scrollHeader}>
+          Invoice Vouchers
+        </button>
+        <button type="button" className="iv-tab" onClick={scrollLines}>
+          Details
+        </button>
+
+        <div className="iv-spacer" />
+
+        <button type="button" className="iv-mini-btn" onClick={() => setEditing((x) => !x)}>
+          {editing ? "Lock" : "Edit"}
+        </button>
+      </div>
+
+      <form id={formId} onSubmit={onSave}>
+        <div className="iv-controls-row">
+          <button type="submit" className="iv-btn-soft iv-btn-edit">
+            Save
+          </button>
+          <span className="iv-lbl-small">%</span>
+          <input
+            className="iv-mini-input"
+            name="officeCommission"
+            readOnly={!editing}
+            defaultValue={str(detail?.officeCommission ?? "0")}
+            key={`oc-${voucherId}-${detail?.updatedAt}`}
+          />
+          <span className="iv-lbl-small">office commossion</span>
+          <input
+            className="iv-mini-input"
+            name="cbmTransportPrice"
+            readOnly={!editing}
+            defaultValue={str(detail?.cbmTransportPrice ?? "")}
+            key={`cbm-${voucherId}-${detail?.updatedAt}`}
+          />
+          <span className="iv-lbl-small">cbm transport price</span>
+          <input className="iv-mini-input" value={str(detail?.policyNo ?? "")} readOnly />
+
+          <div className="iv-spacer" />
+
+          <input
+            className="iv-rate-input"
+            name="exchangeRate"
+            readOnly={!editing}
+            defaultValue={exchangeRate}
+            key={`er-${voucherId}-${detail?.updatedAt}`}
+          />
+          <span className="iv-lbl-small">سعر الصرف</span>
+
+          <input
+            className="iv-date-input"
+            name="voucherDate"
+            readOnly={!editing}
+            placeholder="dd/mm/yyyy"
+            defaultValue={date}
+            key={`vd-${voucherId}-${detail?.updatedAt}`}
+          />
+          <span className="iv-lbl-small">Date</span>
+
+          <input
+            className="iv-voucher-input"
+            name="voucherNo"
+            readOnly={!editing}
+            defaultValue={voucherNo}
+            key={`vn-${voucherId}-${detail?.updatedAt}`}
+          />
+          <span className="iv-lbl-small">Voucher No</span>
+        </div>
+
+        <div className="iv-controls-row second">
+          <select
+            className="iv-blue-input"
+            name="containerId"
+            disabled={!editing}
+            defaultValue={detail?.containerId ?? ""}
+            key={`ct-${voucherId}-${detail?.updatedAt}`}
+          >
+            {containers.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.containerNo}
+              </option>
+            ))}
+          </select>
+          <span className="iv-lbl-small">Container No</span>
+
+          <select
+            className="iv-balance-input"
+            name="supplierId"
+            disabled={!editing}
+            defaultValue={detail?.supplierId ?? ""}
+            key={`sp-${voucherId}-${detail?.updatedAt}`}
+            dir="rtl"
+          >
+            {suppliers.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+          <span className="iv-lbl-small">Supplier</span>
+
+          <div className="iv-voucher-stack">
+            <select
+              className="iv-currency-select"
+              name="currency"
+              disabled={!editing}
+              defaultValue={currency}
+              key={`cur-${voucherId}-${detail?.updatedAt}`}
+            >
+              <option value="دولار">دولار</option>
+              <option value="دينار">دينار</option>
+            </select>
+            <select
+              className="iv-voucher-list"
+              size={Math.min(5, Math.max(3, list.length || 3))}
+              value={voucherId}
+              onChange={(e) => setVoucherId(e.target.value)}
+            >
+              {list.length === 0 ? (
+                <option value="">—</option>
+              ) : (
+                list.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.voucherNo} ({v.currency})
+                  </option>
+                ))
+              )}
+            </select>
+          </div>
+        </div>
+
+        <div className="erp-workflow-row" style={{ margin: "6px 0" }}>
+          <DocumentStatusBadge status={detail?.documentStatus} />
+          {detail?.documentStatus === "DRAFT" && (user?.role === "DATA_ENTRY" || user?.role === "ACCOUNTANT" || user?.role === "ADMIN") ? (
+            <button type="button" onClick={onWorkflowSubmit}>
+              إرسال للموافقة
+            </button>
+          ) : null}
+          {detail?.documentStatus === "SUBMITTED" && (user?.role === "ACCOUNTANT" || user?.role === "ADMIN") ? (
+            <>
+              <button type="button" onClick={onWorkflowApprove}>
+                اعتماد
+              </button>
+              <button type="button" onClick={onWorkflowReject}>
+                رفض
+              </button>
+            </>
+          ) : null}
+        </div>
+
+        <div className="iv-controls-row third">
+          <button type="button" className="iv-blue-wide" onClick={openLinkedContainer} title="فتح الحاوية في قائمة الحاويات">
+            container vouchers
+          </button>
+
+          <div className="iv-spacer" />
+
+          <select
+            className="iv-small-select"
+            name="storeId"
+            disabled={!editing}
+            defaultValue={detail?.storeId ?? ""}
+            key={`st-${voucherId}-${detail?.updatedAt}`}
+          >
+            <option value="">—</option>
+            {stores.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+          <span className="iv-lbl-small">Store Targit</span>
+
+          <input
+            className="iv-mini-input notes"
+            name="notes"
+            readOnly={!editing}
+            defaultValue={detail?.notes ?? ""}
+            key={`nt-${voucherId}-${detail?.updatedAt}`}
+          />
+          <span className="iv-lbl-small">Nots</span>
+        </div>
+      </form>
+
+      <div className="iv-controls-row" style={{ marginTop: 6 }}>
+        <button type="button" className="iv-item-btn green" onClick={onNew}>
+          NEW voucher
+        </button>
+        <button type="button" className="iv-item-btn red" onClick={onDelete}>
+          Delete voucher
+        </button>
+        <button type="button" className="iv-item-btn green" onClick={onAddLine}>
+          Add line
+        </button>
+        <button type="button" className="iv-item-btn red" onClick={onDeleteLine} disabled={!selectedLineId}>
+          Delete line
+        </button>
+        <button type="button" className="iv-item-btn green" onClick={onEditLine} disabled={!selectedLineId}>
+          Edit line
+        </button>
+      </div>
+
+      <div className="iv-table-wrap" ref={linesBlockRef}>
+        <div className="iv-side-item-actions">
+          <button type="button" className="iv-item-btn red" onClick={onDeleteLine} disabled={!selectedLineId}>
+            Delete Item
+          </button>
+          <button type="button" className="iv-item-btn green" onClick={onAddLine}>
+            Add Item
+          </button>
+        </div>
+
+        <table className="iv-table">
+          <thead>
+            <tr>
+              <th />
+              <th>
+                Price to
+                <br />
+                Costumer Sum
+              </th>
+              <th>
+                Weight
+                <br />
+                Sum
+              </th>
+              <th>Weight</th>
+              <th>
+                cbm
+                <br />
+                Sum
+              </th>
+              <th>cbm</th>
+              <th>
+                Boxes
+                <br />
+                Sum
+              </th>
+              <th>
+                Pieces
+                <br />
+                Sum
+              </th>
+              <th>Price Sum</th>
+              <th>carton pcs</th>
+              <th>price</th>
+              <th>Item Name</th>
+              <th>item no</th>
+              <th>seq</th>
+              <th>pic</th>
+            </tr>
+          </thead>
+          <tbody>
+            {lines.length === 0 ? (
+              <tr>
+                <td colSpan={15} style={{ textAlign: "center", padding: 12 }}>
+                  لا أسطر
+                </td>
+              </tr>
+            ) : (
+              lines.map((r) => (
+                <tr
+                  key={r.id}
+                  style={{ cursor: "pointer", background: selectedLineId === r.id ? "#e8f4ff" : undefined }}
+                  onClick={() => setSelectedLineId(r.id)}
+                >
+                  <td className="iv-arrow">▶</td>
+                  <td onDoubleClick={() => beginCellEdit(r.id, "priceToCustomerSum", r.priceToCustomerSum)}>
+                    {editingCell?.lineId === r.id && editingCell?.field === "priceToCustomerSum" ? (
+                      <input
+                        autoFocus
+                        className="iv-mini-input"
+                        value={cellValue}
+                        onChange={(e) => setCellValue(e.target.value)}
+                        onBlur={saveCellEdit}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") saveCellEdit();
+                          if (e.key === "Escape") cancelCellEdit();
+                        }}
+                      />
+                    ) : (
+                      str(r.priceToCustomerSum)
+                    )}
+                  </td>
+                  <td onDoubleClick={() => beginCellEdit(r.id, "weightSum", r.weightSum)}>
+                    {editingCell?.lineId === r.id && editingCell?.field === "weightSum" ? (
+                      <input autoFocus className="iv-mini-input" value={cellValue} onChange={(e) => setCellValue(e.target.value)} onBlur={saveCellEdit} onKeyDown={(e) => { if (e.key === "Enter") saveCellEdit(); if (e.key === "Escape") cancelCellEdit(); }} />
+                    ) : (
+                      str(r.weightSum)
+                    )}
+                  </td>
+                  <td onDoubleClick={() => beginCellEdit(r.id, "weight", r.weight)}>
+                    {editingCell?.lineId === r.id && editingCell?.field === "weight" ? (
+                      <input autoFocus className="iv-mini-input" value={cellValue} onChange={(e) => setCellValue(e.target.value)} onBlur={saveCellEdit} onKeyDown={(e) => { if (e.key === "Enter") saveCellEdit(); if (e.key === "Escape") cancelCellEdit(); }} />
+                    ) : (
+                      str(r.weight)
+                    )}
+                  </td>
+                  <td onDoubleClick={() => beginCellEdit(r.id, "cbmSum", r.cbmSum)}>
+                    {editingCell?.lineId === r.id && editingCell?.field === "cbmSum" ? (
+                      <input autoFocus className="iv-mini-input" value={cellValue} onChange={(e) => setCellValue(e.target.value)} onBlur={saveCellEdit} onKeyDown={(e) => { if (e.key === "Enter") saveCellEdit(); if (e.key === "Escape") cancelCellEdit(); }} />
+                    ) : (
+                      str(r.cbmSum)
+                    )}
+                  </td>
+                  <td onDoubleClick={() => beginCellEdit(r.id, "cbm", r.cbm)}>
+                    {editingCell?.lineId === r.id && editingCell?.field === "cbm" ? (
+                      <input autoFocus className="iv-mini-input" value={cellValue} onChange={(e) => setCellValue(e.target.value)} onBlur={saveCellEdit} onKeyDown={(e) => { if (e.key === "Enter") saveCellEdit(); if (e.key === "Escape") cancelCellEdit(); }} />
+                    ) : (
+                      str(r.cbm)
+                    )}
+                  </td>
+                  <td onDoubleClick={() => beginCellEdit(r.id, "boxesSum", r.boxesSum)}>
+                    {editingCell?.lineId === r.id && editingCell?.field === "boxesSum" ? (
+                      <input autoFocus className="iv-mini-input" value={cellValue} onChange={(e) => setCellValue(e.target.value)} onBlur={saveCellEdit} onKeyDown={(e) => { if (e.key === "Enter") saveCellEdit(); if (e.key === "Escape") cancelCellEdit(); }} />
+                    ) : (
+                      str(r.boxesSum)
+                    )}
+                  </td>
+                  <td onDoubleClick={() => beginCellEdit(r.id, "piecesSum", r.piecesSum)}>
+                    {editingCell?.lineId === r.id && editingCell?.field === "piecesSum" ? (
+                      <input autoFocus className="iv-mini-input" value={cellValue} onChange={(e) => setCellValue(e.target.value)} onBlur={saveCellEdit} onKeyDown={(e) => { if (e.key === "Enter") saveCellEdit(); if (e.key === "Escape") cancelCellEdit(); }} />
+                    ) : (
+                      str(r.piecesSum)
+                    )}
+                  </td>
+                  <td onDoubleClick={() => beginCellEdit(r.id, "priceSum", r.priceSum)}>
+                    {editingCell?.lineId === r.id && editingCell?.field === "priceSum" ? (
+                      <input autoFocus className="iv-mini-input" value={cellValue} onChange={(e) => setCellValue(e.target.value)} onBlur={saveCellEdit} onKeyDown={(e) => { if (e.key === "Enter") saveCellEdit(); if (e.key === "Escape") cancelCellEdit(); }} />
+                    ) : (
+                      str(r.priceSum)
+                    )}
+                  </td>
+                  <td onDoubleClick={() => beginCellEdit(r.id, "cartonPcs", r.cartonPcs)}>
+                    {editingCell?.lineId === r.id && editingCell?.field === "cartonPcs" ? (
+                      <input autoFocus className="iv-mini-input" value={cellValue} onChange={(e) => setCellValue(e.target.value)} onBlur={saveCellEdit} onKeyDown={(e) => { if (e.key === "Enter") saveCellEdit(); if (e.key === "Escape") cancelCellEdit(); }} />
+                    ) : (
+                      str(r.cartonPcs)
+                    )}
+                  </td>
+                  <td onDoubleClick={() => beginCellEdit(r.id, "unitPrice", r.unitPrice)}>
+                    {editingCell?.lineId === r.id && editingCell?.field === "unitPrice" ? (
+                      <input autoFocus className="iv-mini-input" value={cellValue} onChange={(e) => setCellValue(e.target.value)} onBlur={saveCellEdit} onKeyDown={(e) => { if (e.key === "Enter") saveCellEdit(); if (e.key === "Escape") cancelCellEdit(); }} />
+                    ) : (
+                      str(r.unitPrice)
+                    )}
+                  </td>
+                  <td className="iv-item-name" onDoubleClick={() => beginCellEdit(r.id, "itemName", r.itemName)}>
+                    {editingCell?.lineId === r.id && editingCell?.field === "itemName" ? (
+                      <input autoFocus className="iv-mini-input" value={cellValue} onChange={(e) => setCellValue(e.target.value)} onBlur={saveCellEdit} onKeyDown={(e) => { if (e.key === "Enter") saveCellEdit(); if (e.key === "Escape") cancelCellEdit(); }} />
+                    ) : (
+                      r.itemName ?? ""
+                    )}
+                  </td>
+                  <td onDoubleClick={() => beginCellEdit(r.id, "itemNo", r.itemNo)}>
+                    {editingCell?.lineId === r.id && editingCell?.field === "itemNo" ? (
+                      <input autoFocus className="iv-mini-input" value={cellValue} onChange={(e) => setCellValue(e.target.value)} onBlur={saveCellEdit} onKeyDown={(e) => { if (e.key === "Enter") saveCellEdit(); if (e.key === "Escape") cancelCellEdit(); }} />
+                    ) : (
+                      r.itemNo ?? ""
+                    )}
+                  </td>
+                  <td>{r.seq}</td>
+                  <td>{r.itemId ? catalog.find(x => x.id === r.itemId)?.name || "Linked" : "—"}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {isLineEditOpen && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, width: "100%", height: "100%",
+          backgroundColor: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 9999
+        }} dir="rtl">
+          <form className="master-form" onSubmit={saveLineForm} style={{ maxHeight: "90vh", overflowY: "auto", width: "600px", maxWidth: "95%", margin: 0, boxShadow: "0 10px 25px rgba(0,0,0,0.2)", background: "#fff", padding: 20, borderRadius: 8 }}>
+            <h3 className="master-form-title" style={{marginTop: 0, borderBottom: "1px solid #e5e7eb", paddingBottom: 10}}>{lineForm.id ? "تعديل سطر الشراء" : "إضافة سطر شراء جديد"}</h3>
+            
+            <div style={{ marginBottom: 15 }}>
+              <label style={{ display: "block", fontSize: 13, marginBottom: 4, fontWeight: 600 }}>ربط السطر بمنتج الكتالوج</label>
+              <div style={{ border: "1px solid #d1d5db", borderRadius: 4 }}>
+                <SearchableDropdown
+                  value={lineForm.itemId}
+                  onChange={(val) => {
+                    const it = catalog.find(x => x.id === val);
+                    setLineForm({ 
+                       ...lineForm, 
+                       itemId: val, 
+                       itemName: it?.name || lineForm.itemName, 
+                       itemNo: it?.itemNo || lineForm.itemNo 
+                    });
+                  }}
+                  options={catalog}
+                  getOptionValue={x => x.id}
+                  getOptionLabel={x => `${x.name}${x.itemNo ? ` (${x.itemNo})` : ""}`}
+                  placeholder="— ابحث عن المادة —"
+                  clearLabel="— بدون ربط —"
+                />
+              </div>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 15 }}>
+              <label className="master-field">إسم المادة
+                <input className="io-date-input master-input" value={lineForm.itemName} onChange={e => setLineForm({...lineForm, itemName: e.target.value})} />
+              </label>
+              <label className="master-field">رقم المادة
+                <input className="io-date-input master-input" value={lineForm.itemNo} onChange={e => setLineForm({...lineForm, itemNo: e.target.value})} />
+              </label>
+              <label className="master-field">Price To Customer Sum
+                <input className="io-date-input master-input" value={lineForm.priceToCustomerSum} onChange={e => setLineForm({...lineForm, priceToCustomerSum: e.target.value})} />
+              </label>
+              <label className="master-field">Price Sum
+                <input className="io-date-input master-input" value={lineForm.priceSum} onChange={e => setLineForm({...lineForm, priceSum: e.target.value})} />
+              </label>
+              <label className="master-field">Weight Sum
+                <input className="io-date-input master-input" value={lineForm.weightSum} onChange={e => setLineForm({...lineForm, weightSum: e.target.value})} />
+              </label>
+              <label className="master-field">Weight (Unit)
+                <input className="io-date-input master-input" value={lineForm.weight} onChange={e => setLineForm({...lineForm, weight: e.target.value})} />
+              </label>
+              <label className="master-field">CBM Sum
+                <input className="io-date-input master-input" value={lineForm.cbmSum} onChange={e => setLineForm({...lineForm, cbmSum: e.target.value})} />
+              </label>
+              <label className="master-field">CBM (Unit)
+                <input className="io-date-input master-input" value={lineForm.cbm} onChange={e => setLineForm({...lineForm, cbm: e.target.value})} />
+              </label>
+              <label className="master-field">Boxes Sum
+                <input className="io-date-input master-input" value={lineForm.boxesSum} onChange={e => setLineForm({...lineForm, boxesSum: e.target.value})} />
+              </label>
+              <label className="master-field">Carton PCS
+                <input className="io-date-input master-input" value={lineForm.cartonPcs} onChange={e => setLineForm({...lineForm, cartonPcs: e.target.value})} />
+              </label>
+              <label className="master-field">Pieces Sum
+                <input className="io-date-input master-input" value={lineForm.piecesSum} onChange={e => setLineForm({...lineForm, piecesSum: e.target.value})} />
+              </label>
+              <label className="master-field">Unit Price
+                <input className="io-date-input master-input" value={lineForm.unitPrice} onChange={e => setLineForm({...lineForm, unitPrice: e.target.value})} />
+              </label>
+            </div>
+            
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, paddingTop: 15, borderTop: "1px solid #e5e7eb" }}>
+              <button type="button" className="io-btn" onClick={() => setIsLineEditOpen(false)}>إلغاء</button>
+              <button type="submit" className="io-btn-primary">حفظ السطر</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      <div className="iv-summary-row">
+        <div className="iv-sum-grid">
+          <div className="iv-sum-item">
+            <div className="iv-sum-item-box">{str(agg?.priceToCustomerSum ?? "")}</div>
+            <div className="iv-sum-item-label">Price to Customer Sum</div>
+          </div>
+          <div className="iv-sum-item">
+            <div className="iv-sum-item-box">{str(agg?.weightSum ?? "")}</div>
+            <div className="iv-sum-item-label">Weight Sum</div>
+          </div>
+          <div className="iv-sum-item">
+            <div className="iv-sum-item-box">{str(agg?.boxesSum ?? "")}</div>
+            <div className="iv-sum-item-label">Boxes Sum</div>
+          </div>
+          <div className="iv-sum-item">
+            <div className="iv-sum-item-box">{str(agg?.piecesSum ?? "")}</div>
+            <div className="iv-sum-item-label">Pieces Sum</div>
+          </div>
+          <div className="iv-sum-item">
+            <div className="iv-sum-item-box">{str(totals?.summation ?? "")}</div>
+            <div className="iv-sum-item-label">Summation</div>
+          </div>
+        </div>
+      </div>
+      <div className="iv-balance-panel">
+        <div className="iv-balance-line">
+          <input className="iv-balance-small" value={str(totals?.summation ?? "")} readOnly />
+          <span>summation</span>
+        </div>
+        <div className="iv-balance-line">
+          <input className="iv-balance-small" value={str(totals?.paid ?? "")} readOnly />
+          <span>paied</span>
+        </div>
+        <div className="iv-balance-line">
+          <input className="iv-balance-small" value={str(totals?.balance ?? "")} readOnly />
+          <span>balance</span>
+        </div>
+      </div>
+
+      <GlPurchaseVoucherPost
+        voucherId={voucherId}
+        glJournalEntryId={detail?.glJournalEntryId}
+        documentStatus={detail?.documentStatus}
+        onPosted={() => reloadVoucher(voucherId)}
+      />
+
+      <div className="iv-bottom-actions">
+        <button type="button" className="iv-bottom-btn" onClick={onNew}>
+          NEW
+        </button>
+        <button type="button" className="iv-bottom-btn red" onClick={onDelete}>
+          Delete
+        </button>
+        <button type="button" className="iv-bottom-btn" onClick={() => document.getElementById(formId)?.requestSubmit()}>
+          Save
+        </button>
+        <button
+          type="button"
+          className="iv-bottom-btn yellow"
+          onClick={() => printRootWithLocale(pageRootRef.current, { dir: "rtl", lang: "ar" })}
+        >
+          طباعة
+          <br />
+          عربي
+        </button>
+        <button
+          type="button"
+          className="iv-bottom-btn yellow"
+          onClick={() => printRootWithLocale(pageRootRef.current, { dir: "ltr", lang: "en" })}
+        >
+          Print
+          <br />
+          English
+        </button>
+        <button type="button" className="iv-bottom-btn" onClick={goLatestVoucher}>
+          Last Voucher
+        </button>
+        <button type="button" className="iv-bottom-btn" onClick={showRecentVoucherList}>
+          Last Edited
+          <br />
+          Vouchers
+        </button>
+        <button
+          type="button"
+          className="iv-bottom-btn"
+          onClick={() => voucherId && reloadVoucher(voucherId)}
+        >
+          Re Load Last
+          <br />
+          Voucher
+        </button>
+        <button type="button" className="iv-bottom-btn green" onClick={() => navigateAppPage("is")}>
+          Direct Sal
+        </button>
+        <button
+          type="button"
+          className="iv-bottom-btn green"
+          onClick={() => {
+            setEditing(false);
+            setErr("");
+            setSelectedLineId("");
+          }}
+        >
+          X
+        </button>
+        <button type="button" className="iv-bottom-btn green" onClick={scrollLines}>
+          second
+        </button>
+        <button type="button" className="iv-bottom-btn blue" onClick={scrollHeader}>
+          main
+        </button>
+      </div>
+    </div>
+  );
 }
-
-function Sr(e) {
-  let t = ue(e);
-  for (const [n, r] of Object.entries(Tf)) t = t.split(n).join(r);
-  t = decodeMojibakeWindows1256ToUtf8(t);
-  for (const [n, r] of Object.entries(Tf)) t = t.split(n).join(r);
-  return t;
-}
-
-function If(){const{user:e}=ps(),[t,n]=u.useState([]),[r,l]=u.useState(""),[a,i]=u.useState(null),[o,c]=u.useState([]),[d,x]=u.useState(null),[g,h]=u.useState(""),[C,D]=u.useState([]),[k,P]=u.useState([]),[p,m]=u.useState([]),[y,f]=u.useState(""),[S,b]=u.useState(""),[L,A]=u.useState([]),[z,_]=u.useState({}),[R,Y]=u.useState(""),[K,ie]=u.useState(""),[J,se]=u.useState(!1),[j,V]=u.useState(null),[U,W]=u.useState(""),ae=u.useRef(null),me=u.useRef(null),ze=u.useRef(null);u.useEffect(()=>{const N=ae.current;if(!N)return;const $=document.createTreeWalker(N,NodeFilter.SHOW_TEXT);let X=$.nextNode();for(;X;){const v=X,w=v.nodeValue??"",B=Sr(w);B!==w&&(v.nodeValue=B),X=$.nextNode()}N.querySelectorAll("[title]").forEach(v=>{const w=v.getAttribute("title");if(!w)return;const B=Sr(w);B!==w&&v.setAttribute("title",B)}),N.querySelectorAll("input[placeholder]").forEach(v=>{const w=v.getAttribute("placeholder");if(!w)return;const B=Sr(w);B!==w&&v.setAttribute("placeholder",B)})},[a,o,t,J,K,R]);const pe=u.useCallback(async N=>{if(!N)return;const[$,X,v]=await Promise.all([E.get(`/invoice-vouchers/${N}`),E.get(`/invoice-vouchers/${N}/items`),E.get(`/invoice-vouchers/${N}/totals`)]);i($),c(X.items??[]),x(v)},[]);u.useEffect(()=>{let N=!1;return(async()=>{try{const[$,X,v,w]=await Promise.all([E.get("/invoice-vouchers",{page:1,pageSize:100}),E.get("/containers",{page:1,pageSize:200}),E.get("/parties",{type:"SUPPLIER",page:1,pageSize:300}),E.get("/stores")]);if(N)return;const B=$.items??[];n(B),l(ee=>{var oe;return ee&&B.some(ve=>ve.id===ee)?ee:((oe=B[0])==null?void 0:oe.id)??""}),D(X.items??[]),P(v.items??[]),m(w.items??[])}catch($){N||h($.message)}})(),()=>{N=!0}},[]),u.useEffect(()=>{const N=$=>{var v;const X=(v=$.detail)==null?void 0:v.scope;X!=="stores"&&X!=="all"||(async()=>{try{if(X==="stores"){const w=await E.get("/stores");m(w.items??[])}else{const[w,B,ee]=await Promise.all([E.get("/containers",{page:1,pageSize:200}),E.get("/parties",{type:"SUPPLIER",page:1,pageSize:300}),E.get("/stores")]);D(w.items??[]),P(B.items??[]),m(ee.items??[])}}catch(w){h(w.message)}})()};return window.addEventListener($n,N),()=>window.removeEventListener($n,N)},[]),u.useEffect(()=>{var X;const N=(X=sessionStorage.getItem("purchaseVouchersJumpContainerNo"))==null?void 0:X.trim();if(!N||!t.length)return;const $=t.find(v=>{var w;return String(((w=v.container)==null?void 0:w.containerNo)??"").trim()===N});sessionStorage.removeItem("purchaseVouchersJumpContainerNo"),$&&l($.id)},[t]),u.useEffect(()=>{if(!r){i(null),c([]),x(null);return}let N=!1;return(async()=>{try{await pe(r),N||h("")}catch($){N||h($.message)}})(),()=>{N=!0}},[r,pe]),u.useEffect(()=>{ie(""),se(!1)},[r]),u.useEffect(()=>{f((a==null?void 0:a.supplierId)??""),b((a==null?void 0:a.storeId)??"")},[a==null?void 0:a.id,a==null?void 0:a.supplierId,a==null?void 0:a.storeId,a==null?void 0:a.updatedAt]),u.useEffect(()=>{if(!r){A([]),_({}),Y("");return}let N=!1;return(async()=>{var $;try{const X=await E.get(`/invoice-vouchers/${r}/stock`);if(N)return;const v=X.items??[];A(v),Y((($=X.warehouse)==null?void 0:$.name)??"");const w={};for(const B of v)w[B.itemId]=Number(B.qtyOnHand??0);_(w)}catch{if(N)return;A([]),_({}),Y("")}})(),()=>{N=!0}},[r,o]);const ge=ue((a==null?void 0:a.exchangeRate)??"6.7"),xe=a!=null&&a.voucherDate?Et(a.voucherDate):"",Me=(a==null?void 0:a.voucherNo)??"",ye=Sr(ue((a==null?void 0:a.currency)??"دولار"))||"دولار",Ce=d==null?void 0:d.aggregates,F="iv-header-form",re=async()=>{if(r)try{await E.post(`/invoice-vouchers/${r}/workflow/submit`,{}),await pe(r)}catch(N){window.alert(N.message)}},te=async()=>{if(r)try{await E.post(`/invoice-vouchers/${r}/workflow/approve`,{}),await pe(r)}catch(N){window.alert(N.message)}},Be=async()=>{if(!r)return;const N=window.prompt("سبب الرفض (اختياري)")??"";try{await E.post(`/invoice-vouchers/${r}/workflow/reject`,{comment:N||null}),await pe(r)}catch($){window.alert($.message)}},Se=async N=>{N&&N.preventDefault&&N.preventDefault();if(!r){window.alert("اختر فاتورة أولاً.");return}const $=N&&N.currentTarget&&N.currentTarget.tagName==="FORM"?N.currentTarget:document.getElementById(F);if(!$){window.alert("تعذر العثور على نموذج الحفظ.");return}const X=new FormData($);try{await E.patch(`/invoice-vouchers/${r}`,{voucherNo:String(X.get("voucherNo")||"").trim()||void 0,voucherDate:Ct(String(X.get("voucherDate")||""))??null,exchangeRate:X.get("exchangeRate")||void 0,officeCommission:X.get("officeCommission")||void 0,cbmTransportPrice:X.get("cbmTransportPrice")||void 0,currency:X.get("currency")||((a==null?void 0:a.currency)||void 0),containerId:X.get("containerId")||null,supplierId:y||((a==null?void 0:a.supplierId)||void 0),storeId:S||((a==null?void 0:a.storeId)||null),notes:X.get("notes")||((a==null?void 0:a.notes)||null)}),await pe(r);const v=await E.get("/invoice-vouchers",{page:1,pageSize:100});n(v.items??[]),se(!1),h("")}catch(v){const w=Sr(v==null?void 0:v.message)||"تعذر حفظ الفاتورة.";h(w),window.alert(w)}},Re=async()=>{var v,w;const N=(v=C[0])==null?void 0:v.id,$=(w=k[0])==null?void 0:w.id;if(!$){window.alert("يجب وجود مورد على الأقل في البيانات.");return}const X=window.prompt("رقم فاتورة الشراء",`P-${Date.now()}`);if(!(!X||!X.trim()))try{const B=await E.post("/invoice-vouchers",{voucherNo:X.trim(),containerId:N||undefined,supplierId:$,currency:"دولار"}),ee=await E.get("/invoice-vouchers",{page:1,pageSize:100});n(ee.items??[]),l(B.id)}catch(B){h(B.message)}},T=async()=>{var N;if(!(!r||!window.confirm("حذف فاتورة الشراء؟")))try{await E.delete(`/invoice-vouchers/${r}`);const X=(await E.get("/invoice-vouchers",{page:1,pageSize:100})).items??[];n(X),l(((N=X[0])==null?void 0:N.id)??"")}catch($){h($.message)}},q=async()=>{if(!r)return;const N=window.prompt("اسم المادة","سطر جديد");if(N==null)return;const $=window.prompt("رقم المادة","");if($==null)return;const X=window.prompt("Price to Customer Sum","");if(X==null)return;const v=window.prompt("Weight Sum","");if(v==null)return;const w=window.prompt("Weight","");if(w==null)return;const B=window.prompt("CBM Sum","");if(B==null)return;const ee=window.prompt("CBM","");if(ee==null)return;const oe=window.prompt("Boxes Sum","");if(oe==null)return;const ve=window.prompt("Pieces Sum","");if(ve==null)return;const Nt=window.prompt("Price Sum","");if(Nt==null)return;const Xt=window.prompt("Carton PCS","");if(Xt==null)return;const gn=window.prompt("Price","");if(gn!=null)try{await E.post(`/invoice-vouchers/${r}/items`,{itemName:N.trim()||null,itemNo:$.trim()||null,priceToCustomerSum:Oe(X),weightSum:Oe(v),weight:Oe(w),cbmSum:Oe(B),cbm:Oe(ee),boxesSum:Oe(oe),piecesSum:Oe(ve),priceSum:Oe(Nt),cartonPcs:Oe(Xt),unitPrice:Oe(gn)}),await pe(r)}catch(lr){h(lr.message)}},G=async()=>{if(!(!r||!K||!window.confirm("حذف السطر؟")))try{await E.delete(`/invoice-vouchers/${r}/items/${K}`),ie(""),await pe(r)}catch(N){h(N.message)}},Ee=async()=>{if(!r||!K)return;const N=o.find(kl=>kl.id===K);if(!N)return;const $=window.prompt("اسم المادة",N.itemName??"");if($==null)return;const X=window.prompt("رقم المادة",N.itemNo??"");if(X==null)return;const v=window.prompt("Price to Customer Sum",ue(N.priceToCustomerSum??""));if(v==null)return;const w=window.prompt("الوزن الإجمالي",ue(N.weightSum??""));if(w==null)return;const B=window.prompt("Weight",ue(N.weight??""));if(B==null)return;const ee=window.prompt("CBM Sum",ue(N.cbmSum??""));if(ee==null)return;const oe=window.prompt("CBM",ue(N.cbm??""));if(oe==null)return;const ve=window.prompt("Boxes Sum",ue(N.boxesSum??""));if(ve==null)return;const Nt=window.prompt("Pieces Sum",ue(N.piecesSum??""));if(Nt==null)return;const Xt=window.prompt("مجموع السعر",ue(N.priceSum??""));if(Xt==null)return;const gn=window.prompt("Carton PCS",ue(N.cartonPcs??""));if(gn==null)return;const lr=window.prompt("Price",ue(N.unitPrice??""));if(lr!=null)try{await E.patch(`/invoice-vouchers/${r}/items/${K}`,{itemName:$.trim()||null,itemNo:X.trim()||null,priceToCustomerSum:Oe(v),weightSum:Oe(w),weight:Oe(B),cbmSum:Oe(ee),cbm:Oe(oe),boxesSum:Oe(ve),piecesSum:Oe(Nt),priceSum:Oe(Xt),cartonPcs:Oe(gn),unitPrice:Oe(lr)}),await pe(r)}catch(kl){h(kl.message)}},Ne=new Set(["priceToCustomerSum","weightSum","weight","cbmSum","cbm","boxesSum","piecesSum","priceSum","cartonPcs","unitPrice","itemName","itemNo"]),Pe=new Set(["priceToCustomerSum","weightSum","weight","cbmSum","cbm","boxesSum","piecesSum","priceSum","cartonPcs","unitPrice"]),O=(N,$,X)=>{Ne.has($)&&(ie(N),V({lineId:N,field:$}),W(ue(X)))},ne=async()=>{if(!j||!r)return;const{lineId:N,field:$}=j,X={};Pe.has($)?X[$]=Oe(U):X[$]=U.trim()||null;try{await E.patch(`/invoice-vouchers/${r}/items/${N}`,X),await pe(r)}catch(v){h(v.message)}finally{V(null),W("")}},Z=()=>{V(null),W("")},_e=()=>{var $;const N=($=t[0])==null?void 0:$.id;N?l(N):window.alert("لا توجد فواتير شراء في القائمة.")},Dt=()=>{if(!t.length){window.alert("لا توجد فواتير.");return}const N=t.slice(0,20).map(($,X)=>{var v;return`${X+1}. ${$.voucherNo} — ${((v=$.container)==null?void 0:v.containerNo)??"?"}`});window.alert(`أحدث الفواتير (حسب آخر تعديل):
-
-${N.join(`
-`)}`)},I=()=>{var N;return(N=me.current)==null?void 0:N.scrollIntoView({behavior:"smooth",block:"start"})},H=()=>{var N;return(N=ze.current)==null?void 0:N.scrollIntoView({behavior:"smooth",block:"start"})},le=()=>{var $,X;const N=(X=($=a==null?void 0:a.container)==null?void 0:$.containerNo)==null?void 0:X.trim();N&&sessionStorage.setItem("reportsJumpContainerNo",N),kn("list")};return s.jsxs("div",{className:"iv-page",dir:"ltr",ref:ae,children:[g?s.jsx("div",{className:"alert-error",style:{margin:6},children:g}):null,s.jsx("div",{className:"iv-titleline",children:"Invoice Vouchers"}),s.jsxs("div",{className:"iv-top-tabs",ref:me,children:[s.jsx("button",{type:"button",className:"iv-tab active",onClick:I,children:"Invoice Vouchers"}),s.jsx("button",{type:"button",className:"iv-tab",onClick:H,children:"Details"}),s.jsx("div",{className:"iv-spacer"}),s.jsx("button",{type:"button",className:"iv-mini-btn",onClick:()=>se(N=>!N),children:J?"Lock":"Edit"})]}),s.jsxs("form",{id:F,onSubmit:Se,children:[s.jsxs("div",{className:"iv-controls-row",children:[s.jsx("button",{type:"submit",className:"iv-btn-soft iv-btn-edit",children:"Save"}),s.jsx("span",{className:"iv-lbl-small",children:"%"}),s.jsx("input",{className:"iv-mini-input",name:"officeCommission",readOnly:!J,defaultValue:ue((a==null?void 0:a.officeCommission)??"0")},`oc-${r}-${a==null?void 0:a.updatedAt}`),s.jsx("span",{className:"iv-lbl-small",children:"office commossion"}),s.jsx("input",{className:"iv-mini-input",name:"cbmTransportPrice",readOnly:!J,defaultValue:ue((a==null?void 0:a.cbmTransportPrice)??"")},`cbm-${r}-${a==null?void 0:a.updatedAt}`),s.jsx("span",{className:"iv-lbl-small",children:"cbm transport price"}),s.jsx("input",{className:"iv-mini-input",value:ue((a==null?void 0:a.policyNo)??""),readOnly:!0}),s.jsx("div",{className:"iv-spacer"}),s.jsx("input",{className:"iv-rate-input",name:"exchangeRate",readOnly:!J,defaultValue:ge},`er-${r}-${a==null?void 0:a.updatedAt}`),s.jsx("span",{className:"iv-lbl-small",children:"سعر الصرف"}),s.jsx("input",{className:"iv-date-input",name:"voucherDate",readOnly:!J,placeholder:"dd/mm/yyyy",defaultValue:xe},`vd-${r}-${a==null?void 0:a.updatedAt}`),s.jsx("span",{className:"iv-lbl-small",children:"Date"}),s.jsx("input",{className:"iv-voucher-input",name:"voucherNo",readOnly:!J,defaultValue:Me},`vn-${r}-${a==null?void 0:a.updatedAt}`),s.jsx("span",{className:"iv-lbl-small",children:"Voucher No"})]}),s.jsxs("div",{className:"iv-controls-row second",children:[s.jsxs("select",{className:"iv-blue-input",name:"containerId",disabled:!J,defaultValue:(a==null?void 0:a.containerId)??"",children:[s.jsx("option",{value:"",children:"— بدون حاوية —"}),C.map(N=>s.jsx("option",{value:N.id,children:N.containerNo},N.id))]},`ct-${r}-${a==null?void 0:a.updatedAt}`),s.jsx("span",{className:"iv-lbl-small",children:"Container No"}),s.jsx(Zs,{name:"supplierId",dir:"rtl",className:"iv-search-select",inputClassName:"iv-balance-input",disabled:!J,value:y,onChange:f,options:k,getOptionValue:N=>N.id,getOptionLabel:N=>N.name,placeholder:"اختر المورد",searchPlaceholder:"ابحث عن مورد...",clearLabel:"— اختر المورد —",allowClear:!1}),s.jsx("span",{className:"iv-lbl-small",children:"Supplier"}),s.jsxs("div",{className:"iv-voucher-stack",children:[s.jsxs("select",{className:"iv-currency-select",name:"currency",disabled:!J,defaultValue:ye,children:[s.jsx("option",{value:"دولار",children:"دولار"}),s.jsx("option",{value:"دينار",children:"دينار"})]},`cur-${r}-${a==null?void 0:a.updatedAt}`),s.jsx("select",{className:"iv-voucher-list",size:Math.min(5,Math.max(3,t.length||3)),value:r,onChange:N=>l(N.target.value),children:t.length===0?s.jsx("option",{value:"",children:"—"}):t.map(N=>s.jsxs("option",{value:N.id,children:[N.voucherNo," (",N.currency,")"]},N.id))})]})]}),s.jsxs("div",{className:"erp-workflow-row",style:{margin:"6px 0"},children:[s.jsx(Id,{status:a==null?void 0:a.documentStatus}),(a==null?void 0:a.documentStatus)==="DRAFT"&&((e==null?void 0:e.role)==="DATA_ENTRY"||(e==null?void 0:e.role)==="ACCOUNTANT"||(e==null?void 0:e.role)==="ADMIN")?s.jsx("button",{type:"button",onClick:re,children:"إرسال للموافقة"}):null,(a==null?void 0:a.documentStatus)==="SUBMITTED"&&((e==null?void 0:e.role)==="ACCOUNTANT"||(e==null?void 0:e.role)==="ADMIN")?s.jsxs(s.Fragment,{children:[s.jsx("button",{type:"button",onClick:te,children:"اعتماد"}),s.jsx("button",{type:"button",onClick:Be,children:"رفض"})]}):null]}),s.jsxs("div",{className:"iv-controls-row third",children:[s.jsx("button",{type:"button",className:"iv-blue-wide",onClick:le,title:"فتح الحاوية في قائمة الحاويات",children:"container vouchers"}),s.jsx("div",{className:"iv-spacer"}),s.jsx(Zs,{name:"storeId",className:"iv-search-select",inputClassName:"iv-small-select",disabled:!J,value:S,onChange:b,options:p,getOptionValue:N=>N.id,getOptionLabel:N=>N.name,placeholder:"—",searchPlaceholder:"ابحث عن مستودع...",clearLabel:"— بدون مستودع —"}),s.jsx("span",{className:"iv-lbl-small",children:"Store Targit"}),s.jsx("input",{className:"iv-mini-input notes",name:"notes",readOnly:!J,defaultValue:(a==null?void 0:a.notes)??""},`nt-${r}-${a==null?void 0:a.updatedAt}`),s.jsx("span",{className:"iv-lbl-small",children:"Nots"})]})]}),s.jsxs("div",{className:"iv-controls-row",style:{marginTop:6},children:[s.jsx("button",{type:"button",className:"iv-item-btn green",onClick:Re,children:"NEW voucher"}),s.jsx("button",{type:"button",className:"iv-item-btn red",onClick:T,children:"Delete voucher"}),s.jsx("button",{type:"button",className:"iv-item-btn green",onClick:q,children:"Add line"}),s.jsx("button",{type:"button",className:"iv-item-btn red",onClick:G,disabled:!K,children:"Delete line"}),s.jsx("button",{type:"button",className:"iv-item-btn green",onClick:Ee,disabled:!K,children:"Edit line"})]}),s.jsxs("div",{className:"iv-table-wrap",ref:ze,children:[s.jsxs("div",{className:"iv-side-item-actions",children:[s.jsx("button",{type:"button",className:"iv-item-btn red",onClick:G,disabled:!K,children:"Delete Item"}),s.jsx("button",{type:"button",className:"iv-item-btn green",onClick:q,children:"Add Item"})]}),s.jsxs("table",{className:"iv-table",children:[s.jsx("thead",{children:s.jsxs("tr",{children:[s.jsx("th",{}),s.jsxs("th",{children:["Price to",s.jsx("br",{}),"Costumer Sum"]}),s.jsxs("th",{children:["Weight",s.jsx("br",{}),"Sum"]}),s.jsx("th",{children:"Weight"}),s.jsxs("th",{children:["cbm",s.jsx("br",{}),"Sum"]}),s.jsx("th",{children:"cbm"}),s.jsxs("th",{children:["Boxes",s.jsx("br",{}),"Sum"]}),s.jsxs("th",{children:["Pieces",s.jsx("br",{}),"Sum"]}),s.jsx("th",{children:"Price Sum"}),s.jsx("th",{children:"carton pcs"}),s.jsx("th",{children:"price"}),s.jsx("th",{children:"Item Name"}),s.jsx("th",{children:"item no"}),s.jsx("th",{children:"available"}),s.jsx("th",{children:"seq"}),s.jsx("th",{children:"pic"})]})}),s.jsx("tbody",{children:o.length===0?s.jsx("tr",{children:s.jsx("td",{colSpan:16,style:{textAlign:"center",padding:12},children:"لا أسطر"})}):o.map(N=>s.jsxs("tr",{style:{cursor:"pointer",background:K===N.id?"#e8f4ff":void 0},onClick:()=>ie(N.id),children:[s.jsx("td",{className:"iv-arrow",children:"▶"}),s.jsx("td",{onDoubleClick:()=>O(N.id,"priceToCustomerSum",N.priceToCustomerSum),children:(j==null?void 0:j.lineId)===N.id&&(j==null?void 0:j.field)==="priceToCustomerSum"?s.jsx("input",{autoFocus:!0,className:"iv-mini-input",value:U,onChange:$=>W($.target.value),onBlur:ne,onKeyDown:$=>{$.key==="Enter"&&ne(),$.key==="Escape"&&Z()}}):ue(N.priceToCustomerSum)}),s.jsx("td",{onDoubleClick:()=>O(N.id,"weightSum",N.weightSum),children:(j==null?void 0:j.lineId)===N.id&&(j==null?void 0:j.field)==="weightSum"?s.jsx("input",{autoFocus:!0,className:"iv-mini-input",value:U,onChange:$=>W($.target.value),onBlur:ne,onKeyDown:$=>{$.key==="Enter"&&ne(),$.key==="Escape"&&Z()}}):ue(N.weightSum)}),s.jsx("td",{onDoubleClick:()=>O(N.id,"weight",N.weight),children:(j==null?void 0:j.lineId)===N.id&&(j==null?void 0:j.field)==="weight"?s.jsx("input",{autoFocus:!0,className:"iv-mini-input",value:U,onChange:$=>W($.target.value),onBlur:ne,onKeyDown:$=>{$.key==="Enter"&&ne(),$.key==="Escape"&&Z()}}):ue(N.weight)}),s.jsx("td",{onDoubleClick:()=>O(N.id,"cbmSum",N.cbmSum),children:(j==null?void 0:j.lineId)===N.id&&(j==null?void 0:j.field)==="cbmSum"?s.jsx("input",{autoFocus:!0,className:"iv-mini-input",value:U,onChange:$=>W($.target.value),onBlur:ne,onKeyDown:$=>{$.key==="Enter"&&ne(),$.key==="Escape"&&Z()}}):ue(N.cbmSum)}),s.jsx("td",{onDoubleClick:()=>O(N.id,"cbm",N.cbm),children:(j==null?void 0:j.lineId)===N.id&&(j==null?void 0:j.field)==="cbm"?s.jsx("input",{autoFocus:!0,className:"iv-mini-input",value:U,onChange:$=>W($.target.value),onBlur:ne,onKeyDown:$=>{$.key==="Enter"&&ne(),$.key==="Escape"&&Z()}}):ue(N.cbm)}),s.jsx("td",{onDoubleClick:()=>O(N.id,"boxesSum",N.boxesSum),children:(j==null?void 0:j.lineId)===N.id&&(j==null?void 0:j.field)==="boxesSum"?s.jsx("input",{autoFocus:!0,className:"iv-mini-input",value:U,onChange:$=>W($.target.value),onBlur:ne,onKeyDown:$=>{$.key==="Enter"&&ne(),$.key==="Escape"&&Z()}}):ue(N.boxesSum)}),s.jsx("td",{onDoubleClick:()=>O(N.id,"piecesSum",N.piecesSum),children:(j==null?void 0:j.lineId)===N.id&&(j==null?void 0:j.field)==="piecesSum"?s.jsx("input",{autoFocus:!0,className:"iv-mini-input",value:U,onChange:$=>W($.target.value),onBlur:ne,onKeyDown:$=>{$.key==="Enter"&&ne(),$.key==="Escape"&&Z()}}):ue(N.piecesSum)}),s.jsx("td",{onDoubleClick:()=>O(N.id,"priceSum",N.priceSum),children:(j==null?void 0:j.lineId)===N.id&&(j==null?void 0:j.field)==="priceSum"?s.jsx("input",{autoFocus:!0,className:"iv-mini-input",value:U,onChange:$=>W($.target.value),onBlur:ne,onKeyDown:$=>{$.key==="Enter"&&ne(),$.key==="Escape"&&Z()}}):ue(N.priceSum)}),s.jsx("td",{onDoubleClick:()=>O(N.id,"cartonPcs",N.cartonPcs),children:(j==null?void 0:j.lineId)===N.id&&(j==null?void 0:j.field)==="cartonPcs"?s.jsx("input",{autoFocus:!0,className:"iv-mini-input",value:U,onChange:$=>W($.target.value),onBlur:ne,onKeyDown:$=>{$.key==="Enter"&&ne(),$.key==="Escape"&&Z()}}):ue(N.cartonPcs)}),s.jsx("td",{onDoubleClick:()=>O(N.id,"unitPrice",N.unitPrice),children:(j==null?void 0:j.lineId)===N.id&&(j==null?void 0:j.field)==="unitPrice"?s.jsx("input",{autoFocus:!0,className:"iv-mini-input",value:U,onChange:$=>W($.target.value),onBlur:ne,onKeyDown:$=>{$.key==="Enter"&&ne(),$.key==="Escape"&&Z()}}):ue(N.unitPrice)}),s.jsx("td",{className:"iv-item-name",onDoubleClick:()=>O(N.id,"itemName",N.itemName),children:(j==null?void 0:j.lineId)===N.id&&(j==null?void 0:j.field)==="itemName"?s.jsx("input",{autoFocus:!0,className:"iv-mini-input",value:U,onChange:$=>W($.target.value),onBlur:ne,onKeyDown:$=>{$.key==="Enter"&&ne(),$.key==="Escape"&&Z()}}):N.itemName??""}),s.jsx("td",{onDoubleClick:()=>O(N.id,"itemNo",N.itemNo),children:(j==null?void 0:j.lineId)===N.id&&(j==null?void 0:j.field)==="itemNo"?s.jsx("input",{autoFocus:!0,className:"iv-mini-input",value:U,onChange:$=>W($.target.value),onBlur:ne,onKeyDown:$=>{$.key==="Enter"&&ne(),$.key==="Escape"&&Z()}}):N.itemNo??""}),s.jsx("td",{children:N.itemId?ue(z[N.itemId]??0):"—"}),s.jsx("td",{children:N.seq}),s.jsx("td",{children:N.itemId?"linked":"—"})]},N.id))})]})]}),R?s.jsxs("div",{style:{marginTop:6,fontSize:12,color:"#334155"},children:["Warehouse: ",s.jsx("strong",{children:R})," (",L.length," items)"]}):null,s.jsx(Dd,{mode:"purchase",voucherId:r,line:o.find(N=>N.id===K)??o[0],onSaved:()=>pe(r)}),s.jsx("div",{className:"iv-summary-row",children:s.jsxs("div",{className:"iv-sum-grid",children:[s.jsxs("div",{className:"iv-sum-item",children:[s.jsx("div",{className:"iv-sum-item-box",children:ue((Ce==null?void 0:Ce.priceToCustomerSum)??"")}),s.jsx("div",{className:"iv-sum-item-label",children:"Price to Customer Sum"})]}),s.jsxs("div",{className:"iv-sum-item",children:[s.jsx("div",{className:"iv-sum-item-box",children:ue((Ce==null?void 0:Ce.weightSum)??"")}),s.jsx("div",{className:"iv-sum-item-label",children:"Weight Sum"})]}),s.jsxs("div",{className:"iv-sum-item",children:[s.jsx("div",{className:"iv-sum-item-box",children:ue((Ce==null?void 0:Ce.boxesSum)??"")}),s.jsx("div",{className:"iv-sum-item-label",children:"Boxes Sum"})]}),s.jsxs("div",{className:"iv-sum-item",children:[s.jsx("div",{className:"iv-sum-item-box",children:ue((Ce==null?void 0:Ce.piecesSum)??"")}),s.jsx("div",{className:"iv-sum-item-label",children:"Pieces Sum"})]}),s.jsxs("div",{className:"iv-sum-item",children:[s.jsx("div",{className:"iv-sum-item-box",children:ue((d==null?void 0:d.summation)??"")}),s.jsx("div",{className:"iv-sum-item-label",children:"Summation"})]})]})}),s.jsxs("div",{className:"iv-balance-panel",children:[s.jsxs("div",{className:"iv-balance-line",children:[s.jsx("input",{className:"iv-balance-small",value:ue((d==null?void 0:d.summation)??""),readOnly:!0}),s.jsx("span",{children:"summation"})]}),s.jsxs("div",{className:"iv-balance-line",children:[s.jsx("input",{className:"iv-balance-small",value:ue((d==null?void 0:d.paid)??""),readOnly:!0}),s.jsx("span",{children:"paied"})]}),s.jsxs("div",{className:"iv-balance-line",children:[s.jsx("input",{className:"iv-balance-small",value:ue((d==null?void 0:d.balance)??""),readOnly:!0}),s.jsx("span",{children:"balance"})]})]}),s.jsx(Pf,{voucherId:r,glJournalEntryId:a==null?void 0:a.glJournalEntryId,documentStatus:a==null?void 0:a.documentStatus,onPosted:()=>pe(r)}),s.jsxs("div",{className:"iv-bottom-actions",children:[s.jsx("button",{type:"button",className:"iv-bottom-btn",onClick:Re,children:"NEW"}),s.jsx("button",{type:"button",className:"iv-bottom-btn red",onClick:T,children:"Delete"}),s.jsx("button",{type:"button",className:"iv-bottom-btn",onClick:()=>{var N;return(N=document.getElementById(F))==null?void 0:N.requestSubmit()},children:"Save"}),s.jsxs("button",{type:"button",className:"iv-bottom-btn yellow",onClick:()=>Vt(ae.current,{dir:"rtl",lang:"ar"}),children:["طباعة",s.jsx("br",{}),"عربي"]}),s.jsxs("button",{type:"button",className:"iv-bottom-btn yellow",onClick:()=>Vt(ae.current,{dir:"ltr",lang:"en"}),children:["Print",s.jsx("br",{}),"English"]}),s.jsx("button",{type:"button",className:"iv-bottom-btn",onClick:_e,children:"Last Voucher"}),s.jsxs("button",{type:"button",className:"iv-bottom-btn",onClick:Dt,children:["Last Edited",s.jsx("br",{}),"Vouchers"]}),s.jsxs("button",{type:"button",className:"iv-bottom-btn",onClick:()=>r&&pe(r),children:["Re Load Last",s.jsx("br",{}),"Voucher"]}),s.jsx("button",{type:"button",className:"iv-bottom-btn green",onClick:()=>kn("is"),children:"Direct Sal"}),s.jsx("button",{type:"button",className:"iv-bottom-btn green",onClick:()=>{se(!1),h(""),ie("")},children:"X"}),s.jsx("button",{type:"button",className:"iv-bottom-btn green",onClick:H,children:"second"}),s.jsx("button",{type:"button",className:"iv-bottom-btn blue",onClick:I,children:"main"})]})]})}
-
-export default If;
-
-
