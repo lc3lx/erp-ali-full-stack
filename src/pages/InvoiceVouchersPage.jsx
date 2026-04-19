@@ -48,6 +48,7 @@ export default function InvoiceVouchersPage() {
     cbmSum: "", cbm: "", boxesSum: "", piecesSum: "",
     priceSum: "", cartonPcs: "", unitPrice: ""
   });
+  const [imageBase64, setImageBase64] = useState("");
 
   const reloadVoucher = useCallback(async (id) => {
     if (!id) return;
