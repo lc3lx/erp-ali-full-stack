@@ -321,6 +321,17 @@ export default function InvoiceVouchersPage() {
   const onAddLine = () => openLineEditor(false);
   const onEditLine = () => openLineEditor(true);
 
+  const onDeleteLine = async () => {
+    if (!voucherId || !selectedLineId || !window.confirm("حذف السطر؟")) return;
+    try {
+      await api.delete(`/invoice-vouchers/${voucherId}/items/${selectedLineId}`);
+      setSelectedLineId("");
+      await reloadVoucher(voucherId);
+    } catch (e) {
+      setErr(e.message);
+    }
+  };
+
   const editableFields = new Set([
     "priceToCustomerSum",
     "weightSum",
