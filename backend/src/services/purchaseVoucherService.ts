@@ -343,7 +343,11 @@ export async function addPurchaseLine(
 
 export async function listPurchaseLines(voucherId: string) {
   await getPurchaseVoucher(voucherId);
-  return prisma.purchaseVoucherLine.findMany({ where: { voucherId }, orderBy: { seq: "asc" } });
+  return prisma.purchaseVoucherLine.findMany({
+    where: { voucherId },
+    orderBy: { seq: "asc" },
+    include: { item: { select: { id: true, name: true, itemNo: true, imageUrl: true } } },
+  });
 }
 
 export async function updatePurchaseLine(

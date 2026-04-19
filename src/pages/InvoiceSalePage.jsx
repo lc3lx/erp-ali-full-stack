@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { GlSaleVoucherPost } from "../components/GlDocumentPost.jsx";
 import { DocumentStatusBadge } from "../components/erp/DocumentStatusBadge.jsx";
 import { SearchableDropdown } from "../components/SearchableDropdown.jsx";
+import { optimizeImageFile } from "../lib/imageUtils.js";
 import { formatIsoToDisplay, toApiDateTime } from "../lib/dates.js";
 import {
   MASTERS_REFRESH_EVENT,
@@ -54,6 +55,7 @@ export default function InvoiceSalePage() {
     listQty: "", pricePerThousand: "", totalPrice: "",
     pcsInCarton: "", linePrice: ""
   });
+  const [imageBase64, setImageBase64] = useState("");
 
   const reloadVoucher = useCallback(async (id) => {
     if (!id) return;
@@ -262,6 +264,7 @@ export default function InvoiceSalePage() {
 
   const openLineEditor = (isEdit = false) => {
     if (!voucherId) return;
+    setImageBase64("");
     if (isEdit) {
       if (!selectedLineId) return;
       const row = lines.find((x) => x.id === selectedLineId);
@@ -296,11 +299,42 @@ export default function InvoiceSalePage() {
     setIsLineEditOpen(true);
   };
 
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      setImageBase64("");
+      return;
+    }
+    try {
+      const b64 = await optimizeImageFile(file);
+      setImageBase64(b64);
+    } catch (err) {
+      window.alert(err.message);
+      e.target.value = "";
+    }
+  };
+
   const saveLineForm = async (e) => {
     e.preventDefault();
     try {
+      let finalItemId = lineForm.itemId || null;
+
+      if (imageBase64) {
+        if (finalItemId) {
+          await api.patch(`/items/${finalItemId}`, { imageUrl: imageBase64 });
+        } else {
+          const newItemName = lineForm.detail.trim() || lineForm.itemNo.trim() || "منتج جديد";
+          const newItem = await api.post("/items", {
+            name: newItemName,
+            itemNo: lineForm.itemNo.trim() || null,
+            imageUrl: imageBase64
+          });
+          finalItemId = newItem.id;
+        }
+      }
+
       const payload = {
-        itemId: lineForm.itemId || null,
+        itemId: finalItemId,
         detail: lineForm.detail.trim() || null,
         itemNo: lineForm.itemNo.trim() || null,
         usdConvertRate: numOrNull(lineForm.usdConvertRate),
@@ -321,6 +355,10 @@ export default function InvoiceSalePage() {
       } else {
         await api.post(`/invoice-sale/${voucherId}/items`, payload);
       }
+
+      const catRes = await api.get("/items/lookup");
+      setCatalog(catRes.items ?? []);
+
       await reloadVoucher(voucherId);
       setIsLineEditOpen(false);
     } catch (ex) {
@@ -695,6 +733,8 @@ export default function InvoiceSalePage() {
               <th>التفاصيل</th>
               <th>رقم</th>
               <th>ت</th>
+              <th>صورة المنتج</th>
+              <th>المنتج المربوط</th>
             </tr>
           </thead>
           <tbody>
@@ -824,6 +864,12 @@ export default function InvoiceSalePage() {
                     )}
                   </td>
                   <td>{str(r.seq)}</td>
+                  <td style={{ textAlign: "center" }}>
+                    {r.item?.imageUrl ? (
+                       <img src={r.item.imageUrl} alt={r.detail || r.itemNo} style={{ maxWidth: 40, maxHeight: 40, borderRadius: 4, border: "1px solid #ccc" }} />
+                    ) : "—"}
+                  </td>
+                  <td>{r.itemId ? catalog.find(x => x.id === r.itemId)?.name || "Linked" : "—"}</td>
                 </tr>
               ))
             )}
@@ -916,20 +962,29 @@ export default function InvoiceSalePage() {
 
             {(() => {
               const selectedItem = lineForm.itemId ? catalog.find(x => x.id === lineForm.itemId) : null;
-              const imgSrc = selectedItem?.imageUrl;
-              if (!imgSrc) return null;
+              const imgSrc = imageBase64 || selectedItem?.imageUrl;
               return (
                 <div style={{ marginBottom: 15, textAlign: "center" }}>
-                  <img
-                    src={imgSrc}
-                    alt={selectedItem?.name || "صورة المنتج"}
-                    style={{
-                      maxWidth: 180, maxHeight: 140, objectFit: "contain",
-                      borderRadius: 6, border: "1px solid #e5e7eb",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.08)"
-                    }}
-                  />
-                  <div style={{ fontSize: 11, color: "#6b7280", marginTop: 4 }}>صورة المنتج</div>
+                  {imgSrc ? (
+                    <img
+                      src={imgSrc}
+                      alt={selectedItem?.name || "صورة المنتج"}
+                      style={{
+                        maxWidth: 180, maxHeight: 140, objectFit: "contain",
+                        borderRadius: 6, border: "1px solid #e5e7eb",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                        marginBottom: 10
+                      }}
+                    />
+                  ) : (
+                    <div style={{ height: 60, display: "flex", alignItems: "center", justifyContent: "center", background: "#f9fafb", border: "1px dashed #d1d5db", borderRadius: 6, marginBottom: 10 }}>
+                      <span style={{ fontSize: 12, color: "#9ca3af" }}>لا يوجد صورة متوفرة</span>
+                    </div>
+                  )}
+                  <div style={{ margin: "0 auto", display: "inline-block" }}>
+                    <label style={{ display: "block", fontSize: 12, marginBottom: 4, fontWeight: 600 }}>رفع / تغيير الصورة</label>
+                    <input type="file" accept="image/*" onChange={handleImageUpload} className="master-input" style={{ fontSize: 13, padding: "4px 8px" }} />
+                  </div>
                 </div>
               );
             })()}

@@ -212,7 +212,11 @@ export async function addSaleLine(
 
 export async function listSaleLines(voucherId: string) {
   await getSaleVoucher(voucherId);
-  return prisma.saleVoucherLine.findMany({ where: { voucherId }, orderBy: { seq: "asc" } });
+  return prisma.saleVoucherLine.findMany({
+    where: { voucherId },
+    orderBy: { seq: "asc" },
+    include: { item: { select: { id: true, name: true, itemNo: true, imageUrl: true } } },
+  });
 }
 
 export async function updateSaleLine(voucherId: string, lineId: string, data: Prisma.SaleVoucherLineUpdateInput) {
