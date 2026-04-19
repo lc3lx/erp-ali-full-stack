@@ -319,18 +319,18 @@ export default function InvoiceSalePage() {
     try {
       let finalItemId = lineForm.itemId || null;
 
-      if (imageBase64) {
-        if (finalItemId) {
-          await api.patch(`/items/${finalItemId}`, { imageUrl: imageBase64 });
-        } else {
-          const newItemName = lineForm.detail.trim() || lineForm.itemNo.trim() || "منتج جديد";
-          const newItem = await api.post("/items", {
-            name: newItemName,
-            itemNo: lineForm.itemNo.trim() || null,
-            imageUrl: imageBase64
-          });
-          finalItemId = newItem.id;
-        }
+      // Ensure catalog item exists if they typed a detail/name or added an image, but haven't linked
+      if (!finalItemId && (lineForm.detail.trim() || lineForm.itemNo.trim() || imageBase64)) {
+        const newItemName = lineForm.detail.trim() || lineForm.itemNo.trim() || "منتج جديد";
+        const newItem = await api.post("/items", {
+          name: newItemName,
+          itemNo: lineForm.itemNo.trim() || null,
+          imageUrl: imageBase64 || null
+        });
+        finalItemId = newItem.id;
+      } else if (finalItemId && imageBase64) {
+        // Update existing catalog item image
+        await api.patch(`/items/${finalItemId}`, { imageUrl: imageBase64 });
       }
 
       const payload = {
