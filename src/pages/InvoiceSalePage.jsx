@@ -914,6 +914,26 @@ export default function InvoiceSalePage() {
               </div>
             </div>
 
+            {(() => {
+              const selectedItem = lineForm.itemId ? catalog.find(x => x.id === lineForm.itemId) : null;
+              const imgSrc = selectedItem?.imageUrl;
+              if (!imgSrc) return null;
+              return (
+                <div style={{ marginBottom: 15, textAlign: "center" }}>
+                  <img
+                    src={imgSrc}
+                    alt={selectedItem?.name || "صورة المنتج"}
+                    style={{
+                      maxWidth: 180, maxHeight: 140, objectFit: "contain",
+                      borderRadius: 6, border: "1px solid #e5e7eb",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.08)"
+                    }}
+                  />
+                  <div style={{ fontSize: 11, color: "#6b7280", marginTop: 4 }}>صورة المنتج</div>
+                </div>
+              );
+            })()}
+
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 15 }}>
               <label className="master-field">التفاصيل
                 <input className="io-date-input master-input" value={lineForm.detail} onChange={e => setLineForm({...lineForm, detail: e.target.value})} />
