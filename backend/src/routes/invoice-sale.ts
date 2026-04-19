@@ -32,7 +32,7 @@ const voucherBody = z.object({
   officeCommission: optionalNullableNumber,
   cbmTransportPrice: optionalNullableNumber,
   currency: z.string().default("دولار"),
-  containerId: z.string().uuid(),
+  containerId: z.string().uuid().optional().nullable(),
   customerId: z.string().uuid(),
   storeId: z.string().uuid().optional().nullable(),
   notes: z.string().optional().nullable(),
@@ -73,7 +73,7 @@ function toCreate(body: z.infer<typeof voucherBody>): Prisma.SaleVoucherCreateIn
     profit: body.profit,
     accountingDebit: body.accountingDebit,
     accountingCredit: body.accountingCredit,
-    container: { connect: { id: body.containerId } },
+    container: body.containerId ? { connect: { id: body.containerId } } : undefined,
     customer: { connect: { id: body.customerId } },
     store: body.storeId ? { connect: { id: body.storeId } } : undefined,
   };
@@ -92,7 +92,9 @@ function toUpdate(body: Partial<z.infer<typeof voucherBody>>): Prisma.SaleVouche
   if (body.profit !== undefined) d.profit = body.profit;
   if (body.accountingDebit !== undefined) d.accountingDebit = body.accountingDebit;
   if (body.accountingCredit !== undefined) d.accountingCredit = body.accountingCredit;
-  if (body.containerId !== undefined) d.container = { connect: { id: body.containerId } };
+  if (body.containerId !== undefined) {
+    d.container = body.containerId ? { connect: { id: body.containerId } } : { disconnect: true };
+  }
   if (body.customerId !== undefined) d.customer = { connect: { id: body.customerId } };
   if (body.storeId !== undefined) {
     d.store = body.storeId ? { connect: { id: body.storeId } } : { disconnect: true };

@@ -94,7 +94,7 @@ export async function postSaleVoucherToGl(
     const glLines = buildSaleInvoiceGlLines({
       description: desc,
       customerId: v.customerId,
-      containerId: v.containerId,
+      containerId: v.containerId ?? undefined,
       docTotal: amount,
       exchangeMultiplier,
       arAccountId: body.arAccountId,
@@ -196,7 +196,7 @@ export async function postPurchaseVoucherToGl(
     const glLines = buildPurchaseInvoiceGlLines({
       description: desc,
       supplierId: v.supplierId,
-      containerId: v.containerId,
+      containerId: v.containerId ?? undefined,
       docTotal: amount,
       exchangeMultiplier,
       expenseOrInventoryAccountId: body.debitAccountId,

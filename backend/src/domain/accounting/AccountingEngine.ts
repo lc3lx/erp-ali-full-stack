@@ -149,7 +149,7 @@ export function buildInputVatMapFromPurchaseLines(
 export type BuildSaleGlParams = {
   description: string;
   customerId: string;
-  containerId: string;
+  containerId?: string | undefined;
   docTotal: Prisma.Decimal;
   exchangeMultiplier: Prisma.Decimal;
   arAccountId: string;
@@ -247,7 +247,7 @@ export function buildSaleInvoiceGlLines(p: BuildSaleGlParams): GlLineInput[] {
 export type BuildPurchaseGlParams = {
   description: string;
   supplierId: string;
-  containerId: string;
+  containerId?: string | undefined;
   docTotal: Prisma.Decimal;
   exchangeMultiplier: Prisma.Decimal;
   expenseOrInventoryAccountId: string;

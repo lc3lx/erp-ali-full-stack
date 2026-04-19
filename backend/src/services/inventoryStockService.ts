@@ -590,7 +590,7 @@ export async function applyPurchaseVoucherInventory(
     if (qty.lte(0) || !line.itemId) continue;
 
     const base = linePurchaseUnitBaseCost(line);
-    const landShare = await landedCostSharePerLine(tx, v.containerId, v.lines, line.id);
+    const landShare = v.containerId ? await landedCostSharePerLine(tx, v.containerId, v.lines, line.id) : D(0);
     const landPerUnit = landShare.div(qty);
     const unitCost = base.add(landPerUnit);
 

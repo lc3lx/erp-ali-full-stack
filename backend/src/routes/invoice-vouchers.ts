@@ -35,7 +35,7 @@ const voucherBody = z.object({
   officeCommission: optionalNullableNumber,
   cbmTransportPrice: optionalNullableNumber,
   currency: z.string().default("دولار"),
-  containerId: z.string().uuid(),
+  containerId: z.string().uuid().optional().nullable(),
   supplierId: z.string().uuid(),
   storeId: z.string().uuid().optional().nullable(),
   notes: z.string().optional().nullable(),
@@ -70,7 +70,7 @@ function toCreate(body: z.infer<typeof voucherBody>): Prisma.PurchaseInvoiceVouc
     notes: body.notes ?? undefined,
     phoneBalanceText: body.phoneBalanceText ?? undefined,
     paid: body.paid,
-    container: { connect: { id: body.containerId } },
+    container: body.containerId ? { connect: { id: body.containerId } } : undefined,
     supplier: { connect: { id: body.supplierId } },
     store: body.storeId ? { connect: { id: body.storeId } } : undefined,
   };
@@ -99,7 +99,9 @@ function toUpdate(body: Partial<z.infer<typeof voucherBody>>): Prisma.PurchaseIn
   if (body.notes !== undefined) d.notes = body.notes;
   if (body.phoneBalanceText !== undefined) d.phoneBalanceText = body.phoneBalanceText;
   if (body.paid !== undefined) d.paid = body.paid;
-  if (body.containerId !== undefined) d.container = { connect: { id: body.containerId } };
+  if (body.containerId !== undefined) {
+    d.container = body.containerId ? { connect: { id: body.containerId } } : { disconnect: true };
+  }
   if (body.supplierId !== undefined) d.supplier = { connect: { id: body.supplierId } };
   if (body.storeId !== undefined) {
     d.store = body.storeId ? { connect: { id: body.storeId } } : { disconnect: true };

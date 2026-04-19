@@ -438,7 +438,7 @@ model PurchaseInvoiceVoucher {
   officeCommission Decimal?  @db.Decimal(18, 4)
   cbmTransportPrice Decimal? @db.Decimal(18, 4)
   currency         String    @default("دولار")
-  containerId      String
+  containerId      String?
   supplierId       String
   storeId          String?
   notes            String?
@@ -453,7 +453,7 @@ model PurchaseInvoiceVoucher {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
-  container        Container     @relation(fields: [containerId], references: [id])
+  container        Container?    @relation(fields: [containerId], references: [id])
   supplier         Party         @relation(fields: [supplierId], references: [id])
   store            Store?        @relation(fields: [storeId], references: [id])
   glJournalEntry   JournalEntry? @relation("PurchaseVoucherGlJe", fields: [glJournalEntryId], references: [id], onDelete: SetNull)
@@ -500,7 +500,7 @@ model SaleVoucher {
   officeCommission Decimal?  @db.Decimal(18, 4)
   cbmTransportPrice Decimal? @db.Decimal(18, 4)
   currency         String    @default("دولار")
-  containerId      String
+  containerId      String?
   customerId       String
   storeId          String?
   notes            String?
@@ -517,7 +517,7 @@ model SaleVoucher {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
-  container        Container     @relation(fields: [containerId], references: [id])
+  container        Container?    @relation(fields: [containerId], references: [id])
   customer         Party         @relation(fields: [customerId], references: [id])
   store            Store?        @relation(fields: [storeId], references: [id])
   glJournalEntry   JournalEntry? @relation("SaleVoucherGlJe", fields: [glJournalEntryId], references: [id], onDelete: SetNull)

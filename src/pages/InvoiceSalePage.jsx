@@ -1,4 +1,4 @@
-﻿import * as u from "react";
+import * as u from "react";
 import { Fragment, jsx, jsxs } from "react/jsx-runtime";
 import { api as E } from "../lib/api.js";
 import { useAuth as ps } from "../context/AuthContext.jsx";
@@ -400,7 +400,7 @@ function Rf() {
           officeCommission: B.get("officeCommission") || void 0,
           cbmTransportPrice: B.get("cbmTransportPrice") || void 0,
           currency: B.get("currency") || void 0,
-          containerId: B.get("containerId") || void 0,
+          containerId: B.get("containerId") || null,
           customerId: y || void 0,
           storeId: S || null,
           notes: B.get("notes") || null,
@@ -416,8 +416,8 @@ function Rf() {
       var ee, oe;
       const v = (ee = C[0]) == null ? void 0 : ee.id,
         w = (oe = k[0]) == null ? void 0 : oe.id;
-      if (!v || !w) {
-        window.alert("يجب اختيار حاوية وزبون على الأقل.");
+      if (!w) {
+        window.alert("يجب اختيار زبون على الأقل.");
         return;
       }
       const B = window.prompt("رقم فاتورة البيع", `S-${Date.now()}`);
@@ -425,7 +425,7 @@ function Rf() {
         try {
           const ve = await E.post("/invoice-sale", {
               voucherNo: B.trim(),
-              containerId: v,
+              containerId: v || undefined,
               customerId: w,
               currency: "دولار",
             }),
@@ -712,13 +712,16 @@ ${v.join(`
                               disabled: !J,
                               defaultValue:
                                 (a == null ? void 0 : a.containerId) ?? "",
-                              children: C.map((v) =>
-                                s.jsx(
-                                  "option",
-                                  { value: v.id, children: br(v.containerNo) },
-                                  v.id,
+                              children: [
+                                s.jsx("option", { value: "", children: "— بدون حاوية —" }),
+                                ...C.map((v) =>
+                                  s.jsx(
+                                    "option",
+                                    { value: v.id, children: br(v.containerNo) },
+                                    v.id,
+                                  ),
                                 ),
-                              ),
+                              ],
                             },
                             `ct-${r}-${a == null ? void 0 : a.updatedAt}`,
                           ),

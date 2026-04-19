@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+﻿import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api.js";
 import { SearchableDropdown } from "./SearchableDropdown.jsx";
 
@@ -13,7 +13,7 @@ function readFileAsDataUrl(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result ?? ""));
-    reader.onerror = () => reject(new Error("تعذر قراءة ملف الصورة."));
+    reader.onerror = () => reject(new Error("طھط¹ط°ط± ظ‚ط±ط§ط،ط© ظ…ظ„ظپ ط§ظ„طµظˆط±ط©."));
     reader.readAsDataURL(file);
   });
 }
@@ -22,7 +22,7 @@ function loadImage(src) {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error("تعذر معالجة الصورة."));
+    img.onerror = () => reject(new Error("طھط¹ط°ط± ظ…ط¹ط§ظ„ط¬ط© ط§ظ„طµظˆط±ط©."));
     img.src = src;
   });
 }
@@ -30,7 +30,7 @@ function loadImage(src) {
 async function optimizeImageFile(file) {
   const rawDataUrl = await readFileAsDataUrl(file);
   if (!rawDataUrl.startsWith("data:image/")) {
-    throw new Error("يرجى اختيار ملف صورة صالح.");
+    throw new Error("ظٹط±ط¬ظ‰ ط§ط®طھظٹط§ط± ظ…ظ„ظپ طµظˆط±ط© طµط§ظ„ط­.");
   }
   const img = await loadImage(rawDataUrl);
   const maxSide = 900;
@@ -42,7 +42,7 @@ async function optimizeImageFile(file) {
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("تعذر تجهيز الصورة.");
+  if (!ctx) throw new Error("طھط¹ط°ط± طھط¬ظ‡ظٹط² ط§ظ„طµظˆط±ط©.");
 
   ctx.drawImage(img, 0, 0, width, height);
 
@@ -54,7 +54,7 @@ async function optimizeImageFile(file) {
   }
 
   if (out.length > MAX_IMAGE_DATA_URL_LENGTH) {
-    throw new Error("الصورة كبيرة جداً. اختر صورة أصغر.");
+    throw new Error("ط§ظ„طµظˆط±ط© ظƒط¨ظٹط±ط© ط¬ط¯ط§ظ‹. ط§ط®طھط± طµظˆط±ط© ط£طµط؛ط±.");
   }
   return out;
 }
@@ -78,7 +78,7 @@ function inferDefaultUom(line, mode) {
   return toNumber(line?.piecesSum) > 0 ? "PCS" : toNumber(line?.boxesSum) > 0 ? "BOX" : null;
 }
 
-/** ربط سطر فاتورة شراء/بيع بصنف من الكتالوج + صورة الصنف */
+/** ط±ط¨ط· ط³ط·ط± ظپط§طھظˆط±ط© ط´ط±ط§ط،/ط¨ظٹط¹ ط¨طµظ†ظپ ظ…ظ† ط§ظ„ظƒطھط§ظ„ظˆط¬ + طµظˆط±ط© ط§ظ„طµظ†ظپ */
 export function ItemLineLinkPanel({ mode, voucherId, line, onSaved }) {
   const [catalog, setCatalog] = useState([]);
   const [itemId, setItemId] = useState("");
@@ -190,6 +190,9 @@ export function ItemLineLinkPanel({ mode, voucherId, line, onSaved }) {
     requestedQty > 0 &&
     requestedQty > stockQty;
 
+  const saveActionLabel =
+    mode === "purchase" && !itemId ? "إضافة المادة + حفظ الصورة" : "حفظ الربط";
+
   const onPickImage = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -200,7 +203,7 @@ export function ItemLineLinkPanel({ mode, voucherId, line, onSaved }) {
       const optimized = await optimizeImageFile(file);
       setImageUrl(optimized);
       setImageTouched(true);
-      setMsg("تم تجهيز صورة الصنف.");
+      setMsg("طھظ… طھط¬ظ‡ظٹط² طµظˆط±ط© ط§ظ„طµظ†ظپ.");
     } catch (e) {
       setErr(e.message);
     } finally {
@@ -212,10 +215,15 @@ export function ItemLineLinkPanel({ mode, voucherId, line, onSaved }) {
   const onClearImage = () => {
     setImageUrl("");
     setImageTouched(true);
-    setMsg("تمت إزالة الصورة.");
+    setMsg("طھظ…طھ ط¥ط²ط§ظ„ط© ط§ظ„طµظˆط±ط©.");
   };
 
   const onSave = async () => {
+    if (mode === "purchase" && !itemId) {
+      await onCreateAndLinkFromLine();
+      return;
+    }
+
     setBusy(true);
     setErr("");
     setMsg("");
@@ -225,7 +233,7 @@ export function ItemLineLinkPanel({ mode, voucherId, line, onSaved }) {
         await api.patch(`/items/${itemId}`, { imageUrl: imageUrl || null });
       }
       setImageTouched(false);
-      setMsg("تم حفظ الربط والصورة.");
+      setMsg("طھظ… ط­ظپط¸ ط§ظ„ط±ط¨ط· ظˆط§ظ„طµظˆط±ط©.");
       await onSaved?.();
     } catch (e) {
       setErr(e.message);
@@ -238,7 +246,7 @@ export function ItemLineLinkPanel({ mode, voucherId, line, onSaved }) {
     const name = inferSuggestedName(line, mode);
     const itemNo = String(line?.itemNo ?? "").trim();
     if (!name) {
-      setErr("أدخل اسم المادة في السطر أولاً ثم أعد المحاولة.");
+      setErr("ط£ط¯ط®ظ„ ط§ط³ظ… ط§ظ„ظ…ط§ط¯ط© ظپظٹ ط§ظ„ط³ط·ط± ط£ظˆظ„ط§ظ‹ ط«ظ… ط£ط¹ط¯ ط§ظ„ظ…ط­ط§ظˆظ„ط©.");
       return;
     }
     setBusy(true);
@@ -254,7 +262,7 @@ export function ItemLineLinkPanel({ mode, voucherId, line, onSaved }) {
       await api.patch(`${base}/${line.id}`, { itemId: created.id });
       setItemId(created.id);
       setImageTouched(false);
-      setMsg("تم إنشاء الصنف وربطه بالسطر.");
+      setMsg("طھظ… ط¥ظ†ط´ط§ط، ط§ظ„طµظ†ظپ ظˆط±ط¨ط·ظ‡ ط¨ط§ظ„ط³ط·ط±.");
       await loadCat("");
       await onSaved?.();
     } catch (e) {
@@ -275,12 +283,12 @@ export function ItemLineLinkPanel({ mode, voucherId, line, onSaved }) {
       }}
       dir="rtl"
     >
-      <strong>ربط السطر بالصنف (مخزون + صورة)</strong>
+      <strong>ط±ط¨ط· ط§ظ„ط³ط·ط± ط¨ط§ظ„طµظ†ظپ (ظ…ط®ط²ظˆظ† + طµظˆط±ط©)</strong>
       <div style={{ marginTop: 4, fontSize: 12, color: "#475569" }}>
-        لاختيار صورة المنتج: اختر ملف صورة ثم اضغط حفظ الربط.
+        ظ„ط§ط®طھظٹط§ط± طµظˆط±ط© ط§ظ„ظ…ظ†طھط¬: ط§ط®طھط± ظ…ظ„ظپ طµظˆط±ط© ط«ظ… ط§ط¶ط؛ط· ط­ظپط¸ ط§ظ„ط±ط¨ط·.
       </div>
       <div style={{ marginTop: 8 }}>
-        <label>صنف الكتالوج:</label>
+        <label>طµظ†ظپ ط§ظ„ظƒطھط§ظ„ظˆط¬:</label>
         <SearchableDropdown
           value={itemId}
           onChange={(val) => {
@@ -291,10 +299,10 @@ export function ItemLineLinkPanel({ mode, voucherId, line, onSaved }) {
           options={catalog}
           getOptionValue={(item) => item.id}
           getOptionLabel={(item) => `${item.name}${item.itemNo ? ` (${item.itemNo})` : ""}`}
-          placeholder="— بدون ربط —"
-          searchPlaceholder="ابحث بالاسم / الرقم / الباركود"
+          placeholder="â€” ط¨ط¯ظˆظ† ط±ط¨ط· â€”"
+          searchPlaceholder="ط§ط¨ط­ط« ط¨ط§ظ„ط§ط³ظ… / ط§ظ„ط±ظ‚ظ… / ط§ظ„ط¨ط§ط±ظƒظˆط¯"
           onSearchChange={setSearchText}
-          clearLabel="— بدون ربط —"
+          clearLabel="â€” ط¨ط¯ظˆظ† ط±ط¨ط· â€”"
         />
         <button
           type="button"
@@ -303,7 +311,7 @@ export function ItemLineLinkPanel({ mode, voucherId, line, onSaved }) {
           onClick={onSave}
           disabled={busy || imageBusy}
         >
-          حفظ الربط
+          {saveActionLabel}
         </button>
         <button
           type="button"
@@ -312,23 +320,12 @@ export function ItemLineLinkPanel({ mode, voucherId, line, onSaved }) {
           onClick={() => loadCat(searchText)}
           disabled={busy || imageBusy}
         >
-          تحديث القائمة
+          طھط­ط¯ظٹط« ط§ظ„ظ‚ط§ط¦ظ…ط©
         </button>
-        {mode === "purchase" ? (
-          <button
-            type="button"
-            className="iv-item-btn green"
-            style={{ marginInlineStart: 4 }}
-            onClick={onCreateAndLinkFromLine}
-            disabled={busy || imageBusy}
-          >
-            إنشاء صنف من السطر
-          </button>
-        ) : null}
       </div>
 
       <div style={{ marginTop: 10 }}>
-        <div style={{ marginBottom: 6, fontWeight: 600 }}>صورة الصنف</div>
+        <div style={{ marginBottom: 6, fontWeight: 600 }}>طµظˆط±ط© ط§ظ„طµظ†ظپ</div>
         <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
           <div
             style={{
@@ -344,35 +341,35 @@ export function ItemLineLinkPanel({ mode, voucherId, line, onSaved }) {
             }}
           >
             {imageUrl ? (
-              <img src={imageUrl} alt="صورة الصنف" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              <img src={imageUrl} alt="طµظˆط±ط© ط§ظ„طµظ†ظپ" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             ) : (
-              <span style={{ fontSize: 11, color: "#6b7280" }}>بدون</span>
+              <span style={{ fontSize: 11, color: "#6b7280" }}>ط¨ط¯ظˆظ†</span>
             )}
           </div>
           <input type="file" accept="image/*" onChange={onPickImage} disabled={busy || imageBusy} />
           <button type="button" className="iv-item-btn red" onClick={onClearImage} disabled={busy || imageBusy}>
-            حذف الصورة
+            ط­ط°ظپ ط§ظ„طµظˆط±ط©
           </button>
-          {imageBusy ? <span style={{ fontSize: 12, color: "#334155" }}>جارٍ تجهيز الصورة...</span> : null}
+          {imageBusy ? <span style={{ fontSize: 12, color: "#334155" }}>ط¬ط§ط±ظچ طھط¬ظ‡ظٹط² ط§ظ„طµظˆط±ط©...</span> : null}
         </div>
       </div>
 
       <div style={{ marginTop: 8, display: "flex", gap: 12, flexWrap: "wrap", fontSize: 12 }}>
         <span>
-          مستودع: <strong>{warehouseName || "—"}</strong>
+          ظ…ط³طھظˆط¯ط¹: <strong>{warehouseName || "â€”"}</strong>
         </span>
         <span>
-          المتاح: <strong>{stockQty == null ? "—" : String(stockQty)}</strong>
+          ط§ظ„ظ…طھط§ط­: <strong>{stockQty == null ? "â€”" : String(stockQty)}</strong>
         </span>
         {mode === "sale" ? (
           <span>
-            المطلوب بالسطر: <strong>{String(requestedQty || 0)}</strong>
+            ط§ظ„ظ…ط·ظ„ظˆط¨ ط¨ط§ظ„ط³ط·ط±: <strong>{String(requestedQty || 0)}</strong>
           </span>
         ) : null}
       </div>
       {showLowStockWarning ? (
         <div style={{ color: "crimson", marginTop: 6 }}>
-          تحذير: الكمية المطلوبة أعلى من المتاح في المستودع المحدد.
+          طھط­ط°ظٹط±: ط§ظ„ظƒظ…ظٹط© ط§ظ„ظ…ط·ظ„ظˆط¨ط© ط£ط¹ظ„ظ‰ ظ…ظ† ط§ظ„ظ…طھط§ط­ ظپظٹ ط§ظ„ظ…ط³طھظˆط¯ط¹ ط§ظ„ظ…ط­ط¯ط¯.
         </div>
       ) : null}
       {msg ? <div style={{ color: "#166534", marginTop: 6 }}>{msg}</div> : null}
@@ -380,3 +377,5 @@ export function ItemLineLinkPanel({ mode, voucherId, line, onSaved }) {
     </div>
   );
 }
+
+

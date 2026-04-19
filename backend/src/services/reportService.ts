@@ -135,7 +135,8 @@ async function containersInSaleReport(filters: Parameters<typeof containerWhere>
     distinct: ["containerId"],
     select: { containerId: true },
   });
-  const ids = new Set(saleContainers.map((s) => s.containerId));
+  const validIds = saleContainers.map((s) => s.containerId).filter((id): id is string => id !== null);
+  const ids = new Set(validIds);
   const rowsRaw = await prisma.container.findMany({
     where: { ...where, id: { in: [...ids] } },
     include: { clearanceCompany: true },
