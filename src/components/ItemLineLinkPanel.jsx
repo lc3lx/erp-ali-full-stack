@@ -7,8 +7,6 @@ function toNumber(value) {
   return Number.isFinite(n) ? n : 0;
 }
 
-import { optimizeImageFile } from "../lib/imageUtils.js";
-
 function inferSuggestedName(line, mode) {
   const name = String(line?.itemName ?? "").trim();
   if (name) return name;
@@ -28,7 +26,6 @@ function inferDefaultUom(line, mode) {
   return toNumber(line?.piecesSum) > 0 ? "PCS" : toNumber(line?.boxesSum) > 0 ? "BOX" : null;
 }
 
-/** ط±ط¨ط· ط³ط·ط± ظپط§طھظˆط±ط© ط´ط±ط§ط،/ط¨ظٹط¹ ط¨طµظ†ظپ ظ…ظ† ط§ظ„ظƒطھط§ظ„ظˆط¬ + طµظˆط±ط© ط§ظ„طµظ†ظپ */
 export function ItemLineLinkPanel({ mode, voucherId, line, onSaved }) {
   const [catalog, setCatalog] = useState([]);
   const [itemId, setItemId] = useState("");
@@ -38,9 +35,6 @@ export function ItemLineLinkPanel({ mode, voucherId, line, onSaved }) {
   const [busy, setBusy] = useState(false);
   const [stockQty, setStockQty] = useState(null);
   const [warehouseName, setWarehouseName] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
-  const [imageTouched, setImageTouched] = useState(false);
-  const [imageBusy, setImageBusy] = useState(false);
 
   const loadCat = useCallback(async (q = "") => {
     try {
@@ -65,29 +59,7 @@ export function ItemLineLinkPanel({ mode, voucherId, line, onSaved }) {
     setMsg("");
     setStockQty(null);
     setWarehouseName("");
-    setImageUrl("");
-    setImageTouched(false);
   }, [line?.id, line?.itemId]);
-
-  useEffect(() => {
-    let disposed = false;
-    if (!itemId) {
-      if (!imageTouched) setImageUrl("");
-      return () => {};
-    }
-    (async () => {
-      try {
-        const item = await api.get(`/items/${itemId}`);
-        if (disposed) return;
-        if (!imageTouched) setImageUrl(item.imageUrl ?? "");
-      } catch {
-        // Ignore; dropdown may still include enough data.
-      }
-    })();
-    return () => {
-      disposed = true;
-    };
-  }, [itemId, imageTouched]);
 
   const stockEndpoint =
     mode === "purchase"
@@ -141,32 +113,7 @@ export function ItemLineLinkPanel({ mode, voucherId, line, onSaved }) {
     requestedQty > stockQty;
 
   const saveActionLabel =
-    mode === "purchase" && !itemId ? "إضافة المادة + حفظ الصورة" : "حفظ الربط";
-
-  const onPickImage = async (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    setImageBusy(true);
-    setErr("");
-    setMsg("");
-    try {
-      const optimized = await optimizeImageFile(file);
-      setImageUrl(optimized);
-      setImageTouched(true);
-      setMsg("طھظ… طھط¬ظ‡ظٹط² طµظˆط±ط© ط§ظ„طµظ†ظپ.");
-    } catch (e) {
-      setErr(e.message);
-    } finally {
-      setImageBusy(false);
-      event.target.value = "";
-    }
-  };
-
-  const onClearImage = () => {
-    setImageUrl("");
-    setImageTouched(true);
-    setMsg("طھظ…طھ ط¥ط²ط§ظ„ط© ط§ظ„طµظˆط±ط©.");
-  };
+    mode === "purchase" && !itemId ? "إضافة المادة" : "حفظ الربط";
 
   const onSave = async () => {
     if (mode === "purchase" && !itemId) {
@@ -179,11 +126,7 @@ export function ItemLineLinkPanel({ mode, voucherId, line, onSaved }) {
     setMsg("");
     try {
       await api.patch(`${base}/${line.id}`, { itemId: itemId ? itemId : null });
-      if (itemId && imageTouched) {
-        await api.patch(`/items/${itemId}`, { imageUrl: imageUrl || null });
-      }
-      setImageTouched(false);
-      setMsg("طھظ… ط­ظپط¸ ط§ظ„ط±ط¨ط· ظˆط§ظ„طµظˆط±ط©.");
+      setMsg("تم حفظ الربط بنجاح.");
       await onSaved?.();
     } catch (e) {
       setErr(e.message);
@@ -196,7 +139,7 @@ export function ItemLineLinkPanel({ mode, voucherId, line, onSaved }) {
     const name = inferSuggestedName(line, mode);
     const itemNo = String(line?.itemNo ?? "").trim();
     if (!name) {
-      setErr("ط£ط¯ط®ظ„ ط§ط³ظ… ط§ظ„ظ…ط§ط¯ط© ظپظٹ ط§ظ„ط³ط·ط± ط£ظˆظ„ط§ظ‹ ط«ظ… ط£ط¹ط¯ ط§ظ„ظ…ط­ط§ظˆظ„ط©.");
+      setErr("أدخل اسم المادة في السطر أولاً ثم أعد المحاولة.");
       return;
     }
     setBusy(true);
@@ -206,13 +149,12 @@ export function ItemLineLinkPanel({ mode, voucherId, line, onSaved }) {
       const created = await api.post("/items", {
         name,
         itemNo: itemNo || null,
-        imageUrl: imageUrl || null,
+        imageUrl: null,
         defaultUom: inferDefaultUom(line, mode),
       });
       await api.patch(`${base}/${line.id}`, { itemId: created.id });
       setItemId(created.id);
-      setImageTouched(false);
-      setMsg("طھظ… ط¥ظ†ط´ط§ط، ط§ظ„طµظ†ظپ ظˆط±ط¨ط·ظ‡ ط¨ط§ظ„ط³ط·ط±.");
+      setMsg("تم إنشاء الصنف وربطه بالسطر بنجاح.");
       await loadCat("");
       await onSaved?.();
     } catch (e) {
@@ -233,12 +175,12 @@ export function ItemLineLinkPanel({ mode, voucherId, line, onSaved }) {
       }}
       dir="rtl"
     >
-      <strong>ط±ط¨ط· ط§ظ„ط³ط·ط± ط¨ط§ظ„طµظ†ظپ (ظ…ط®ط²ظˆظ† + طµظˆط±ط©)</strong>
+      <strong>ربط السطر بالصنف</strong>
       <div style={{ marginTop: 4, fontSize: 12, color: "#475569" }}>
-        ظ„ط§ط®طھظٹط§ط± طµظˆط±ط© ط§ظ„ظ…ظ†طھط¬: ط§ط®طھط± ظ…ظ„ظپ طµظˆط±ط© ط«ظ… ط§ط¶ط؛ط· ط­ظپط¸ ط§ظ„ط±ط¨ط·.
+        لربط الصنف: اختر المنتج من القائمة ثم اضغط حفظ الربط. إضافة صورة الصنف أصبحت الآن من شاشة إضافة الأصناف.
       </div>
       <div style={{ marginTop: 8 }}>
-        <label>طµظ†ظپ ط§ظ„ظƒطھط§ظ„ظˆط¬:</label>
+        <label>صنف الكتالوج:</label>
         <SearchableDropdown
           value={itemId}
           onChange={(val) => {
@@ -249,17 +191,17 @@ export function ItemLineLinkPanel({ mode, voucherId, line, onSaved }) {
           options={catalog}
           getOptionValue={(item) => item.id}
           getOptionLabel={(item) => `${item.name}${item.itemNo ? ` (${item.itemNo})` : ""}`}
-          placeholder="â€” ط¨ط¯ظˆظ† ط±ط¨ط· â€”"
-          searchPlaceholder="ط§ط¨ط­ط« ط¨ط§ظ„ط§ط³ظ… / ط§ظ„ط±ظ‚ظ… / ط§ظ„ط¨ط§ط±ظƒظˆط¯"
+          placeholder="— بدون ربط —"
+          searchPlaceholder="ابحث بالاسم / الرقم / الباركود"
           onSearchChange={setSearchText}
-          clearLabel="â€” ط¨ط¯ظˆظ† ط±ط¨ط· â€”"
+          clearLabel="— بدون ربط —"
         />
         <button
           type="button"
           className="iv-item-btn green"
           style={{ marginInlineStart: 8 }}
           onClick={onSave}
-          disabled={busy || imageBusy}
+          disabled={busy}
         >
           {saveActionLabel}
         </button>
@@ -268,58 +210,28 @@ export function ItemLineLinkPanel({ mode, voucherId, line, onSaved }) {
           className="iv-item-btn"
           style={{ marginInlineStart: 4 }}
           onClick={() => loadCat(searchText)}
-          disabled={busy || imageBusy}
+          disabled={busy}
         >
-          طھط­ط¯ظٹط« ط§ظ„ظ‚ط§ط¦ظ…ط©
+          تحديث القائمة
         </button>
-      </div>
-
-      <div style={{ marginTop: 10 }}>
-        <div style={{ marginBottom: 6, fontWeight: 600 }}>طµظˆط±ط© ط§ظ„طµظ†ظپ</div>
-        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
-          <div
-            style={{
-              width: 64,
-              height: 64,
-              border: "1px solid #d1d5db",
-              borderRadius: 6,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              overflow: "hidden",
-              background: "#f8fafc",
-            }}
-          >
-            {imageUrl ? (
-              <img src={imageUrl} alt="طµظˆط±ط© ط§ظ„طµظ†ظپ" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            ) : (
-              <span style={{ fontSize: 11, color: "#6b7280" }}>ط¨ط¯ظˆظ†</span>
-            )}
-          </div>
-          <input type="file" accept="image/*" onChange={onPickImage} disabled={busy || imageBusy} />
-          <button type="button" className="iv-item-btn red" onClick={onClearImage} disabled={busy || imageBusy}>
-            ط­ط°ظپ ط§ظ„طµظˆط±ط©
-          </button>
-          {imageBusy ? <span style={{ fontSize: 12, color: "#334155" }}>ط¬ط§ط±ظچ طھط¬ظ‡ظٹط² ط§ظ„طµظˆط±ط©...</span> : null}
-        </div>
       </div>
 
       <div style={{ marginTop: 8, display: "flex", gap: 12, flexWrap: "wrap", fontSize: 12 }}>
         <span>
-          ظ…ط³طھظˆط¯ط¹: <strong>{warehouseName || "â€”"}</strong>
+          مستودع: <strong>{warehouseName || "—"}</strong>
         </span>
         <span>
-          ط§ظ„ظ…طھط§ط­: <strong>{stockQty == null ? "â€”" : String(stockQty)}</strong>
+          المتاح: <strong>{stockQty == null ? "—" : String(stockQty)}</strong>
         </span>
         {mode === "sale" ? (
           <span>
-            ط§ظ„ظ…ط·ظ„ظˆط¨ ط¨ط§ظ„ط³ط·ط±: <strong>{String(requestedQty || 0)}</strong>
+            المطلوب بالسطر: <strong>{String(requestedQty || 0)}</strong>
           </span>
         ) : null}
       </div>
       {showLowStockWarning ? (
         <div style={{ color: "crimson", marginTop: 6 }}>
-          طھط­ط°ظٹط±: ط§ظ„ظƒظ…ظٹط© ط§ظ„ظ…ط·ظ„ظˆط¨ط© ط£ط¹ظ„ظ‰ ظ…ظ† ط§ظ„ظ…طھط§ط­ ظپظٹ ط§ظ„ظ…ط³طھظˆط¯ط¹ ط§ظ„ظ…ط­ط¯ط¯.
+          تحذير: الكمية المطلوبة أعلى من المتاح في المستودع المحدد.
         </div>
       ) : null}
       {msg ? <div style={{ color: "#166534", marginTop: 6 }}>{msg}</div> : null}
@@ -327,5 +239,3 @@ export function ItemLineLinkPanel({ mode, voucherId, line, onSaved }) {
     </div>
   );
 }
-
-
